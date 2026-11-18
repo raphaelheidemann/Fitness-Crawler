@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { auth, db, handleFirestoreError, OperationType } from './firebase';
 import { Food } from './lib/foodDb';
+import { LanguageProvider, LanguageToggle, useT } from './lib/i18n';
 import {
   CrawlerRewardEvent,
   CrawlerState,
@@ -84,6 +85,7 @@ const NAV_ITEMS: {
 ];
 
 function WorkspaceShell() {
+  const t = useT();
   const [authReady, setAuthReady] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -766,7 +768,7 @@ function WorkspaceShell() {
     );
   }
 
-  const activeNavLabel = NAV_ITEMS.find((item) => item.id === activeNav)?.label ?? 'Overview';
+  const activeNavLabel = t(NAV_ITEMS.find((item) => item.id === activeNav)?.label ?? 'Overview');
 
   const handleOpenQuickCheckIn = () => {
     setActiveNav('measurements');
@@ -853,7 +855,7 @@ function WorkspaceShell() {
                 <SlidersHorizontal className="w-3.5 h-3.5" />
               </div>
               <p className="text-sm font-semibold text-white mt-0.5 tabular-nums">
-                Week {profile.currentWeek} · {profile.phaseName}
+                {t('Week {n} · {phase}', { n: profile.currentWeek, phase: profile.phaseName })}
               </p>
             </button>
           </div>
@@ -878,7 +880,7 @@ function WorkspaceShell() {
                       isActive ? 'text-emerald-400' : 'text-slate-400'
                     }`}
                   />
-                  {item.label}
+                  {t(item.label)}
                 </button>
               );
             })}
@@ -913,8 +915,8 @@ function WorkspaceShell() {
             <button
               type="button"
               onClick={() => void signOut(auth)}
-              aria-label="Sign out"
-              title="Sign out"
+              aria-label={t('Sign out')}
+              title={t('Sign out')}
               className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg transition-colors shrink-0"
             >
               <LogOut className="w-4 h-4" />
@@ -962,7 +964,7 @@ function WorkspaceShell() {
                       }`}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
-                      {item.label}
+                      {t(item.label)}
                     </button>
                   );
                 })}
@@ -977,7 +979,7 @@ function WorkspaceShell() {
                   onClick={() => void signOut(auth)}
                   className="min-h-[40px] px-2 text-xs font-medium text-slate-300 hover:text-white"
                 >
-                  Sign out
+                  {t('Sign out')}
                 </button>
               </div>
             </div>
@@ -993,7 +995,7 @@ function WorkspaceShell() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open menu"
+              aria-label={t('Open menu')}
               className="lg:hidden min-h-[40px] min-w-[40px] flex items-center justify-center -ml-2 text-slate-300 hover:text-white rounded-lg"
             >
               <Menu className="w-5 h-5" />
@@ -1007,14 +1009,17 @@ function WorkspaceShell() {
             </div>
           </div>
 
+          <div className="flex items-center gap-2 shrink-0">
+          <LanguageToggle />
           <button
             type="button"
             onClick={handleOpenQuickCheckIn}
             className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            Log Check-in
+            {t('Log Check-in')}
           </button>
+          </div>
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8 max-w-[1280px] w-full mx-auto">
@@ -1221,7 +1226,7 @@ function WorkspaceShell() {
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium tracking-tight">{item.shortLabel}</span>
+              <span className="text-[10px] font-medium tracking-tight">{t(item.shortLabel)}</span>
             </button>
           );
         })}
@@ -1273,7 +1278,9 @@ function WorkspaceShell() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <WorkspaceShell />
+      <LanguageProvider>
+        <WorkspaceShell />
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }

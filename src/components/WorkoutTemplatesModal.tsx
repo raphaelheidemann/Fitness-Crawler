@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, ChevronLeft, Layers, X } from 'lucide-react';
 import { DAY_SHORT } from '../types';
+import { useT } from '../lib/i18n';
 import { defaultCardio } from '../lib/sanitize';
 import { saveWorkoutPlan } from '../lib/firestoreService';
 import {
@@ -20,6 +21,7 @@ interface Props {
 export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onAdded }) => {
   const [level, setLevel] = useState<TemplateLevel | null>(null);
   const [split, setSplit] = useState<TemplateSplit | null>(null);
+  const t = useT();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +36,7 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
 
   if (!open) return null;
 
-  const levelLabel = TEMPLATE_LEVELS.find((l) => l.key === level)?.label ?? '';
+  const levelLabel = t(TEMPLATE_LEVELS.find((l) => l.key === level)?.label ?? '');
   const splits = WORKOUT_TEMPLATES.filter((s) => s.level === level);
 
   const handleBack = () => {
@@ -53,7 +55,7 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
           uid,
           {
             id: '',
-            name: `${split.name} · ${d.name}`,
+            name: `${t(split.name)} · ${t(d.name)}`,
             scheduledTime: '',
             defaultDays: d.weekdays,
             isRestDay: false,
@@ -64,21 +66,25 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
           false
         );
       }
-      onAdded(`${levelLabel} ${split.name}`, split.days.length);
+      onAdded(`${levelLabel} ${t(split.name)}`, split.days.length);
       onClose();
     } catch {
-      setError('Could not add these workouts. Check your connection and try again.');
+      setError(t('Could not add these workouts. Check your connection and try again.'));
       setSaving(false);
     }
   };
 
-  const title = split ? split.name : level ? `${levelLabel}: choose a split` : 'Ready-made workouts';
+  const title = split
+    ? t(split.name)
+    : level
+      ? t('{level}: choose a split', { level: levelLabel })
+      : t('Ready-made workouts');
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Ready-made workouts"
+      aria-label={t('Ready-made workouts')}
       className="fixed inset-0 z-50 bg-black/75 backdrop-blur-[1px] flex items-center justify-center p-4"
     >
       <div className="bg-[#131a24] w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border-2 border-[#33445e] shadow-2xl overflow-hidden">
@@ -88,7 +94,7 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
               <button
                 type="button"
                 onClick={handleBack}
-                aria-label="Back"
+                aria-label={t('Back')}
                 className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-[#1a2332]"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -100,7 +106,7 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-[#1a2332]"
           >
             <X className="w-4 h-4" />
@@ -110,7 +116,7 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
         <div className="p-4 overflow-y-auto space-y-3">
           {!level && (
             <>
-              <p className="text-xs text-slate-400">What is your training level?</p>
+              <p className="text-xs text-slate-400">{t('What is your training level?')}</p>
               {TEMPLATE_LEVELS.map((l) => (
                 <button
                   key={l.key}
@@ -118,8 +124,8 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
                   onClick={() => setLevel(l.key)}
                   className="w-full text-left min-h-[56px] px-4 py-3 bg-[#1a2332] border border-[#2d3c54] hover:border-amber-400 rounded-xl transition-colors"
                 >
-                  <span className="block text-sm font-semibold text-white">{l.label}</span>
-                  <span className="block text-xs text-slate-400">{l.hint}</span>
+                  <span className="block text-sm font-semibold text-white">{t(l.label)}</span>
+                  <span className="block text-xs text-slate-400">{t(l.hint)}</span>
                 </button>
               ))}
             </>
@@ -133,20 +139,20 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
                 onClick={() => setSplit(s)}
                 className="w-full text-left px-4 py-3 bg-[#1a2332] border border-[#2d3c54] hover:border-amber-400 rounded-xl transition-colors"
               >
-                <span className="block text-sm font-semibold text-white">{s.name}</span>
-                <span className="block text-xs text-slate-400 mt-0.5">{s.description}</span>
+                <span className="block text-sm font-semibold text-white">{t(s.name)}</span>
+                <span className="block text-xs text-slate-400 mt-0.5">{t(s.description)}</span>
               </button>
             ))}
 
           {split && (
             <>
-              <p className="text-xs text-slate-400">{split.description}</p>
+              <p className="text-xs text-slate-400">{t(split.description)}</p>
               {split.days.map((d) => (
                 <div key={d.name} className="bg-[#1a2332] border border-[#2d3c54] rounded-xl p-3.5">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-white">{d.name}</h3>
+                    <h3 className="text-sm font-semibold text-white">{t(d.name)}</h3>
                     <span className="text-[11px] text-slate-400">
-                      {d.weekdays.map((w) => DAY_SHORT[w]).join(' · ')}
+                      {d.weekdays.map((w) => t(DAY_SHORT[w])).join(' · ')}
                     </span>
                   </div>
                   <ul className="mt-2 space-y-1">
@@ -162,9 +168,12 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
                 </div>
               ))}
               <p className="text-[11px] text-slate-500">
-                Adds {split.days.length} {split.days.length === 1 ? 'plan' : 'plans'} to Training
-                Plans. Open a day, pick the workout from the list and train. You can edit the loads
-                and exercises afterwards.
+                {t(
+                  split.days.length === 1
+                    ? 'Adds {n} plan to Training Plans. Open a day, pick the workout from the list and train. You can edit the loads and exercises afterwards.'
+                    : 'Adds {n} plans to Training Plans. Open a day, pick the workout from the list and train. You can edit the loads and exercises afterwards.',
+                  { n: split.days.length }
+                )}
               </p>
               {error && <p className="text-xs text-rose-300">{error}</p>}
             </>
@@ -180,7 +189,7 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
               className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 rounded-lg transition-colors"
             >
               <Check className="w-3.5 h-3.5" />
-              {saving ? 'Adding...' : 'Add to my plans'}
+              {saving ? t('Adding...') : t('Add to my plans')}
             </button>
           </div>
         )}

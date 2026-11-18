@@ -27,6 +27,7 @@ import {
   UserProfile,
 } from '../types';
 import { Food } from '../lib/foodDb';
+import { useT } from '../lib/i18n';
 import {
   createMealLog,
   deleteMealLog,
@@ -60,6 +61,7 @@ export const DietPlanView: React.FC<Props> = ({
   onOpenQuickFood,
   onOpenCsvImport,
 }) => {
+  const t = useT();
   const [selectedWeek, setSelectedWeek] = useState(profile.currentWeek);
   const [selectedDay, setSelectedDay] = useState(0);
   const [showGrocery, setShowGrocery] = useState(false);
@@ -340,7 +342,7 @@ export const DietPlanView: React.FC<Props> = ({
             className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
           >
             <Wand2 className="w-3.5 h-3.5" />
-            Basic Diet Plan
+            {t('Basic Diet Plan')}
           </button>
 
           <button
@@ -489,7 +491,7 @@ export const DietPlanView: React.FC<Props> = ({
                           className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
                         >
                           <Search className="w-3.5 h-3.5" />
-                          Food DB
+                          {t('Food DB')}
                         </button>
                         <button
                           type="button"
@@ -581,8 +583,8 @@ export const DietPlanView: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => setFoodTarget({ kind: 'replace', meal })}
-                              aria-label={`Replace ${meal.title}`}
-                              title="Replace with another food"
+                              aria-label={t('Replace {name}', { name: meal.title })}
+                              title={t('Replace with another food')}
                               className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-emerald-300 rounded-md transition-colors"
                             >
                               <Repeat className="w-4 h-4" />

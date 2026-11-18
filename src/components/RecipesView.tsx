@@ -27,6 +27,7 @@ import {
   toggleRecipeFavorite,
 } from '../lib/firestoreService';
 import { buildStarterRecipes } from '../lib/starterRecipes';
+import { useT } from '../lib/i18n';
 
 interface Props {
   uid: string;
@@ -54,6 +55,7 @@ const PRESET_IMAGES = [
 ];
 
 export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
+  const t = useT();
   const [filter, setFilter] = useState<'all' | 'favorites' | RecipeCategory>('all');
   const [search, setSearch] = useState('');
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
@@ -240,7 +242,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-60 rounded-lg transition-colors whitespace-nowrap"
             >
               <Utensils className="w-4 h-4" />
-              {seeding ? 'Adding...' : `Add ${missingStarters.length} starter recipes`}
+              {seeding ? t('Adding...') : t('Add {n} starter recipes', { n: missingStarters.length })}
             </button>
           )}
           <button
