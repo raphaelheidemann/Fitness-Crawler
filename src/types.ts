@@ -39,6 +39,13 @@ export interface CardioLog {
   completed: boolean;
 }
 
+export interface SetLog {
+  reps: number;
+  load: number;
+  rpe: number; // 0 = not rated
+  done: boolean;
+}
+
 export interface ExerciseItem {
   id: string;
   name: string;
@@ -49,6 +56,7 @@ export interface ExerciseItem {
   rpe: number;
   completed: boolean;
   restSeconds?: number;
+  setLog?: SetLog[]; // one entry per set; absent on legacy exercises
   muscleGroup?: string;
   imageUrl?: string;
   notes?: string;

@@ -1195,4 +1195,13 @@ export const PT: Record<string, string> = {
   'Stage Aura': 'Aura de palco',
   'Default Starter': 'Item inicial',
   'Achievements ({n}/6)': 'Conquistas ({n}/6)',
+  'Target: {reps} reps': 'Meta: {reps} reps',
+  'Set': 'Série',
+  'Previous': 'Anterior',
+  'Set RPE for set {n}': 'Definir RPE da série {n}',
+  'Mark set {n} done': 'Marcar série {n} como feita',
+  'Add set': 'Adicionar série',
+  'Remove set': 'Remover série',
+  'Select RPE': 'Selecionar RPE',
+  'Slide or tap to rate your effort': 'Deslize ou toque para avaliar seu esforço',
 };
