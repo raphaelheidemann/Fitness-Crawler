@@ -1,0 +1,1865 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Database,
+  Dumbbell,
+  Footprints,
+  Layers,
+  Pencil,
+  Play,
+  Plus,
+  Save,
+  Search,
+  Timer,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react';
+import {
+  CardioLog,
+  CardioType,
+  DAY_FULL,
+  DAY_SHORT,
+  ExerciseCatalogItem,
+  ExerciseItem,
+  MealLog,
+  SCHEMA_LIMITS,
+  UserProfile,
+  WorkoutDay,
+  WorkoutPlan,
+} from '../types';
+import {
+  computeExerciseVolume,
+  defaultCardio,
+  distanceUnit,
+  sanitizeCardio,
+  weightUnit,
+} from '../lib/sanitize';
+import {
+  applyPlanToWorkoutDay,
+  copyWeekPlans,
+  deleteWorkoutPlan,
+  saveWorkoutPlan,
+  toggleWorkoutCompleted,
+  updateUserWeekAndPhase,
+  upsertWorkoutDay,
+} from '../lib/firestoreService';
+import { ExercisePickerModal, formatMuscleLabel } from './ExercisePickerModal';
+import { RestTimerBar, playRestCompleteChime } from './RestTimerBar';
+import { WorkoutPlanModal } from './WorkoutPlanModal';
+
+interface ExerciseThumbProps {
+  src?: string;
+  alt: string;
+  onClick: () => void;
+}
+
+const ExerciseThumb: React.FC<ExerciseThumbProps> = ({ src, alt, onClick }) => {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={src ? 'Preview exercise form' : 'Match photo from exercise database'}
+      aria-label={src ? `Preview ${alt}` : `Find photo for ${alt}`}
+      className="w-12 h-12 rounded-lg border border-[#2d3c54] bg-[#0e141d] overflow-hidden shrink-0 flex items-center justify-center hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+    >
+      {src && !failed ? (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <Dumbbell className="w-5 h-5 text-slate-400" />
+      )}
+    </button>
+  );
+};
+
+const PreviewPhoto: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (failed) {
+    return (
+      <div className="w-full aspect-[4/3] bg-[#0e141d] flex items-center justify-center text-slate-400">
+        <Dumbbell className="w-8 h-8" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+      className="w-full aspect-[4/3] object-cover bg-[#0e141d]"
+    />
+  );
+};
+
+interface Props {
+  uid: string;
+  profile: UserProfile;
+  workouts: WorkoutDay[];
+  workoutPlans: WorkoutPlan[];
+  mealLogs: MealLog[];
+  onOpenCsvImport: (week: number, day: number) => void;
+}
+
+export const GymPlanView: React.FC<Props> = ({
+  uid,
+  profile,
+  workouts,
+  workoutPlans,
+  mealLogs,
+  onOpenCsvImport,
+}) => {
+  const [subTab, setSubTab] = useState<'schedule' | 'plans'>('schedule');
+  const [selectedWeek, setSelectedWeek] = useState<number>(profile.currentWeek);
+  const [selectedDay, setSelectedDay] = useState<number>(0);
+
+  const wUnit = weightUnit(profile.unitSystem);
+  const dUnit = distanceUnit(profile.unitSystem);
+
+  useEffect(() => {
+    setSelectedWeek(profile.currentWeek);
+  }, [profile.currentWeek]);
+
+  const sortedPlans = useMemo(
+    () =>
+      [...workoutPlans].sort((a, b) => {
+        const aDay = a.defaultDays[0] ?? 99;
+        const bDay = b.defaultDays[0] ?? 99;
+        if (aDay !== bDay) return aDay - bDay;
+        return a.name.localeCompare(b.name);
+      }),
+    [workoutPlans]
+  );
+
+  const weekWorkouts = useMemo(
+    () => workouts.filter((w) => w.weekNumber === selectedWeek),
+    [workouts, selectedWeek]
+  );
+
+  const existingDayDoc = useMemo(
+    () => weekWorkouts.find((w) => w.dayIndex === selectedDay),
+    [weekWorkouts, selectedDay]
+  );
+
+  const [focus, setFocus] = useState('');
+  const [planId, setPlanId] = useState('');
+  const [planName, setPlanName] = useState('');
+  const [isRestDay, setIsRestDay] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [exercises, setExercises] = useState<ExerciseItem[]>([]);
+  const [cardio, setCardio] = useState<CardioLog>(defaultCardio());
+  const [saving, setSaving] = useState(false);
+  const [updatingTemplate, setUpdatingTemplate] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
+  const [copying, setCopying] = useState(false);
+
+  // Plan editor modal & quick-apply state
+  const [planModalState, setPlanModalState] = useState<{
+    open: boolean;
+    editingPlan: WorkoutPlan | null;
+    seedFromDay: {
+      name: string;
+      isRestDay: boolean;
+      exercises: ExerciseItem[];
+      cardio: CardioLog;
+      notes: string;
+      dayIndex: number;
+    } | null;
+  }>({ open: false, editingPlan: null, seedFromDay: null });
+  const [applyDayChoiceByPlan, setApplyDayChoiceByPlan] = useState<Record<string, number>>({});
+  const [applyingPlanId, setApplyingPlanId] = useState<string | null>(null);
+
+  // Exercise Database & Image Preview modal state
+  const [pickerState, setPickerState] = useState<{
+    open: boolean;
+    mode: 'add' | 'match';
+    matchIndex: number | null;
+    initialQuery: string;
+  }>({
+    open: false,
+    mode: 'add',
+    matchIndex: null,
+    initialQuery: '',
+  });
+  const [previewExerciseIdx, setPreviewExerciseIdx] = useState<number | null>(null);
+
+  // Rest Timer state
+  const [timerExerciseName, setTimerExerciseName] = useState('');
+  const [timerTargetSeconds, setTimerTargetSeconds] = useState(90);
+  const [timerSecondsLeft, setTimerSecondsLeft] = useState<number | null>(null);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const chimeFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!timerRunning || timerSecondsLeft === null) return;
+    if (timerSecondsLeft <= 0) {
+      setTimerRunning(false);
+      if (!chimeFiredRef.current) {
+        chimeFiredRef.current = true;
+        if (soundEnabled) {
+          playRestCompleteChime();
+        }
+      }
+      return;
+    }
+
+    const id = window.setInterval(() => {
+      setTimerSecondsLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [timerRunning, timerSecondsLeft, soundEnabled]);
+
+  const startRestTimer = (exerciseName: string, seconds: number) => {
+    const duration = Math.max(15, Math.min(600, Math.round(seconds || 90)));
+    chimeFiredRef.current = false;
+    setTimerExerciseName(exerciseName || 'Between Sets');
+    setTimerTargetSeconds(duration);
+    setTimerSecondsLeft(duration);
+    setTimerRunning(true);
+  };
+
+  useEffect(() => {
+    if (existingDayDoc) {
+      setFocus(existingDayDoc.focus);
+      setPlanId(existingDayDoc.planId ?? '');
+      setPlanName(existingDayDoc.planName ?? '');
+      setIsRestDay(existingDayDoc.isRestDay);
+      setCompleted(existingDayDoc.completed);
+      setNotes(existingDayDoc.notes);
+      setExercises(existingDayDoc.exercises.map((ex) => ({ ...ex })));
+      setCardio(sanitizeCardio(existingDayDoc.cardio));
+    } else {
+      setFocus(selectedDay === 2 || selectedDay === 6 ? 'Active Recovery' : 'Training Session');
+      setPlanId('');
+      setPlanName('');
+      setIsRestDay(selectedDay === 2 || selectedDay === 6);
+      setCompleted(false);
+      setNotes('');
+      setExercises([]);
+      setCardio(defaultCardio());
+    }
+    setSaveFeedback(null);
+    setPreviewExerciseIdx(null);
+  }, [existingDayDoc, selectedDay, selectedWeek]);
+
+  const sessionVolume = useMemo(() => computeExerciseVolume(exercises), [exercises]);
+  const weekVolume = useMemo(
+    () => weekWorkouts.reduce((acc, w) => acc + computeExerciseVolume(w.exercises), 0),
+    [weekWorkouts]
+  );
+  const weekCardioDistance = useMemo(
+    () =>
+      weekWorkouts.reduce(
+        (acc, w) =>
+          acc + (w.cardio && w.cardio.activityType !== 'none' ? w.cardio.distance : 0),
+        0
+      ),
+    [weekWorkouts]
+  );
+  const completedCount = weekWorkouts.filter((w) => !w.isRestDay && w.completed).length;
+
+  const handleAddExercise = () => {
+    if (exercises.length >= SCHEMA_LIMITS.EXERCISES_MAX) return;
+    setIsRestDay(false);
+    setExercises((prev) => [
+      ...prev,
+      {
+        id: `ex_${Date.now()}_${prev.length}`,
+        name: '',
+        sets: 3,
+        reps: '8-10',
+        targetLoad: 0,
+        actualLoad: 0,
+        rpe: 8,
+        restSeconds: 90,
+        completed: false,
+      },
+    ]);
+  };
+
+  const handleSelectFromCatalog = (
+    item: ExerciseCatalogItem,
+    defaultRestSeconds: number
+  ) => {
+    const primaryImage = item.images[0] || '';
+    if (pickerState.mode === 'match' && pickerState.matchIndex !== null) {
+      const targetIdx = pickerState.matchIndex;
+      setExercises((prev) =>
+        prev.map((ex, i) =>
+          i === targetIdx
+            ? {
+                ...ex,
+                name: ex.name.trim() ? ex.name : item.name,
+                muscleGroup: item.muscleGroup,
+                imageUrl: primaryImage,
+                restSeconds: ex.restSeconds ?? defaultRestSeconds,
+              }
+            : ex
+        )
+      );
+      return;
+    }
+
+    if (exercises.length >= SCHEMA_LIMITS.EXERCISES_MAX) return;
+    setIsRestDay(false);
+    setExercises((prev) => [
+      ...prev,
+      {
+        id: `ex_${Date.now()}_${prev.length}`,
+        name: item.name.slice(0, 80),
+        sets: 3,
+        reps: '8-12',
+        targetLoad: 0,
+        actualLoad: 0,
+        rpe: 8,
+        restSeconds: defaultRestSeconds,
+        muscleGroup: item.muscleGroup,
+        imageUrl: primaryImage,
+        completed: false,
+      },
+    ]);
+  };
+
+  const handleUpdateExercise = (
+    idx: number,
+    field: keyof ExerciseItem,
+    value: string | number | boolean
+  ) => {
+    setExercises((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleRemoveExercise = (idx: number) => {
+    setExercises((prev) => prev.filter((_, i) => i !== idx));
+    if (previewExerciseIdx === idx) {
+      setPreviewExerciseIdx(null);
+    }
+  };
+
+  const linkedPlan = useMemo(
+    () => (planId ? workoutPlans.find((p) => p.id === planId) ?? null : null),
+    [planId, workoutPlans]
+  );
+
+  const handleApplyPlan = async (plan: WorkoutPlan, targetDayIdx: number, switchTab = false) => {
+    setApplyingPlanId(plan.id);
+    setSaveFeedback(null);
+    try {
+      const targetExists = weekWorkouts.some((w) => w.dayIndex === targetDayIdx);
+      await applyPlanToWorkoutDay(uid, plan, selectedWeek, targetDayIdx, targetExists);
+      setSelectedDay(targetDayIdx);
+      if (switchTab) {
+        setSubTab('schedule');
+      }
+      setSaveFeedback(`Loaded "${plan.name}" onto ${DAY_FULL[targetDayIdx]} (Week ${selectedWeek})`);
+    } finally {
+      setApplyingPlanId(null);
+    }
+  };
+
+  const handleSelectPlanFromDayDropdown = async (chosenValue: string) => {
+    if (!chosenValue) return;
+    if (chosenValue === '__rest__') {
+      setFocus('Rest / Recovery');
+      setPlanId('');
+      setPlanName('');
+      setIsRestDay(true);
+      setExercises([]);
+      await upsertWorkoutDay(
+        uid,
+        {
+          id: existingDayDoc?.id ?? `w${selectedWeek}_d${selectedDay}`,
+          weekNumber: selectedWeek,
+          dayIndex: selectedDay,
+          focus: 'Rest / Recovery',
+          planId: '',
+          planName: '',
+          isRestDay: true,
+          completed: false,
+          exercises: [],
+          cardio: sanitizeCardio(cardio),
+          notes,
+        },
+        Boolean(existingDayDoc)
+      );
+      setSaveFeedback(`Set ${DAY_FULL[selectedDay]} as Rest / Recovery`);
+      return;
+    }
+
+    const chosen = workoutPlans.find((p) => p.id === chosenValue);
+    if (!chosen) return;
+    await handleApplyPlan(chosen, selectedDay, false);
+  };
+
+  const handleUpdateLinkedPlan = async () => {
+    if (!linkedPlan) return;
+    setUpdatingTemplate(true);
+    setSaveFeedback(null);
+    try {
+      await saveWorkoutPlan(
+        uid,
+        {
+          id: linkedPlan.id,
+          name: focus.trim() || linkedPlan.name,
+          scheduledTime: linkedPlan.scheduledTime,
+          defaultDays: linkedPlan.defaultDays,
+          isRestDay,
+          exercises: isRestDay ? [] : exercises,
+          cardio: sanitizeCardio({ ...cardio, completed: false }),
+          notes,
+        },
+        true
+      );
+      setPlanName(focus.trim() || linkedPlan.name);
+      setSaveFeedback(`Updated reusable plan "${focus.trim() || linkedPlan.name}"`);
+    } finally {
+      setUpdatingTemplate(false);
+    }
+  };
+
+  const handleDuplicatePlan = async (plan: WorkoutPlan) => {
+    await saveWorkoutPlan(
+      uid,
+      {
+        id: '',
+        name: `${plan.name.slice(0, 70)} (Copy)`,
+        scheduledTime: plan.scheduledTime,
+        defaultDays: plan.defaultDays,
+        isRestDay: plan.isRestDay,
+        exercises: plan.exercises,
+        cardio: plan.cardio,
+        notes: plan.notes,
+      },
+      false
+    );
+    setSaveFeedback(`Duplicated plan "${plan.name}"`);
+  };
+
+  const handleSaveDay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setSaveFeedback(null);
+    try {
+      await upsertWorkoutDay(
+        uid,
+        {
+          id: existingDayDoc?.id ?? `w${selectedWeek}_d${selectedDay}`,
+          weekNumber: selectedWeek,
+          dayIndex: selectedDay,
+          focus: focus || 'Training Session',
+          planId,
+          planName,
+          isRestDay,
+          completed,
+          exercises: isRestDay ? [] : exercises,
+          cardio: sanitizeCardio(cardio),
+          notes,
+        },
+        Boolean(existingDayDoc)
+      );
+      setSaveFeedback('Day plan saved');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCopyToNextWeek = async () => {
+    if (selectedWeek >= 52) return;
+    setCopying(true);
+    setSaveFeedback(null);
+    try {
+      const targetWeek = selectedWeek + 1;
+      const sourceMeals = mealLogs.filter((m) => m.weekNumber === selectedWeek);
+      const existingTargetIds = workouts
+        .filter((w) => w.weekNumber === targetWeek)
+        .map((w) => w.id);
+      await copyWeekPlans(uid, weekWorkouts, sourceMeals, targetWeek, existingTargetIds);
+      setSelectedWeek(targetWeek);
+      setSaveFeedback(`Copied split & meals to Week ${targetWeek}`);
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  const handleMakeCurrentWeek = async () => {
+    await updateUserWeekAndPhase(uid, selectedWeek, profile.phaseName);
+    setSaveFeedback(`Active program set to Week ${selectedWeek}`);
+  };
+
+  const previewExercise =
+    previewExerciseIdx !== null ? exercises[previewExerciseIdx] ?? null : null;
+  const previewImages = useMemo(() => {
+    if (!previewExercise?.imageUrl) return [];
+    const primary = previewExercise.imageUrl;
+    if (primary.endsWith('/0.jpg')) {
+      return [primary, `${primary.slice(0, -6)}/1.jpg`];
+    }
+    return [primary];
+  }, [previewExercise]);
+
+  return (
+    <div className="space-y-6">
+      {/* Toolbar */}
+      <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <span>Weekly Split &amp; Exercise Log</span>
+            <span aria-hidden="true">·</span>
+            <span className="tabular-nums">{completedCount} training sessions done</span>
+            <span aria-hidden="true">·</span>
+            <span className="tabular-nums">
+              {Math.round(weekVolume).toLocaleString()} {wUnit} weekly volume
+            </span>
+            {weekCardioDistance > 0 && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="tabular-nums text-sky-400 font-medium">
+                  {Number(weekCardioDistance.toFixed(1))} {dUnit} walk/run
+                </span>
+              </>
+            )}
+          </div>
+          <h1 className="text-xl font-bold text-white mt-1">
+            Week {selectedWeek} Gym Plan
+            {selectedWeek === profile.currentWeek ? ' (Active Week)' : ''}
+          </h1>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="inline-flex items-center border border-[#2d3c54] rounded-lg bg-[#0e141d] p-1">
+            <button
+              type="button"
+              onClick={() => setSelectedWeek((w) => Math.max(1, w - 1))}
+              disabled={selectedWeek <= 1}
+              aria-label="Previous week"
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded-md disabled:opacity-40"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <select
+              aria-label="Select week"
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(Number(e.target.value))}
+              className="bg-transparent px-2 text-xs font-mono font-medium text-slate-100 focus:outline-none tabular-nums"
+            >
+              {Array.from({ length: 52 }, (_, i) => i + 1).map((wk) => (
+                <option key={wk} value={wk} className="bg-[#0e141d] text-slate-100">
+                  Week {wk}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setSelectedWeek((w) => Math.min(52, w + 1))}
+              disabled={selectedWeek >= 52}
+              aria-label="Next week"
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded-md disabled:opacity-40"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {selectedWeek !== profile.currentWeek && (
+            <button
+              type="button"
+              onClick={() => void handleMakeCurrentWeek()}
+              className="px-3 py-2 text-xs font-medium text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors whitespace-nowrap"
+            >
+              Set as Current Week
+            </button>
+          )}
+
+          {weekWorkouts.length > 0 && selectedWeek < 52 && (
+            <button
+              type="button"
+              onClick={() => void handleCopyToNextWeek()}
+              disabled={copying}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              {copying ? 'Copying...' : `Copy to Week ${selectedWeek + 1}`}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => onOpenCsvImport(selectedWeek, selectedDay)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            CSV Templates &amp; Import
+          </button>
+        </div>
+      </div>
+
+      {/* Sub-navigation: Weekly Schedule vs Reusable Training Plans */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="inline-flex items-center p-1 bg-[#131a24] border border-[#263347] rounded-xl self-start">
+          <button
+            type="button"
+            onClick={() => setSubTab('schedule')}
+            className={`min-h-[40px] inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+              subTab === 'schedule'
+                ? 'bg-amber-400 text-slate-950'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <Dumbbell className="w-3.5 h-3.5" />
+            Weekly Schedule (Mon–Sun)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubTab('plans')}
+            className={`min-h-[40px] inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors tabular-nums ${
+              subTab === 'plans'
+                ? 'bg-amber-400 text-slate-950'
+                : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Training Plans ({workoutPlans.length})
+          </button>
+        </div>
+
+        {subTab === 'plans' && (
+          <button
+            type="button"
+            onClick={() =>
+              setPlanModalState({ open: true, editingPlan: null, seedFromDay: null })
+            }
+            className="min-h-[40px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors self-start sm:self-auto"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Create New Plan
+          </button>
+        )}
+      </div>
+
+      {subTab === 'plans' ? (
+        <div className="space-y-4">
+          {saveFeedback && (
+            <div className="text-xs font-medium text-emerald-200 bg-emerald-950/50 border border-emerald-500/40 rounded-lg px-3.5 py-2">
+              {saveFeedback}
+            </div>
+          )}
+
+          {sortedPlans.length === 0 ? (
+            <div className="bg-[#131a24] border border-dashed border-[#2d3c54] rounded-xl p-10 text-center space-y-3">
+              <div className="w-11 h-11 rounded-xl bg-[#1a2332] text-slate-300 flex items-center justify-center mx-auto">
+                <Layers className="w-5 h-5" />
+              </div>
+              <h2 className="text-base font-semibold text-white">
+                No reusable training plans yet
+              </h2>
+              <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                Extract the training CSV template to build your week with your preferred AI agent,
+                upload it back to auto-create reusable plans, or build one manually.
+              </p>
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => onOpenCsvImport(selectedWeek, selectedDay)}
+                  className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Get Template / Import CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPlanModalState({ open: true, editingPlan: null, seedFromDay: null })
+                  }
+                  className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Create Plan Manually
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedPlans.map((plan) => {
+                const chosenApplyDay =
+                  applyDayChoiceByPlan[plan.id] ?? plan.defaultDays[0] ?? selectedDay;
+                return (
+                  <div
+                    key={plan.id}
+                    className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col justify-between gap-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="text-base font-bold text-white truncate">
+                            {plan.name}
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-0.5 tabular-nums">
+                            {plan.defaultDays.length > 0
+                              ? plan.defaultDays.map((d) => DAY_SHORT[d]).join(', ')
+                              : 'Any day'}
+                            {plan.scheduledTime ? ` · ${plan.scheduledTime}` : ''}
+                            {' · '}
+                            {plan.isRestDay
+                              ? 'Rest template'
+                              : `${plan.exercises.length} exercises`}
+                            {plan.cardio.activityType !== 'none'
+                              ? ` · ${plan.cardio.activityType === 'walk' ? 'Walk' : 'Run'}${
+                                  plan.cardio.durationMinutes > 0
+                                    ? ` ${plan.cardio.durationMinutes} min`
+                                    : ''
+                                }`
+                              : ''}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPlanModalState({
+                                open: true,
+                                editingPlan: plan,
+                                seedFromDay: null,
+                              })
+                            }
+                            aria-label={`Edit ${plan.name}`}
+                            title="Edit plan"
+                            className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDuplicatePlan(plan)}
+                            aria-label={`Duplicate ${plan.name}`}
+                            title="Duplicate plan"
+                            className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void deleteWorkoutPlan(uid, plan.id);
+                              setSaveFeedback(`Deleted plan "${plan.name}"`);
+                            }}
+                            aria-label={`Delete ${plan.name}`}
+                            title="Delete plan"
+                            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {plan.exercises.length > 0 && (
+                        <ul className="space-y-1 text-xs text-slate-300 border-t border-[#1e293b] pt-2.5 tabular-nums">
+                          {plan.exercises.slice(0, 4).map((ex) => (
+                            <li key={ex.id} className="flex items-center justify-between gap-2">
+                              <span className="truncate font-medium text-slate-200">
+                                {ex.name}
+                              </span>
+                              <span className="text-slate-400 font-mono shrink-0">
+                                {ex.sets}×{ex.reps}
+                                {ex.targetLoad > 0 ? ` · ${ex.targetLoad}${wUnit}` : ''}
+                              </span>
+                            </li>
+                          ))}
+                          {plan.exercises.length > 4 && (
+                            <li className="text-[11px] text-slate-500">
+                              +{plan.exercises.length - 4} more exercises
+                            </li>
+                          )}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-[#1e293b] flex items-center gap-2">
+                      <select
+                        aria-label={`Select day to assign ${plan.name}`}
+                        value={chosenApplyDay}
+                        onChange={(e) =>
+                          setApplyDayChoiceByPlan((prev) => ({
+                            ...prev,
+                            [plan.id]: Number(e.target.value),
+                          }))
+                        }
+                        className="min-h-[38px] px-2.5 py-1.5 text-xs font-medium text-slate-100 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                      >
+                        {DAY_FULL.map((dName, dIdx) => (
+                          <option key={dName} value={dIdx}>
+                            {dName} (W{selectedWeek})
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={applyingPlanId === plan.id}
+                        onClick={() => void handleApplyPlan(plan, chosenApplyDay, true)}
+                        className="flex-1 min-h-[38px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 rounded-lg transition-colors"
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        {applyingPlanId === plan.id ? 'Assigning...' : 'Start on This Day'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* 7-Day Selector Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+            {DAY_SHORT.map((shortName, idx) => {
+              const dayDoc = weekWorkouts.find((w) => w.dayIndex === idx);
+              const isSelected = selectedDay === idx;
+              return (
+                <button
+                  key={shortName}
+                  type="button"
+                  onClick={() => setSelectedDay(idx)}
+                  className={`text-left p-3.5 rounded-xl border-2 transition-colors ${
+                    isSelected
+                      ? 'bg-[#1b2535] text-white border-amber-400'
+                      : 'bg-[#131a24] text-slate-200 border-[#263347] hover:border-[#394c69]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`text-xs font-semibold ${
+                        isSelected ? 'text-amber-400' : 'text-slate-400'
+                      }`}
+                    >
+                      {shortName}
+                    </span>
+                    {dayDoc?.completed && (
+                      <Check
+                        className={`w-3.5 h-3.5 ${
+                          isSelected ? 'text-emerald-400' : 'text-emerald-400'
+                        }`}
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs font-medium mt-1.5 truncate text-white">
+                    {dayDoc ? dayDoc.focus : 'Unscheduled'}
+                  </p>
+                  <p
+                    className={`text-[11px] mt-1 tabular-nums ${
+                      isSelected ? 'text-slate-300' : 'text-slate-400'
+                    }`}
+                  >
+                    {dayDoc ? (
+                      <>
+                        {dayDoc.isRestDay ? 'Rest' : `${dayDoc.exercises.length} ex`}
+                        {dayDoc.cardio && dayDoc.cardio.activityType !== 'none'
+                          ? ` · ${dayDoc.cardio.activityType === 'walk' ? 'Walk' : 'Run'} ${dayDoc.cardio.distance}${dUnit}`
+                          : ''}
+                      </>
+                    ) : (
+                      'Pick a plan'
+                    )}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Day Editor */}
+          <form
+            onSubmit={handleSaveDay}
+            className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-4 sm:p-6 space-y-6"
+          >
+            {/* Assign Plan Bar */}
+            <div className="p-3.5 bg-[#0e141d] border border-[#263347] rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2.5 min-w-0">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-200 whitespace-nowrap">
+                  <Layers className="w-3.5 h-3.5 text-amber-400" />
+                  Plan for {DAY_FULL[selectedDay]}:
+                </span>
+                <select
+                  aria-label={`Select training plan for ${DAY_FULL[selectedDay]}`}
+                  value={planId || ''}
+                  onChange={(e) => void handleSelectPlanFromDayDropdown(e.target.value)}
+                  className="min-h-[38px] px-3 py-1.5 text-xs font-medium text-slate-100 bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400 max-w-full sm:max-w-xs"
+                >
+                  <option value="">
+                    {sortedPlans.length > 0
+                      ? 'Choose a saved Training Plan...'
+                      : 'No saved plans yet — create or import CSV'}
+                  </option>
+                  {sortedPlans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.isRestDay ? 'Rest' : `${p.exercises.length} ex`})
+                    </option>
+                  ))}
+                  <option value="__rest__">Rest / Recovery Day</option>
+                </select>
+                {planName && (
+                  <span className="text-xs text-slate-400 truncate">
+                    Linked · {planName}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {linkedPlan && (
+                  <button
+                    type="button"
+                    disabled={updatingTemplate}
+                    onClick={() => void handleUpdateLinkedPlan()}
+                    className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    {updatingTemplate ? 'Updating...' : 'Update Plan Template'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPlanModalState({
+                      open: true,
+                      editingPlan: null,
+                      seedFromDay: {
+                        name: focus || `${DAY_FULL[selectedDay]} Session`,
+                        isRestDay,
+                        exercises,
+                        cardio,
+                        notes,
+                        dayIndex: selectedDay,
+                      },
+                    })
+                  }
+                  className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Save as New Plan
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#1e293b]">
+              <div>
+                <p className="text-xs font-medium text-slate-400">
+                  Week {selectedWeek} · {DAY_FULL[selectedDay]}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <input
+                    type="text"
+                    required
+                    maxLength={SCHEMA_LIMITS.FOCUS_MAX}
+                    value={focus}
+                    onChange={(e) => setFocus(e.target.value)}
+                    placeholder="Session focus (e.g., Upper Body Push)"
+                    className="px-3 py-1.5 text-base font-semibold text-white bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400 min-w-[240px]"
+                  />
+                  <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isRestDay}
+                      onChange={(e) => setIsRestDay(e.target.checked)}
+                      className="rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
+                    />
+                    Rest / Recovery Day
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {existingDayDoc && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !completed;
+                      setCompleted(next);
+                      void toggleWorkoutCompleted(uid, existingDayDoc.id, next);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
+                      completed
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                        : 'bg-[#1a2332] text-slate-200 border-[#2d3c54] hover:bg-[#233044]'
+                    }`}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    {completed ? 'Session Completed (+50 XP)' : 'Mark Complete (+50 XP)'}
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {saving ? 'Saving...' : 'Save Day Log'}
+                </button>
+              </div>
+            </div>
+
+            {saveFeedback && (
+              <div className="text-xs font-medium text-emerald-200 bg-emerald-950/50 border border-emerald-500/40 rounded-lg px-3.5 py-2">
+                {saveFeedback}
+              </div>
+            )}
+
+        {!isRestDay && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-white">Exercise Prescription</h2>
+                <p className="text-xs text-slate-400 tabular-nums">
+                  Session volume: {Math.round(sessionVolume).toLocaleString()} {wUnit} ·{' '}
+                  {exercises.length} / {SCHEMA_LIMITS.EXERCISES_MAX} exercises
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => startRestTimer(focus || 'Quick Rest', 90)}
+                  className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+                >
+                  <Timer className="w-3.5 h-3.5 text-emerald-400" />
+                  Rest Timer
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPickerState({
+                      open: true,
+                      mode: 'add',
+                      matchIndex: null,
+                      initialQuery: '',
+                    })
+                  }
+                  disabled={exercises.length >= SCHEMA_LIMITS.EXERCISES_MAX}
+                  className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
+                >
+                  <Database className="w-3.5 h-3.5" />
+                  Browse Exercise DB
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddExercise}
+                  disabled={exercises.length >= SCHEMA_LIMITS.EXERCISES_MAX}
+                  className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Custom Row
+                </button>
+              </div>
+            </div>
+
+            {exercises.length === 0 ? (
+              <div className="py-10 px-4 text-center border border-dashed border-[#2d3c54] rounded-lg">
+                <p className="text-sm text-slate-300">
+                  No exercises added for {DAY_FULL[selectedDay]}.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPickerState({
+                        open: true,
+                        mode: 'add',
+                        matchIndex: null,
+                        initialQuery: '',
+                      })
+                    }
+                    className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    Browse Exercise Database
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddExercise}
+                    className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Custom Exercise
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto border border-[#263347] rounded-lg">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#0e141d] border-b border-[#263347] text-xs font-medium text-slate-400">
+                        <th className="py-2.5 px-3">Exercise</th>
+                        <th className="py-2.5 px-2 text-right w-16">Sets</th>
+                        <th className="py-2.5 px-2 text-right w-22">Reps</th>
+                        <th className="py-2.5 px-2 text-right w-24">Target ({wUnit})</th>
+                        <th className="py-2.5 px-2 text-right w-24">Actual ({wUnit})</th>
+                        <th className="py-2.5 px-2 text-right w-16">RPE</th>
+                        <th className="py-2.5 px-2 text-right w-32">Rest (s)</th>
+                        <th className="py-2.5 px-2 text-center w-14">Done</th>
+                        <th className="py-2.5 px-2 text-right w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#1e293b] text-sm">
+                      {exercises.map((ex, idx) => {
+                        const restSec = ex.restSeconds ?? 90;
+                        return (
+                          <tr key={ex.id} className="hover:bg-[#17202e]">
+                            <td className="py-2.5 px-3 min-w-[260px]">
+                              <div className="flex items-center gap-2.5">
+                                <ExerciseThumb
+                                  src={ex.imageUrl}
+                                  alt={ex.name || 'Exercise'}
+                                  onClick={() => {
+                                    if (ex.imageUrl) {
+                                      setPreviewExerciseIdx(idx);
+                                    } else {
+                                      setPickerState({
+                                        open: true,
+                                        mode: 'match',
+                                        matchIndex: idx,
+                                        initialQuery: ex.name,
+                                      });
+                                    }
+                                  }}
+                                />
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <input
+                                    type="text"
+                                    required
+                                    maxLength={80}
+                                    value={ex.name}
+                                    onChange={(e) =>
+                                      handleUpdateExercise(idx, 'name', e.target.value)
+                                    }
+                                    placeholder="e.g., Barbell Squat"
+                                    className="w-full px-2.5 py-1.5 text-sm font-medium text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
+                                  />
+                                  <div className="flex items-center gap-2 text-[11px] text-slate-400 px-0.5">
+                                    <span>
+                                      {ex.muscleGroup
+                                        ? formatMuscleLabel(ex.muscleGroup)
+                                        : 'Custom exercise'}
+                                    </span>
+                                    <span aria-hidden="true">·</span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPickerState({
+                                          open: true,
+                                          mode: 'match',
+                                          matchIndex: idx,
+                                          initialQuery: ex.name,
+                                        })
+                                      }
+                                      className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 font-medium"
+                                    >
+                                      <Search className="w-3 h-3" />
+                                      {ex.imageUrl ? 'Swap' : 'Match photo'}
+                                    </button>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    maxLength={SCHEMA_LIMITS.EXERCISE_NOTES_MAX}
+                                    value={ex.notes ?? ''}
+                                    onChange={(e) =>
+                                      handleUpdateExercise(idx, 'notes', e.target.value)
+                                    }
+                                    placeholder="Cue / last log note..."
+                                    className="w-full px-2 py-1 text-[11px] text-slate-300 bg-[#0e141d]/70 border border-[#263347] rounded focus:outline-none focus:border-emerald-400"
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-2 align-top">
+                              <input
+                                type="number"
+                                min={1}
+                                max={20}
+                                value={ex.sets}
+                                onChange={(e) =>
+                                  handleUpdateExercise(idx, 'sets', Number(e.target.value))
+                                }
+                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
+                              />
+                            </td>
+                            <td className="py-2.5 px-2 align-top">
+                              <input
+                                type="text"
+                                maxLength={24}
+                                value={ex.reps}
+                                onChange={(e) =>
+                                  handleUpdateExercise(idx, 'reps', e.target.value)
+                                }
+                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
+                              />
+                            </td>
+                            <td className="py-2.5 px-2 align-top">
+                              <input
+                                type="number"
+                                step="0.5"
+                                min={0}
+                                max={1000}
+                                value={ex.targetLoad}
+                                onChange={(e) =>
+                                  handleUpdateExercise(
+                                    idx,
+                                    'targetLoad',
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
+                              />
+                            </td>
+                            <td className="py-2.5 px-2 align-top">
+                              <input
+                                type="number"
+                                step="0.5"
+                                min={0}
+                                max={1000}
+                                value={ex.actualLoad}
+                                onChange={(e) =>
+                                  handleUpdateExercise(
+                                    idx,
+                                    'actualLoad',
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
+                              />
+                            </td>
+                            <td className="py-2.5 px-2 align-top">
+                              <input
+                                type="number"
+                                step="0.5"
+                                min={1}
+                                max={10}
+                                value={ex.rpe}
+                                onChange={(e) =>
+                                  handleUpdateExercise(idx, 'rpe', Number(e.target.value))
+                                }
+                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
+                              />
+                            </td>
+                            <td className="py-2.5 px-2 align-top">
+                              <div className="flex items-center justify-end gap-1">
+                                <input
+                                  type="number"
+                                  step={15}
+                                  min={0}
+                                  max={600}
+                                  aria-label={`Rest seconds for ${ex.name || 'exercise'}`}
+                                  value={restSec}
+                                  onChange={(e) =>
+                                    handleUpdateExercise(
+                                      idx,
+                                      'restSeconds',
+                                      Number(e.target.value)
+                                    )
+                                  }
+                                  className="w-16 px-1.5 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => startRestTimer(ex.name, restSec)}
+                                  title={`Start ${restSec}s rest timer`}
+                                  aria-label={`Start ${restSec} second rest timer for ${ex.name || 'exercise'}`}
+                                  className="p-1.5 text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-md transition-colors"
+                                >
+                                  <Timer className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                            <td className="py-3 px-2 text-center align-top">
+                              <input
+                                type="checkbox"
+                                checked={ex.completed}
+                                onChange={(e) =>
+                                  handleUpdateExercise(idx, 'completed', e.target.checked)
+                                }
+                                aria-label={`Mark ${ex.name || 'exercise'} complete`}
+                                className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
+                              />
+                            </td>
+                            <td className="py-2.5 px-2 text-right align-top">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveExercise(idx)}
+                                aria-label="Remove exercise"
+                                className="p-1.5 text-slate-400 hover:text-rose-400 rounded-md transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Gym Card View */}
+                <div className="lg:hidden space-y-3">
+                  {exercises.map((ex, idx) => {
+                    const restSec = ex.restSeconds ?? 90;
+                    return (
+                      <div
+                        key={ex.id}
+                        className="border border-[#263347] rounded-xl p-3.5 bg-[#0e141d] space-y-3"
+                      >
+                        <div className="flex items-start gap-3">
+                          <ExerciseThumb
+                            src={ex.imageUrl}
+                            alt={ex.name || 'Exercise'}
+                            onClick={() => {
+                              if (ex.imageUrl) {
+                                setPreviewExerciseIdx(idx);
+                              } else {
+                                setPickerState({
+                                  open: true,
+                                  mode: 'match',
+                                  matchIndex: idx,
+                                  initialQuery: ex.name,
+                                });
+                              }
+                            }}
+                          />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <input
+                              type="text"
+                              required
+                              maxLength={80}
+                              value={ex.name}
+                              onChange={(e) =>
+                                handleUpdateExercise(idx, 'name', e.target.value)
+                              }
+                              placeholder="Exercise name"
+                              className="w-full min-h-[38px] px-2.5 py-1.5 text-sm font-semibold text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                            />
+                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                              <span>
+                                {ex.muscleGroup
+                                  ? formatMuscleLabel(ex.muscleGroup)
+                                  : 'Custom'}
+                              </span>
+                              <span aria-hidden="true">·</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPickerState({
+                                    open: true,
+                                    mode: 'match',
+                                    matchIndex: idx,
+                                    initialQuery: ex.name,
+                                  })
+                                }
+                                className="text-amber-400 font-medium"
+                              >
+                                {ex.imageUrl ? 'Swap image' : 'Match from DB'}
+                              </button>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExercise(idx)}
+                            aria-label="Remove exercise"
+                            className="w-10 h-10 inline-flex items-center justify-center text-slate-400 hover:text-rose-400 rounded-lg shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <input
+                          type="text"
+                          maxLength={SCHEMA_LIMITS.EXERCISE_NOTES_MAX}
+                          value={ex.notes ?? ''}
+                          onChange={(e) =>
+                            handleUpdateExercise(idx, 'notes', e.target.value)
+                          }
+                          placeholder="Progression cue / last load note..."
+                          className="w-full px-2.5 py-1.5 text-xs text-slate-300 bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                        />
+
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                              Sets
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={ex.sets}
+                              onChange={(e) =>
+                                handleUpdateExercise(idx, 'sets', Number(e.target.value))
+                              }
+                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                              Reps
+                            </label>
+                            <input
+                              type="text"
+                              maxLength={24}
+                              value={ex.reps}
+                              onChange={(e) =>
+                                handleUpdateExercise(idx, 'reps', e.target.value)
+                              }
+                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                              Rest (sec)
+                            </label>
+                            <input
+                              type="number"
+                              step={15}
+                              min={0}
+                              max={600}
+                              value={restSec}
+                              onChange={(e) =>
+                                handleUpdateExercise(
+                                  idx,
+                                  'restSeconds',
+                                  Number(e.target.value)
+                                )
+                              }
+                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                              Target ({wUnit})
+                            </label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min={0}
+                              max={1000}
+                              value={ex.targetLoad}
+                              onChange={(e) =>
+                                handleUpdateExercise(
+                                  idx,
+                                  'targetLoad',
+                                  Number(e.target.value)
+                                )
+                              }
+                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                              Actual ({wUnit})
+                            </label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min={0}
+                              max={1000}
+                              value={ex.actualLoad}
+                              onChange={(e) =>
+                                handleUpdateExercise(
+                                  idx,
+                                  'actualLoad',
+                                  Number(e.target.value)
+                                )
+                              }
+                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                              RPE
+                            </label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min={1}
+                              max={10}
+                              value={ex.rpe}
+                              onChange={(e) =>
+                                handleUpdateExercise(idx, 'rpe', Number(e.target.value))
+                              }
+                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => startRestTimer(ex.name, restSec)}
+                            className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors tabular-nums"
+                          >
+                            <Timer className="w-4 h-4" />
+                            Start {restSec}s Rest
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateExercise(idx, 'completed', !ex.completed)
+                            }
+                            className={`min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                              ex.completed
+                                ? 'bg-emerald-400 text-slate-950 border-emerald-400'
+                                : 'bg-[#1a2332] text-slate-200 border-[#2d3c54] hover:bg-[#233044]'
+                            }`}
+                          >
+                            <Check className="w-4 h-4" />
+                            {ex.completed ? 'Done' : 'Mark Done'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Walk or Run Cardio Option */}
+        <div className="p-4 sm:p-5 bg-[#0e141d] border border-[#263347] rounded-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#131a24] border border-[#2d3c54] flex items-center justify-center text-emerald-400 shrink-0">
+                <Footprints className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-white">Cardio · Walk or Run (+35 XP)</h2>
+                <p className="text-xs text-slate-400">
+                  Log outdoor or treadmill walk/run distance, duration, and pace
+                </p>
+              </div>
+            </div>
+
+            <div className="inline-flex items-center p-1 bg-[#131a24] border border-[#2d3c54] rounded-lg self-start sm:self-auto">
+              {(
+                [
+                  { id: 'none', label: 'None' },
+                  { id: 'walk', label: 'Walk' },
+                  { id: 'run', label: 'Run' },
+                ] as { id: CardioType; label: string }[]
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() =>
+                    setCardio((prev) => ({
+                      ...prev,
+                      activityType: opt.id,
+                    }))
+                  }
+                  className={`min-h-[38px] px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                    cardio.activityType === opt.id
+                      ? 'bg-amber-400 text-slate-950'
+                      : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {cardio.activityType !== 'none' && (
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Distance ({dUnit})
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min={0}
+                  max={500}
+                  value={cardio.distance}
+                  onChange={(e) =>
+                    setCardio((prev) => ({ ...prev, distance: Number(e.target.value) }))
+                  }
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Duration (min)
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min={0}
+                  max={600}
+                  value={cardio.durationMinutes}
+                  onChange={(e) =>
+                    setCardio((prev) => ({
+                      ...prev,
+                      durationMinutes: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Calories Burned
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={5000}
+                  value={cardio.caloriesBurned}
+                  onChange={(e) =>
+                    setCardio((prev) => ({
+                      ...prev,
+                      caloriesBurned: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full px-3 py-2 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  {cardio.activityType === 'walk' ? 'Incline / Speed' : 'Pace / Split'}
+                </label>
+                <input
+                  type="text"
+                  maxLength={SCHEMA_LIMITS.PACE_OR_INCLINE_MAX}
+                  value={cardio.paceOrIncline}
+                  onChange={(e) =>
+                    setCardio((prev) => ({ ...prev, paceOrIncline: e.target.value }))
+                  }
+                  placeholder={
+                    cardio.activityType === 'walk' ? 'e.g., 6% incline · 5.8 km/h' : 'e.g., 5:20 /km'
+                  }
+                  className="w-full px-3 py-2 text-sm text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div className="flex items-end">
+                <label className="w-full min-h-[42px] px-3 py-2 bg-[#131a24] border border-[#2d3c54] rounded-lg inline-flex items-center gap-2 text-xs font-medium text-slate-200 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={cardio.completed}
+                    onChange={(e) =>
+                      setCardio((prev) => ({ ...prev, completed: e.target.checked }))
+                    }
+                    className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
+                  />
+                  Cardio Done
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            Session Notes &amp; Conditioning
+          </label>
+          <textarea
+            rows={2}
+            maxLength={SCHEMA_LIMITS.NOTES_MAX}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Record tempo cues, soreness, or progression notes..."
+            className="w-full px-3 py-2 text-sm text-white bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+          />
+        </div>
+      </form>
+        </>
+      )}
+
+      {/* Create / Edit Reusable Training Plan Modal */}
+      <WorkoutPlanModal
+        open={planModalState.open}
+        onClose={() =>
+          setPlanModalState({ open: false, editingPlan: null, seedFromDay: null })
+        }
+        uid={uid}
+        unitSystem={profile.unitSystem}
+        editingPlan={planModalState.editingPlan}
+        seedFromDay={planModalState.seedFromDay}
+        onSaved={(savedName) => setSaveFeedback(`Saved training plan "${savedName}"`)}
+      />
+
+      {/* Exercise Form Photo Preview Modal */}
+      {previewExercise && previewExerciseIdx !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Form photos for ${previewExercise.name}`}
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-[1px] flex items-center justify-center p-4"
+        >
+          <div className="bg-[#131a24] w-full max-w-2xl rounded-2xl border-2 border-[#33445e] shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#253247] bg-[#0f151e] flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-emerald-400">
+                  {previewExercise.muscleGroup
+                    ? formatMuscleLabel(previewExercise.muscleGroup)
+                    : 'Exercise Form Guide'}
+                </p>
+                <h3 className="text-base font-bold text-white truncate">
+                  {previewExercise.name || 'Exercise Preview'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewExerciseIdx(null)}
+                aria-label="Close exercise preview"
+                className="w-10 h-10 inline-flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {previewImages.length > 0 && (
+                <div
+                  className={`grid gap-3 ${
+                    previewImages.length > 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'
+                  }`}
+                >
+                  {previewImages.map((imgUrl, idx) => (
+                    <div
+                      key={imgUrl}
+                      className="border border-[#263347] rounded-xl overflow-hidden bg-[#0e141d]"
+                    >
+                      <PreviewPhoto
+                        src={imgUrl}
+                        alt={`${previewExercise.name} position ${idx + 1}`}
+                      />
+                      <div className="px-3 py-2 text-xs font-medium text-slate-300 bg-[#131a24] border-t border-[#263347]">
+                        {idx === 0 ? 'Start Position' : 'End / Peak Position'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = previewExerciseIdx;
+                    const q = previewExercise.name;
+                    setPreviewExerciseIdx(null);
+                    setPickerState({
+                      open: true,
+                      mode: 'match',
+                      matchIndex: idx,
+                      initialQuery: q,
+                    });
+                  }}
+                  className="min-h-[42px] px-4 py-2 inline-flex items-center gap-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  Swap Photo from Database
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    startRestTimer(
+                      previewExercise.name,
+                      previewExercise.restSeconds ?? 90
+                    );
+                    setPreviewExerciseIdx(null);
+                  }}
+                  className="min-h-[42px] px-4 py-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors tabular-nums"
+                >
+                  <Timer className="w-4 h-4" />
+                  Start {previewExercise.restSeconds ?? 90}s Rest
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Searchable Exercise Database Modal */}
+      <ExercisePickerModal
+        isOpen={pickerState.open}
+        mode={pickerState.mode}
+        initialQuery={pickerState.initialQuery}
+        onClose={() =>
+          setPickerState((prev) => ({ ...prev, open: false, matchIndex: null }))
+        }
+        onSelectExercise={handleSelectFromCatalog}
+      />
+
+      {/* Active Floating Rest Timer */}
+      {timerSecondsLeft !== null && (
+        <RestTimerBar
+          exerciseName={timerExerciseName}
+          targetSeconds={timerTargetSeconds}
+          secondsLeft={timerSecondsLeft}
+          isRunning={timerRunning}
+          soundEnabled={soundEnabled}
+          onToggleSound={() => setSoundEnabled((s) => !s)}
+          onAdjust={(delta) =>
+            setTimerSecondsLeft((prev) => {
+              const base = prev ?? 0;
+              const next = Math.max(0, Math.min(600, base + delta));
+              if (next > 0) chimeFiredRef.current = false;
+              return next;
+            })
+          }
+          onTogglePause={() => setTimerRunning((r) => !r)}
+          onReset={() => {
+            chimeFiredRef.current = false;
+            setTimerSecondsLeft(timerTargetSeconds);
+            setTimerRunning(true);
+          }}
+          onSelectPreset={(preset) => {
+            chimeFiredRef.current = false;
+            setTimerTargetSeconds(preset);
+            setTimerSecondsLeft(preset);
+            setTimerRunning(true);
+          }}
+          onDismiss={() => {
+            setTimerRunning(false);
+            setTimerSecondsLeft(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+

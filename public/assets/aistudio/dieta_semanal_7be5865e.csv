@@ -1,0 +1,133 @@
+﻿Ordem dia;Dia;Treino do dia;Ordem refeição;Horário;Refeição;Alimento;Quantidade (g);Medida caseira;kcal;Proteína (g);Carboidrato (g);Gordura (g)
+1;Segunda;Academia 05:30;1;05:00;Pré-treino;Banana;90;1,0 un;72;0,9;18,0;0,3
+1;Segunda;Academia 05:30;1;05:00;Pré-treino;Mel;15;;46;0,0;12,3;0,0
+1;Segunda;Academia 05:30;2;06:40;Pós-treino / café;Aveia em flocos;50;;197;7,0;33,3;4,2
+1;Segunda;Academia 05:30;2;06:40;Pós-treino / café;Leite semidesnatado;150;;75;4,9;7,4;2,4
+1;Segunda;Academia 05:30;2;06:40;Pós-treino / café;Banana;90;1,0 un;72;0,9;18,0;0,3
+1;Segunda;Academia 05:30;2;06:40;Pós-treino / café;Gotas de chocolate;8;;40;0,4;4,8;2,4
+1;Segunda;Academia 05:30;2;06:40;Pós-treino / café;Ovo;100;2,0 un;143;12,6;0,7;9,5
+1;Segunda;Academia 05:30;3;10:00;Lanche da manhã;Iogurte natural;150;;92;5,2;7,1;4,9
+1;Segunda;Academia 05:30;3;10:00;Lanche da manhã;Aveia em flocos;30;;118;4,2;20,0;2,5
+1;Segunda;Academia 05:30;3;10:00;Lanche da manhã;Chia;12;;58;2,0;5,0;3,7
+1;Segunda;Academia 05:30;3;10:00;Lanche da manhã;Fruta picada;100;;52;0,7;13,0;0,2
+1;Segunda;Academia 05:30;4;12:00;Almoço (marmita);Arroz cozido;150;;192;3,8;42,2;0,3
+1;Segunda;Academia 05:30;4;12:00;Almoço (marmita);Peito de frango (cozido);150;;238;48,0;0,0;4,8
+1;Segunda;Academia 05:30;5;15:00;Lanche da tarde;Ovo;100;2,0 un;143;12,6;0,7;9,5
+1;Segunda;Academia 05:30;5;15:00;Lanche da tarde;Fruta picada;150;;78;1,0;19,5;0,3
+1;Segunda;Academia 05:30;6;19:30;Jantar;Arroz cozido;150;;192;3,8;42,2;0,3
+1;Segunda;Academia 05:30;6;19:30;Jantar;Moela (cozida);150;;231;45,6;0,0;4,1
+1;Segunda;Academia 05:30;7;22:00;Ceia;Leite semidesnatado;150;;75;4,9;7,4;2,4
+1;Segunda;Academia 05:30;7;22:00;Ceia;Fruta picada;100;;52;0,7;13,0;0,2
+1;Segunda;Academia 05:30;7;22:00;Ceia;Pasta de amendoim;10;;57;2,6;1,6;4,7
+2;Terça;Corrida 06:15;1;06:00;Pré-corrida;Banana;90;1,0 un;72;0,9;18,0;0,3
+2;Terça;Corrida 06:15;2;06:55;Pós-corrida / café;Aveia em flocos;50;;197;7,0;33,3;4,2
+2;Terça;Corrida 06:15;2;06:55;Pós-corrida / café;Leite semidesnatado;150;;75;4,9;7,4;2,4
+2;Terça;Corrida 06:15;2;06:55;Pós-corrida / café;Whey protein;30;1,0 scoop;120;24,0;3,0;2,0
+2;Terça;Corrida 06:15;2;06:55;Pós-corrida / café;Chia;12;;58;2,0;5,0;3,7
+2;Terça;Corrida 06:15;2;06:55;Pós-corrida / café;Banana;90;1,0 un;72;0,9;18,0;0,3
+2;Terça;Corrida 06:15;3;10:00;Lanche da manhã;Iogurte natural;150;;92;5,2;7,1;4,9
+2;Terça;Corrida 06:15;3;10:00;Lanche da manhã;Aveia em flocos;30;;118;4,2;20,0;2,5
+2;Terça;Corrida 06:15;3;10:00;Lanche da manhã;Chia;12;;58;2,0;5,0;3,7
+2;Terça;Corrida 06:15;3;10:00;Lanche da manhã;Fruta picada;100;;52;0,7;13,0;0,2
+2;Terça;Corrida 06:15;4;12:00;Almoço (marmita);Arroz cozido;150;;192;3,8;42,2;0,3
+2;Terça;Corrida 06:15;4;12:00;Almoço (marmita);Peito de frango (cozido);150;;238;48,0;0,0;4,8
+2;Terça;Corrida 06:15;5;15:00;Lanche da tarde;Ovo;100;2,0 un;143;12,6;0,7;9,5
+2;Terça;Corrida 06:15;5;15:00;Lanche da tarde;Fruta picada;150;;78;1,0;19,5;0,3
+2;Terça;Corrida 06:15;6;19:30;Jantar;Arroz cozido;150;;192;3,8;42,2;0,3
+2;Terça;Corrida 06:15;6;19:30;Jantar;Sobrecoxa sem pele (cozida);150;;278;38,2;0,0;13,4
+2;Terça;Corrida 06:15;7;22:00;Ceia;Ovo;100;2,0 un;143;12,6;0,7;9,5
+2;Terça;Corrida 06:15;7;22:00;Ceia;Pasta de amendoim;10;;57;2,6;1,6;4,7
+3;Quarta;Descanso;1;08:00;Café da manhã;Ovo;100;2,0 un;143;12,6;0,7;9,5
+3;Quarta;Descanso;1;08:00;Café da manhã;Aveia em flocos;40;;158;5,6;26,6;3,4
+3;Quarta;Descanso;1;08:00;Café da manhã;Leite semidesnatado;150;;75;4,9;7,4;2,4
+3;Quarta;Descanso;1;08:00;Café da manhã;Banana;90;1,0 un;72;0,9;18,0;0,3
+3;Quarta;Descanso;2;10:00;Lanche da manhã;Iogurte natural;150;;92;5,2;7,1;4,9
+3;Quarta;Descanso;2;10:00;Lanche da manhã;Aveia em flocos;30;;118;4,2;20,0;2,5
+3;Quarta;Descanso;2;10:00;Lanche da manhã;Chia;12;;58;2,0;5,0;3,7
+3;Quarta;Descanso;2;10:00;Lanche da manhã;Fruta picada;100;;52;0,7;13,0;0,2
+3;Quarta;Descanso;3;12:00;Almoço (marmita);Arroz cozido;100;;128;2,5;28,1;0,2
+3;Quarta;Descanso;3;12:00;Almoço (marmita);Sobrecoxa sem pele (cozida);150;;278;38,2;0,0;13,4
+3;Quarta;Descanso;4;15:00;Lanche da tarde;Sardinha em lata;80;1,0 lata;166;19,7;0,0;9,2
+3;Quarta;Descanso;4;15:00;Lanche da tarde;Fruta picada;150;;78;1,0;19,5;0,3
+3;Quarta;Descanso;5;19:30;Jantar;Peito de frango (cozido);150;;238;48,0;0,0;4,8
+3;Quarta;Descanso;6;22:00;Ceia;Fruta picada;100;;52;0,7;13,0;0,2
+3;Quarta;Descanso;6;22:00;Ceia;Pasta de amendoim;10;;57;2,6;1,6;4,7
+4;Quinta;Academia 05:30;1;05:00;Pré-treino;Banana;90;1,0 un;72;0,9;18,0;0,3
+4;Quinta;Academia 05:30;1;05:00;Pré-treino;Mel;15;;46;0,0;12,3;0,0
+4;Quinta;Academia 05:30;2;06:40;Pós-treino / café;Aveia em flocos;50;;197;7,0;33,3;4,2
+4;Quinta;Academia 05:30;2;06:40;Pós-treino / café;Leite semidesnatado;150;;75;4,9;7,4;2,4
+4;Quinta;Academia 05:30;2;06:40;Pós-treino / café;Tâmara;25;1,7 un;70;0,6;18,8;0,1
+4;Quinta;Academia 05:30;2;06:40;Pós-treino / café;Gotas de chocolate;8;;40;0,4;4,8;2,4
+4;Quinta;Academia 05:30;2;06:40;Pós-treino / café;Ovo;100;2,0 un;143;12,6;0,7;9,5
+4;Quinta;Academia 05:30;3;10:00;Lanche da manhã;Iogurte natural;150;;92;5,2;7,1;4,9
+4;Quinta;Academia 05:30;3;10:00;Lanche da manhã;Aveia em flocos;30;;118;4,2;20,0;2,5
+4;Quinta;Academia 05:30;3;10:00;Lanche da manhã;Chia;12;;58;2,0;5,0;3,7
+4;Quinta;Academia 05:30;3;10:00;Lanche da manhã;Fruta picada;100;;52;0,7;13,0;0,2
+4;Quinta;Academia 05:30;4;12:00;Almoço (marmita);Arroz cozido;150;;192;3,8;42,2;0,3
+4;Quinta;Academia 05:30;4;12:00;Almoço (marmita);Peito de frango (cozido);150;;238;48,0;0,0;4,8
+4;Quinta;Academia 05:30;5;15:00;Lanche da tarde;Ovo;100;2,0 un;143;12,6;0,7;9,5
+4;Quinta;Academia 05:30;5;15:00;Lanche da tarde;Fruta picada;150;;78;1,0;19,5;0,3
+4;Quinta;Academia 05:30;6;19:30;Jantar;Arroz cozido;150;;192;3,8;42,2;0,3
+4;Quinta;Academia 05:30;6;19:30;Jantar;Fígado de frango (cozido);150;;250;36,8;1,4;9,8
+4;Quinta;Academia 05:30;7;22:00;Ceia;Leite semidesnatado;150;;75;4,9;7,4;2,4
+4;Quinta;Academia 05:30;7;22:00;Ceia;Fruta picada;100;;52;0,7;13,0;0,2
+4;Quinta;Academia 05:30;7;22:00;Ceia;Pasta de amendoim;10;;57;2,6;1,6;4,7
+5;Sexta;Corrida 06:15;1;06:00;Pré-corrida;Banana;90;1,0 un;72;0,9;18,0;0,3
+5;Sexta;Corrida 06:15;2;06:55;Pós-corrida / café;Aveia em flocos;50;;197;7,0;33,3;4,2
+5;Sexta;Corrida 06:15;2;06:55;Pós-corrida / café;Leite semidesnatado;150;;75;4,9;7,4;2,4
+5;Sexta;Corrida 06:15;2;06:55;Pós-corrida / café;Whey protein;30;1,0 scoop;120;24,0;3,0;2,0
+5;Sexta;Corrida 06:15;2;06:55;Pós-corrida / café;Chia;12;;58;2,0;5,0;3,7
+5;Sexta;Corrida 06:15;2;06:55;Pós-corrida / café;Banana;90;1,0 un;72;0,9;18,0;0,3
+5;Sexta;Corrida 06:15;3;10:00;Lanche da manhã;Iogurte natural;120;;73;4,2;5,6;4,0
+5;Sexta;Corrida 06:15;3;10:00;Lanche da manhã;Aveia em flocos;30;;118;4,2;20,0;2,5
+5;Sexta;Corrida 06:15;3;10:00;Lanche da manhã;Chia;12;;58;2,0;5,0;3,7
+5;Sexta;Corrida 06:15;3;10:00;Lanche da manhã;Fruta picada;100;;52;0,7;13,0;0,2
+5;Sexta;Corrida 06:15;4;12:00;Almoço (marmita);Arroz cozido;150;;192;3,8;42,2;0,3
+5;Sexta;Corrida 06:15;4;12:00;Almoço (marmita);Moela (cozida);150;;231;45,6;0,0;4,1
+5;Sexta;Corrida 06:15;5;15:00;Lanche da tarde;Ovo;100;2,0 un;143;12,6;0,7;9,5
+5;Sexta;Corrida 06:15;5;15:00;Lanche da tarde;Fruta picada;150;;78;1,0;19,5;0,3
+5;Sexta;Corrida 06:15;6;19:30;Jantar;Arroz cozido;200;;256;5,0;56,2;0,4
+5;Sexta;Corrida 06:15;6;19:30;Jantar;Sobrecoxa sem pele (cozida);150;;278;38,2;0,0;13,4
+5;Sexta;Corrida 06:15;7;22:00;Ceia;Leite semidesnatado;150;;75;4,9;7,4;2,4
+5;Sexta;Corrida 06:15;7;22:00;Ceia;Fruta picada;100;;52;0,7;13,0;0,2
+5;Sexta;Corrida 06:15;7;22:00;Ceia;Pasta de amendoim;10;;57;2,6;1,6;4,7
+6;Sábado;Academia 07:00;1;06:30;Pré-treino;Banana;90;1,0 un;72;0,9;18,0;0,3
+6;Sábado;Academia 07:00;1;06:30;Pré-treino;Mel;15;;46;0,0;12,3;0,0
+6;Sábado;Academia 07:00;2;08:15;Pós-treino / café;Aveia em flocos;50;;197;7,0;33,3;4,2
+6;Sábado;Academia 07:00;2;08:15;Pós-treino / café;Leite semidesnatado;150;;75;4,9;7,4;2,4
+6;Sábado;Academia 07:00;2;08:15;Pós-treino / café;Banana;90;1,0 un;72;0,9;18,0;0,3
+6;Sábado;Academia 07:00;2;08:15;Pós-treino / café;Gotas de chocolate;8;;40;0,4;4,8;2,4
+6;Sábado;Academia 07:00;2;08:15;Pós-treino / café;Ovo;100;2,0 un;143;12,6;0,7;9,5
+6;Sábado;Academia 07:00;3;10:00;Lanche da manhã;Iogurte natural;150;;92;5,2;7,1;4,9
+6;Sábado;Academia 07:00;3;10:00;Lanche da manhã;Aveia em flocos;30;;118;4,2;20,0;2,5
+6;Sábado;Academia 07:00;3;10:00;Lanche da manhã;Chia;12;;58;2,0;5,0;3,7
+6;Sábado;Academia 07:00;3;10:00;Lanche da manhã;Fruta picada;100;;52;0,7;13,0;0,2
+6;Sábado;Academia 07:00;4;12:00;Almoço (marmita);Arroz cozido;150;;192;3,8;42,2;0,3
+6;Sábado;Academia 07:00;4;12:00;Almoço (marmita);Peito de frango (cozido);150;;238;48,0;0,0;4,8
+6;Sábado;Academia 07:00;5;15:00;Lanche da tarde;Ovo;100;2,0 un;143;12,6;0,7;9,5
+6;Sábado;Academia 07:00;5;15:00;Lanche da tarde;Fruta picada;150;;78;1,0;19,5;0,3
+6;Sábado;Academia 07:00;6;19:30;Jantar;Arroz cozido;150;;192;3,8;42,2;0,3
+6;Sábado;Academia 07:00;6;19:30;Jantar;Sobrecoxa sem pele (cozida);150;;278;38,2;0,0;13,4
+6;Sábado;Academia 07:00;7;22:00;Ceia;Leite semidesnatado;150;;75;4,9;7,4;2,4
+6;Sábado;Academia 07:00;7;22:00;Ceia;Fruta picada;100;;52;0,7;13,0;0,2
+6;Sábado;Academia 07:00;7;22:00;Ceia;Pasta de amendoim;10;;57;2,6;1,6;4,7
+7;Domingo;Academia ~08:30 (inferiores);1;1 h antes;Pré-treino;Banana;90;1,0 un;72;0,9;18,0;0,3
+7;Domingo;Academia ~08:30 (inferiores);1;1 h antes;Pré-treino;Mel;15;;46;0,0;12,3;0,0
+7;Domingo;Academia ~08:30 (inferiores);2;Depois do treino;Pós-treino / café;Aveia em flocos;50;;197;7,0;33,3;4,2
+7;Domingo;Academia ~08:30 (inferiores);2;Depois do treino;Pós-treino / café;Leite semidesnatado;150;;75;4,9;7,4;2,4
+7;Domingo;Academia ~08:30 (inferiores);2;Depois do treino;Pós-treino / café;Banana;90;1,0 un;72;0,9;18,0;0,3
+7;Domingo;Academia ~08:30 (inferiores);2;Depois do treino;Pós-treino / café;Gotas de chocolate;8;;40;0,4;4,8;2,4
+7;Domingo;Academia ~08:30 (inferiores);2;Depois do treino;Pós-treino / café;Ovo;100;2,0 un;143;12,6;0,7;9,5
+7;Domingo;Academia ~08:30 (inferiores);3;10:00;Lanche da manhã;Iogurte natural;150;;92;5,2;7,1;4,9
+7;Domingo;Academia ~08:30 (inferiores);3;10:00;Lanche da manhã;Aveia em flocos;30;;118;4,2;20,0;2,5
+7;Domingo;Academia ~08:30 (inferiores);3;10:00;Lanche da manhã;Chia;12;;58;2,0;5,0;3,7
+7;Domingo;Academia ~08:30 (inferiores);3;10:00;Lanche da manhã;Fruta picada;100;;52;0,7;13,0;0,2
+7;Domingo;Academia ~08:30 (inferiores);4;12:00;Almoço (marmita);Arroz cozido;200;;256;5,0;56,2;0,4
+7;Domingo;Academia ~08:30 (inferiores);4;12:00;Almoço (marmita);Sobrecoxa sem pele (cozida);150;;278;38,2;0,0;13,4
+7;Domingo;Academia ~08:30 (inferiores);5;15:00;Lanche da tarde;Sardinha em lata;80;1,0 lata;166;19,7;0,0;9,2
+7;Domingo;Academia ~08:30 (inferiores);5;15:00;Lanche da tarde;Fruta picada;150;;78;1,0;19,5;0,3
+7;Domingo;Academia ~08:30 (inferiores);6;19:30;Jantar;Arroz cozido;200;;256;5,0;56,2;0,4
+7;Domingo;Academia ~08:30 (inferiores);6;19:30;Jantar;Peito de frango (cozido);150;;238;48,0;0,0;4,8
+7;Domingo;Academia ~08:30 (inferiores);7;22:00;Ceia;Leite semidesnatado;150;;75;4,9;7,4;2,4
+7;Domingo;Academia ~08:30 (inferiores);7;22:00;Ceia;Fruta picada;100;;52;0,7;13,0;0,2
+7;Domingo;Academia ~08:30 (inferiores);7;22:00;Ceia;Pasta de amendoim;10;;57;2,6;1,6;4,7

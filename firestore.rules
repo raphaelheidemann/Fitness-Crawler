@@ -1,0 +1,874 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Primitives ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidDateString(val) {
+      return val is string && val.size() == 10 && val.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    function isValidBannerTheme(val) {
+      return val in ['amber', 'crimson', 'emerald', 'sky', 'violet'];
+    }
+
+    function hasParentProfile(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function hasParentProfileAfter(userId) {
+      return existsAfter(/databases/$(database)/documents/users/$(userId));
+    }
+
+    // --- Validation Blueprints ---
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'displayName', 'currentWeek', 'phaseName', 'unitSystem',
+        'startDate', 'targetWeight', 'dailyCalorieTarget', 'proteinTargetG',
+        'carbsTargetG', 'fatTargetG', 'weeklyWorkoutTarget', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'displayName', 'currentWeek', 'phaseName', 'unitSystem',
+        'startDate', 'targetWeight', 'dailyCalorieTarget', 'proteinTargetG',
+        'carbsTargetG', 'fatTargetG', 'weeklyWorkoutTarget', 'mealsPerDay',
+        'dailyWaterGoalMl', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+      && data.currentWeek is int && data.currentWeek >= 1 && data.currentWeek <= 52
+      && data.phaseName is string && data.phaseName.size() >= 1 && data.phaseName.size() <= 80
+      && data.unitSystem in ['metric', 'imperial']
+      && isValidDateString(data.startDate)
+      && data.targetWeight is number && data.targetWeight >= 20 && data.targetWeight <= 500
+      && data.dailyCalorieTarget is int && data.dailyCalorieTarget >= 800 && data.dailyCalorieTarget <= 10000
+      && data.proteinTargetG is int && data.proteinTargetG >= 20 && data.proteinTargetG <= 600
+      && data.carbsTargetG is int && data.carbsTargetG >= 0 && data.carbsTargetG <= 1200
+      && data.fatTargetG is int && data.fatTargetG >= 10 && data.fatTargetG <= 400
+      && data.weeklyWorkoutTarget is int && data.weeklyWorkoutTarget >= 1 && data.weeklyWorkoutTarget <= 7
+      && (!('mealsPerDay' in data) || (data.mealsPerDay is int && data.mealsPerDay >= 1 && data.mealsPerDay <= 10))
+      && (!('dailyWaterGoalMl' in data) || (data.dailyWaterGoalMl is int && data.dailyWaterGoalMl >= 500 && data.dailyWaterGoalMl <= 10000))
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidCardioMap(c) {
+      return c is map
+        && c.keys().hasAll([
+          'activityType', 'distance', 'durationMinutes', 'caloriesBurned', 'paceOrIncline', 'completed'
+        ])
+        && c.keys().hasOnly([
+          'activityType', 'distance', 'durationMinutes', 'caloriesBurned', 'paceOrIncline', 'completed'
+        ])
+        && c.activityType in ['none', 'walk', 'run']
+        && c.distance is number && c.distance >= 0 && c.distance <= 500
+        && c.durationMinutes is number && c.durationMinutes >= 0 && c.durationMinutes <= 600
+        && c.caloriesBurned is number && c.caloriesBurned >= 0 && c.caloriesBurned <= 5000
+        && c.paceOrIncline is string && c.paceOrIncline.size() <= 60
+        && c.completed is bool;
+    }
+
+    function isValidWorkoutDay(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'weekNumber', 'dayIndex', 'focus', 'isRestDay',
+        'completed', 'exercises', 'notes', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'weekNumber', 'dayIndex', 'focus', 'planId', 'planName',
+        'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.weekNumber is int && data.weekNumber >= 1 && data.weekNumber <= 52
+      && data.dayIndex is int && data.dayIndex >= 0 && data.dayIndex <= 6
+      && data.focus is string && data.focus.size() >= 1 && data.focus.size() <= 80
+      && (!('planId' in data) || (data.planId is string && data.planId.size() <= 128))
+      && (!('planName' in data) || (data.planName is string && data.planName.size() <= 80))
+      && data.isRestDay is bool
+      && data.completed is bool
+      && data.exercises is list && data.exercises.size() <= 25
+      && (data.exercises.size() == 0 || data.exercises[0] is map)
+      && data.notes is string && data.notes.size() <= 500
+      && (!('cardio' in data) || isValidCardioMap(data.cardio))
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkoutPlan(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'name', 'scheduledTime', 'defaultDays', 'isRestDay',
+        'exercises', 'cardio', 'notes', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'name', 'scheduledTime', 'defaultDays', 'isRestDay',
+        'exercises', 'cardio', 'notes', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+      && data.scheduledTime is string && data.scheduledTime.size() <= 30
+      && data.defaultDays is list && data.defaultDays.size() <= 7
+      && (data.defaultDays.size() == 0 || (data.defaultDays[0] is int && data.defaultDays[0] >= 0 && data.defaultDays[0] <= 6))
+      && data.isRestDay is bool
+      && data.exercises is list && data.exercises.size() <= 25
+      && (data.exercises.size() == 0 || data.exercises[0] is map)
+      && isValidCardioMap(data.cardio)
+      && data.notes is string && data.notes.size() <= 500
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidMealLog(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'weekNumber', 'dayIndex', 'slot', 'title', 'recipeId',
+        'servings', 'calories', 'proteinG', 'carbsG', 'fatG', 'consumed',
+        'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'weekNumber', 'dayIndex', 'slot', 'title', 'recipeId',
+        'servings', 'calories', 'proteinG', 'carbsG', 'fatG', 'consumed',
+        'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.weekNumber is int && data.weekNumber >= 1 && data.weekNumber <= 52
+      && data.dayIndex is int && data.dayIndex >= 0 && data.dayIndex <= 6
+      && data.slot in [
+        'breakfast', 'lunch', 'dinner', 'snack',
+        'meal_1', 'meal_2', 'meal_3', 'meal_4', 'meal_5',
+        'meal_6', 'meal_7', 'meal_8', 'meal_9', 'meal_10',
+        'on_the_spot'
+      ]
+      && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+      && data.recipeId is string && data.recipeId.size() <= 128
+      && data.servings is number && data.servings > 0 && data.servings <= 20
+      && data.calories is number && data.calories >= 0 && data.calories <= 10000
+      && data.proteinG is number && data.proteinG >= 0 && data.proteinG <= 500
+      && data.carbsG is number && data.carbsG >= 0 && data.carbsG <= 1000
+      && data.fatG is number && data.fatG >= 0 && data.fatG <= 500
+      && data.consumed is bool
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidRecipe(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'title', 'category', 'prepMinutes', 'servings',
+        'calories', 'proteinG', 'carbsG', 'fatG', 'imageUrl',
+        'ingredients', 'instructions', 'isFavorite', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'title', 'category', 'prepMinutes', 'servings',
+        'calories', 'proteinG', 'carbsG', 'fatG', 'imageUrl',
+        'ingredients', 'instructions', 'isFavorite', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+      && data.category in ['breakfast', 'lunch', 'dinner', 'snack']
+      && data.prepMinutes is int && data.prepMinutes >= 0 && data.prepMinutes <= 1440
+      && data.servings is int && data.servings >= 1 && data.servings <= 50
+      && data.calories is number && data.calories >= 0 && data.calories <= 5000
+      && data.proteinG is number && data.proteinG >= 0 && data.proteinG <= 500
+      && data.carbsG is number && data.carbsG >= 0 && data.carbsG <= 800
+      && data.fatG is number && data.fatG >= 0 && data.fatG <= 400
+      && data.imageUrl is string && data.imageUrl.size() <= 500
+      && data.ingredients is list && data.ingredients.size() <= 40
+      && (data.ingredients.size() == 0 || data.ingredients[0] is string)
+      && data.instructions is list && data.instructions.size() <= 25
+      && (data.instructions.size() == 0 || data.instructions[0] is string)
+      && data.isFavorite is bool
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidMeasurement(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'weekNumber', 'date', 'weight', 'bodyFatPct',
+        'waist', 'chest', 'hips', 'arms', 'thighs', 'neck', 'notes',
+        'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'weekNumber', 'date', 'weight', 'bodyFatPct',
+        'waist', 'chest', 'hips', 'arms', 'thighs', 'neck', 'notes',
+        'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.weekNumber is int && data.weekNumber >= 1 && data.weekNumber <= 52
+      && isValidDateString(data.date)
+      && data.weight is number && data.weight >= 20 && data.weight <= 500
+      && data.bodyFatPct is number && data.bodyFatPct >= 0 && data.bodyFatPct <= 70
+      && data.waist is number && data.waist >= 0 && data.waist <= 300
+      && data.chest is number && data.chest >= 0 && data.chest <= 300
+      && data.hips is number && data.hips >= 0 && data.hips <= 300
+      && data.arms is number && data.arms >= 0 && data.arms <= 150
+      && data.thighs is number && data.thighs >= 0 && data.thighs <= 200
+      && data.neck is number && data.neck >= 0 && data.neck <= 100
+      && data.notes is string && data.notes.size() <= 500
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidHydrationLog(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'weekNumber', 'dayIndex', 'amountMl', 'goalMl', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'weekNumber', 'dayIndex', 'amountMl', 'goalMl', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.weekNumber is int && data.weekNumber >= 1 && data.weekNumber <= 52
+      && data.dayIndex is int && data.dayIndex >= 0 && data.dayIndex <= 6
+      && data.amountMl is int && data.amountMl >= 0 && data.amountMl <= 20000
+      && data.goalMl is int && data.goalMl >= 500 && data.goalMl <= 10000
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidHabit(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'title', 'color', 'weeklyGoal', 'sortOrder', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'title', 'color', 'weeklyGoal', 'sortOrder', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.title is string && data.title.size() >= 1 && data.title.size() <= 60
+      && data.color in ['emerald', 'sky', 'amber', 'rose', 'violet', 'teal', 'orange', 'indigo']
+      && data.weeklyGoal is int && data.weeklyGoal >= 1 && data.weeklyGoal <= 7
+      && data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 100
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidHabitLog(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'date', 'completedHabitIds', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'date', 'completedHabitIds', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && isValidDateString(data.date)
+      && data.completedHabitIds is list && data.completedHabitIds.size() <= 30
+      && (data.completedHabitIds.size() == 0 || (data.completedHabitIds[0] is string && data.completedHabitIds[0].size() <= 128))
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidCrawlerState(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+        'streakFreezes', 'lastActiveDate', 'recoveryQuestActive', 'equippedSpriteTier',
+        'equippedWeapon', 'equippedArmor', 'equippedAccessory', 'equippedAura',
+        'unlockedGearIds', 'unlockedAchievementIds', 'pendingLootBoxes',
+        'rewardedActionKeys', 'clearedWeekKeys', 'sfxEnabled', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+        'streakFreezes', 'lastActiveDate', 'recoveryQuestActive', 'equippedSpriteTier',
+        'equippedWeapon', 'equippedArmor', 'equippedAccessory', 'equippedAura',
+        'unlockedGearIds', 'unlockedAchievementIds', 'pendingLootBoxes',
+        'rewardedActionKeys', 'clearedWeekKeys', 'sfxEnabled',
+        'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
+        'guildId', 'guildName', 'isPublicProfile',
+        'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.xp is int && data.xp >= 0 && data.xp <= 1000000
+      && data.level is int && data.level >= 1 && data.level <= 8
+      && data.weeklyClears is int && data.weeklyClears >= 0 && data.weeklyClears <= 500
+      && data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 3650
+      && data.bestStreak is int && data.bestStreak >= 0 && data.bestStreak <= 3650
+      && data.streakFreezes is int && data.streakFreezes >= 0 && data.streakFreezes <= 5
+      && data.lastActiveDate is string && (data.lastActiveDate == '' || isValidDateString(data.lastActiveDate))
+      && data.recoveryQuestActive is bool
+      && data.equippedSpriteTier is int && data.equippedSpriteTier >= 1 && data.equippedSpriteTier <= 4
+      && data.equippedWeapon is string && data.equippedWeapon.size() <= 60
+      && data.equippedArmor is string && data.equippedArmor.size() <= 60
+      && data.equippedAccessory is string && data.equippedAccessory.size() <= 60
+      && data.equippedAura is string && data.equippedAura.size() <= 40
+      && data.unlockedGearIds is list && data.unlockedGearIds.size() <= 60
+      && (data.unlockedGearIds.size() == 0 || (data.unlockedGearIds[0] is string && data.unlockedGearIds[0].size() <= 60))
+      && data.unlockedAchievementIds is list && data.unlockedAchievementIds.size() <= 20
+      && (data.unlockedAchievementIds.size() == 0 || (data.unlockedAchievementIds[0] is string && data.unlockedAchievementIds[0].size() <= 60))
+      && data.pendingLootBoxes is list && data.pendingLootBoxes.size() <= 20
+      && (data.pendingLootBoxes.size() == 0 || (data.pendingLootBoxes[0] is string && data.pendingLootBoxes[0].size() <= 40))
+      && data.rewardedActionKeys is list && data.rewardedActionKeys.size() <= 120
+      && (data.rewardedActionKeys.size() == 0 || (data.rewardedActionKeys[0] is string && data.rewardedActionKeys[0].size() <= 80))
+      && data.clearedWeekKeys is list && data.clearedWeekKeys.size() <= 60
+      && (data.clearedWeekKeys.size() == 0 || (data.clearedWeekKeys[0] is string && data.clearedWeekKeys[0].size() <= 20))
+      && data.sfxEnabled is bool
+      && (!('crawlerName' in data) || (data.crawlerName is string && data.crawlerName.size() >= 1 && data.crawlerName.size() <= 32))
+      && (!('crawlerClass' in data) || (data.crawlerClass is string && data.crawlerClass.size() >= 1 && data.crawlerClass.size() <= 32))
+      && (!('crawlerMotto' in data) || (data.crawlerMotto is string && data.crawlerMotto.size() <= 80))
+      && (!('bannerTheme' in data) || isValidBannerTheme(data.bannerTheme))
+      && (!('guildId' in data) || (data.guildId is string && (data.guildId == '' || isValidId(data.guildId)) && data.guildId.size() <= 40))
+      && (!('guildName' in data) || (data.guildName is string && data.guildName.size() <= 50))
+      && (!('isPublicProfile' in data) || data.isPublicProfile is bool)
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidPublicCrawler(data, crawlerId) {
+      return data.keys().hasAll([
+        'ownerId', 'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
+        'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+        'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
+        'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount',
+        'guildId', 'guildName', 'isPublic', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
+        'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+        'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
+        'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount',
+        'guildId', 'guildName', 'isPublic', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == crawlerId && isValidId(data.ownerId)
+      && data.crawlerName is string && data.crawlerName.size() >= 1 && data.crawlerName.size() <= 32
+      && data.crawlerClass is string && data.crawlerClass.size() >= 1 && data.crawlerClass.size() <= 32
+      && data.crawlerMotto is string && data.crawlerMotto.size() <= 80
+      && isValidBannerTheme(data.bannerTheme)
+      && data.xp is int && data.xp >= 0 && data.xp <= 1000000
+      && data.level is int && data.level >= 1 && data.level <= 8
+      && data.weeklyClears is int && data.weeklyClears >= 0 && data.weeklyClears <= 500
+      && data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 3650
+      && data.bestStreak is int && data.bestStreak >= 0 && data.bestStreak <= 3650
+      && data.equippedSpriteTier is int && data.equippedSpriteTier >= 1 && data.equippedSpriteTier <= 4
+      && data.equippedWeapon is string && data.equippedWeapon.size() <= 60
+      && data.equippedArmor is string && data.equippedArmor.size() <= 60
+      && data.equippedAccessory is string && data.equippedAccessory.size() <= 60
+      && data.equippedAura is string && data.equippedAura.size() <= 40
+      && data.unlockedAchievementIds is list && data.unlockedAchievementIds.size() <= 20
+      && (data.unlockedAchievementIds.size() == 0 || (data.unlockedAchievementIds[0] is string && data.unlockedAchievementIds[0].size() <= 60))
+      && data.unlockedGearCount is int && data.unlockedGearCount >= 0 && data.unlockedGearCount <= 60
+      && data.guildId is string && (data.guildId == '' || isValidId(data.guildId)) && data.guildId.size() <= 40
+      && data.guildName is string && data.guildName.size() <= 50
+      && data.isPublic is bool
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidGuild(data, guildId) {
+      return data.keys().hasAll([
+        'ownerId', 'name', 'motto', 'bannerTheme', 'inviteCode',
+        'isPublic', 'memberCount', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'name', 'motto', 'bannerTheme', 'inviteCode',
+        'isPublic', 'memberCount', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && isValidId(data.ownerId)
+      && data.name is string && data.name.size() >= 2 && data.name.size() <= 40
+      && data.motto is string && data.motto.size() <= 100
+      && isValidBannerTheme(data.bannerTheme)
+      && data.inviteCode is string && data.inviteCode == guildId && isValidId(data.inviteCode)
+      && data.inviteCode.size() >= 4 && data.inviteCode.size() <= 40
+      && data.isPublic is bool
+      && data.memberCount is int && data.memberCount >= 0 && data.memberCount <= 50
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidGuildMember(data, guildId, memberId) {
+      return data.keys().hasAll([
+        'ownerId', 'guildId', 'role', 'crawlerName', 'crawlerClass', 'crawlerMotto',
+        'bannerTheme', 'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+        'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
+        'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount', 'joinedAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'guildId', 'role', 'crawlerName', 'crawlerClass', 'crawlerMotto',
+        'bannerTheme', 'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+        'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
+        'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount', 'joinedAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == memberId && isValidId(data.ownerId)
+      && data.guildId is string && data.guildId == guildId && isValidId(data.guildId)
+      && data.role in ['leader', 'member']
+      && data.crawlerName is string && data.crawlerName.size() >= 1 && data.crawlerName.size() <= 32
+      && data.crawlerClass is string && data.crawlerClass.size() >= 1 && data.crawlerClass.size() <= 32
+      && data.crawlerMotto is string && data.crawlerMotto.size() <= 80
+      && isValidBannerTheme(data.bannerTheme)
+      && data.xp is int && data.xp >= 0 && data.xp <= 1000000
+      && data.level is int && data.level >= 1 && data.level <= 8
+      && data.weeklyClears is int && data.weeklyClears >= 0 && data.weeklyClears <= 500
+      && data.currentStreak is int && data.currentStreak >= 0 && data.currentStreak <= 3650
+      && data.bestStreak is int && data.bestStreak >= 0 && data.bestStreak <= 3650
+      && data.equippedSpriteTier is int && data.equippedSpriteTier >= 1 && data.equippedSpriteTier <= 4
+      && data.equippedWeapon is string && data.equippedWeapon.size() <= 60
+      && data.equippedArmor is string && data.equippedArmor.size() <= 60
+      && data.equippedAccessory is string && data.equippedAccessory.size() <= 60
+      && data.equippedAura is string && data.equippedAura.size() <= 40
+      && data.unlockedAchievementIds is list && data.unlockedAchievementIds.size() <= 20
+      && (data.unlockedAchievementIds.size() == 0 || (data.unlockedAchievementIds[0] is string && data.unlockedAchievementIds[0].size() <= 60))
+      && data.unlockedGearCount is int && data.unlockedGearCount >= 0 && data.unlockedGearCount <= 60
+      && data.joinedAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    // --- Collection Match Rules ---
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['currentWeek', 'phaseName', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['mealsPerDay', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['dailyWaterGoalMl', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'currentWeek', 'phaseName', 'unitSystem', 'startDate',
+            'targetWeight', 'dailyCalorieTarget', 'proteinTargetG', 'carbsTargetG',
+            'fatTargetG', 'weeklyWorkoutTarget', 'mealsPerDay', 'dailyWaterGoalMl', 'updatedAt'
+          ])
+        );
+      allow delete: if isEmailVerified() && isValidId(userId) && isOwner(userId);
+
+      match /workouts/{workoutId} {
+        allow get: if isValidId(userId) && isValidId(workoutId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(workoutId)
+          && isOwner(userId)
+          && isValidWorkoutDay(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(workoutId)
+          && isOwner(userId)
+          && isValidWorkoutDay(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['cardio', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['exercises', 'completed', 'notes', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['exercises', 'completed', 'notes', 'cardio', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['focus', 'isRestDay', 'completed', 'exercises', 'notes', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['focus', 'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['focus', 'planId', 'planName', 'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'updatedAt'])
+          );
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(workoutId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /workoutPlans/{planId} {
+        allow get: if isValidId(userId) && isValidId(planId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(planId)
+          && isOwner(userId)
+          && isValidWorkoutPlan(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(planId)
+          && isOwner(userId)
+          && isValidWorkoutPlan(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'scheduledTime', 'defaultDays', 'isRestDay', 'exercises', 'cardio', 'notes', 'updatedAt'
+          ]);
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(planId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /mealLogs/{mealLogId} {
+        allow get: if isValidId(userId) && isValidId(mealLogId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(mealLogId)
+          && isOwner(userId)
+          && isValidMealLog(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(mealLogId)
+          && isOwner(userId)
+          && isValidMealLog(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['consumed', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'slot', 'title', 'recipeId', 'servings', 'calories', 'proteinG', 'carbsG', 'fatG', 'consumed', 'updatedAt'
+            ])
+          );
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(mealLogId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /recipes/{recipeId} {
+        allow get: if isValidId(userId) && isValidId(recipeId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(recipeId)
+          && isOwner(userId)
+          && isValidRecipe(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(recipeId)
+          && isOwner(userId)
+          && isValidRecipe(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['isFavorite', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'category', 'prepMinutes', 'servings', 'calories', 'proteinG',
+              'carbsG', 'fatG', 'imageUrl', 'ingredients', 'instructions', 'isFavorite', 'updatedAt'
+            ])
+          );
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(recipeId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /measurements/{measurementId} {
+        allow get: if isValidId(userId) && isValidId(measurementId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(measurementId)
+          && isOwner(userId)
+          && isValidMeasurement(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(measurementId)
+          && isOwner(userId)
+          && isValidMeasurement(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'weekNumber', 'date', 'weight', 'bodyFatPct', 'waist', 'chest',
+              'hips', 'arms', 'thighs', 'neck', 'notes', 'updatedAt'
+            ])
+          );
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(measurementId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /hydrationLogs/{hydrationId} {
+        allow get: if isValidId(userId) && isValidId(hydrationId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(hydrationId)
+          && isOwner(userId)
+          && isValidHydrationLog(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(hydrationId)
+          && isOwner(userId)
+          && isValidHydrationLog(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && incoming().diff(existing()).affectedKeys().hasOnly(['amountMl', 'goalMl', 'updatedAt']);
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(hydrationId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /habits/{habitId} {
+        allow get: if isValidId(userId) && isValidId(habitId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(habitId)
+          && isOwner(userId)
+          && isValidHabit(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(habitId)
+          && isOwner(userId)
+          && isValidHabit(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'color', 'weeklyGoal', 'sortOrder', 'updatedAt'
+          ]);
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(habitId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /habitLogs/{habitLogId} {
+        allow get: if isValidId(userId) && isValidId(habitLogId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(habitLogId)
+          && isOwner(userId)
+          && isValidHabitLog(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(habitLogId)
+          && isOwner(userId)
+          && isValidHabitLog(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && incoming().diff(existing()).affectedKeys().hasOnly(['completedHabitIds', 'updatedAt']);
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(habitLogId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /crawlerState/{stateId} {
+        allow get: if isValidId(userId) && isValidId(stateId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(stateId)
+          && isOwner(userId)
+          && isValidCrawlerState(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow update: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(stateId)
+          && isOwner(userId)
+          && isValidCrawlerState(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && hasParentProfile(userId)
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+            'streakFreezes', 'lastActiveDate', 'recoveryQuestActive', 'equippedSpriteTier',
+            'equippedWeapon', 'equippedArmor', 'equippedAccessory', 'equippedAura',
+            'unlockedGearIds', 'unlockedAchievementIds', 'pendingLootBoxes',
+            'rewardedActionKeys', 'clearedWeekKeys', 'sfxEnabled',
+            'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
+            'guildId', 'guildName', 'isPublicProfile', 'updatedAt'
+          ]);
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(stateId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+    }
+
+    // --- Social: Non-PII Public Crawler Profiles ---
+    match /publicCrawlers/{crawlerId} {
+      allow get: if isValidId(crawlerId)
+        && isSignedIn()
+        && (isOwner(crawlerId) || existing().isPublic == true);
+      allow list: if isSignedIn()
+        && (existing().ownerId == request.auth.uid || existing().isPublic == true);
+      allow create: if isEmailVerified()
+        && isValidId(crawlerId)
+        && isOwner(crawlerId)
+        && isValidPublicCrawler(incoming(), crawlerId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && hasParentProfile(crawlerId);
+      allow update: if isEmailVerified()
+        && isValidId(crawlerId)
+        && isOwner(crawlerId)
+        && isValidPublicCrawler(incoming(), crawlerId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && hasParentProfile(crawlerId)
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
+          'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+          'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
+          'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount',
+          'guildId', 'guildName', 'isPublic', 'updatedAt'
+        ]);
+      allow delete: if isEmailVerified() && isValidId(crawlerId) && isOwner(crawlerId);
+    }
+
+    // --- Social: Guilds & Member Leaderboards ---
+    match /guilds/{guildId} {
+      allow get: if isSignedIn() && isValidId(guildId);
+      allow list: if isSignedIn()
+        && (existing().ownerId == request.auth.uid || existing().isPublic == true);
+      allow create: if isEmailVerified()
+        && isValidId(guildId)
+        && isOwner(incoming().ownerId)
+        && isValidGuild(incoming(), guildId)
+        && incoming().memberCount == 1
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && hasParentProfile(request.auth.uid)
+        && existsAfter(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid));
+      allow update: if isEmailVerified()
+        && isValidId(guildId)
+        && isValidGuild(incoming(), guildId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().inviteCode == existing().inviteCode
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && hasParentProfile(request.auth.uid)
+        && (
+          (isOwner(existing().ownerId)
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'motto', 'bannerTheme', 'isPublic', 'updatedAt'
+            ]))
+          || (incoming().diff(existing()).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
+            && incoming().memberCount == existing().memberCount + 1
+            && existing().memberCount < 50
+            && !exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid))
+            && existsAfter(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)))
+          || (incoming().diff(existing()).affectedKeys().hasOnly(['memberCount', 'updatedAt'])
+            && incoming().memberCount == existing().memberCount - 1
+            && existing().memberCount >= 1
+            && exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid))
+            && !existsAfter(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid)))
+        );
+      allow delete: if isEmailVerified() && isValidId(guildId) && isOwner(existing().ownerId);
+
+      match /members/{memberId} {
+        allow get: if isSignedIn()
+          && isValidId(guildId)
+          && isValidId(memberId)
+          && (
+            isOwner(memberId)
+            || exists(/databases/$(database)/documents/guilds/$(guildId)/members/$(request.auth.uid))
+            || get(/databases/$(database)/documents/guilds/$(guildId)).data.isPublic == true
+          );
+        allow list: if isSignedIn() && existing().guildId == guildId;
+        allow create: if isEmailVerified()
+          && isValidId(guildId)
+          && isValidId(memberId)
+          && isOwner(memberId)
+          && isValidGuildMember(incoming(), guildId, memberId)
+          && existsAfter(/databases/$(database)/documents/guilds/$(guildId))
+          && (
+            incoming().role == 'member'
+            || (incoming().role == 'leader'
+              && getAfter(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId == request.auth.uid)
+          )
+          && incoming().joinedAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfile(memberId);
+        allow update: if isEmailVerified()
+          && isValidId(guildId)
+          && isValidId(memberId)
+          && isOwner(memberId)
+          && isValidGuildMember(incoming(), guildId, memberId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().guildId == existing().guildId
+          && incoming().role == existing().role
+          && incoming().joinedAt == existing().joinedAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
+            'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
+            'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
+            'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount', 'updatedAt'
+          ]);
+        allow delete: if isEmailVerified()
+          && isValidId(guildId)
+          && isValidId(memberId)
+          && (
+            isOwner(memberId)
+            || get(/databases/$(database)/documents/guilds/$(guildId)).data.ownerId == request.auth.uid
+          );
+      }
+    }
+  }
+}

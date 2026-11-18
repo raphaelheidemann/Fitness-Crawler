@@ -1,0 +1,1108 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user program configuration, current active week, macro targets, and unit preferences.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Authenticated user UID."
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User display name."
+        },
+        "currentWeek": {
+          "type": "integer",
+          "description": "Active training and diet plan week number (1-52)."
+        },
+        "phaseName": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Current program phase label such as Lean Hypertrophy or Cut."
+        },
+        "unitSystem": {
+          "type": "string",
+          "enum": ["metric", "imperial"],
+          "description": "Preferred measurement unit system."
+        },
+        "startDate": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Program start date in YYYY-MM-DD format."
+        },
+        "targetWeight": {
+          "type": "number",
+          "description": "Target body weight in user unit system."
+        },
+        "dailyCalorieTarget": {
+          "type": "integer",
+          "description": "Daily caloric intake target."
+        },
+        "proteinTargetG": {
+          "type": "integer",
+          "description": "Daily protein target in grams."
+        },
+        "carbsTargetG": {
+          "type": "integer",
+          "description": "Daily carbohydrate target in grams."
+        },
+        "fatTargetG": {
+          "type": "integer",
+          "description": "Daily fat target in grams."
+        },
+        "weeklyWorkoutTarget": {
+          "type": "integer",
+          "description": "Target gym sessions per week (1-7)."
+        },
+        "mealsPerDay": {
+          "type": "integer",
+          "description": "Configured number of daily meal slots (1-10)."
+        },
+        "dailyWaterGoalMl": {
+          "type": "integer",
+          "description": "Daily hydration target in milliliters (500-10000)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last updated timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "displayName",
+        "currentWeek",
+        "phaseName",
+        "unitSystem",
+        "startDate",
+        "targetWeight",
+        "dailyCalorieTarget",
+        "proteinTargetG",
+        "carbsTargetG",
+        "fatTargetG",
+        "weeklyWorkoutTarget",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkoutDay": {
+      "title": "WorkoutDay",
+      "description": "Scheduled gym session for a specific week and day index with exercises and completion status.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "weekNumber": {
+          "type": "integer",
+          "description": "Week number (1-52)."
+        },
+        "dayIndex": {
+          "type": "integer",
+          "description": "Day of week index (0=Mon through 6=Sun)."
+        },
+        "focus": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Training split focus for the day."
+        },
+        "planId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Optional linked reusable WorkoutPlan ID."
+        },
+        "planName": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Optional linked WorkoutPlan display name."
+        },
+        "isRestDay": {
+          "type": "boolean",
+          "description": "Whether the day is a scheduled rest or recovery day."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the workout session is completed."
+        },
+        "exercises": {
+          "type": "array",
+          "description": "List of up to 25 structured exercise objects."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Session notes or RPE summary."
+        },
+        "cardio": {
+          "type": "object",
+          "description": "Optional walk or run cardio log for the day.",
+          "properties": {
+            "activityType": {
+              "type": "string",
+              "enum": ["none", "walk", "run"]
+            },
+            "distance": {
+              "type": "number"
+            },
+            "durationMinutes": {
+              "type": "number"
+            },
+            "caloriesBurned": {
+              "type": "number"
+            },
+            "paceOrIncline": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "completed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "weekNumber",
+        "dayIndex",
+        "focus",
+        "isRestDay",
+        "completed",
+        "exercises",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MealLog": {
+      "title": "MealLog",
+      "description": "Planned or consumed meal entry tied to a week, day, slot, and optional recipe.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "weekNumber": {
+          "type": "integer"
+        },
+        "dayIndex": {
+          "type": "integer"
+        },
+        "slot": {
+          "type": "string",
+          "enum": [
+            "breakfast",
+            "lunch",
+            "dinner",
+            "snack",
+            "meal_1",
+            "meal_2",
+            "meal_3",
+            "meal_4",
+            "meal_5",
+            "meal_6",
+            "meal_7",
+            "meal_8",
+            "meal_9",
+            "meal_10",
+            "on_the_spot"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "recipeId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "servings": {
+          "type": "number"
+        },
+        "calories": {
+          "type": "number"
+        },
+        "proteinG": {
+          "type": "number"
+        },
+        "carbsG": {
+          "type": "number"
+        },
+        "fatG": {
+          "type": "number"
+        },
+        "consumed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "weekNumber",
+        "dayIndex",
+        "slot",
+        "title",
+        "recipeId",
+        "servings",
+        "calories",
+        "proteinG",
+        "carbsG",
+        "fatG",
+        "consumed",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "User recipe with macro breakdown per serving, ingredients, instructions, and prep time.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "enum": ["breakfast", "lunch", "dinner", "snack"]
+        },
+        "prepMinutes": {
+          "type": "integer"
+        },
+        "servings": {
+          "type": "integer"
+        },
+        "calories": {
+          "type": "number"
+        },
+        "proteinG": {
+          "type": "number"
+        },
+        "carbsG": {
+          "type": "number"
+        },
+        "fatG": {
+          "type": "number"
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "ingredients": {
+          "type": "array",
+          "description": "Up to 40 ingredient lines."
+        },
+        "instructions": {
+          "type": "array",
+          "description": "Up to 25 preparation steps."
+        },
+        "isFavorite": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "category",
+        "prepMinutes",
+        "servings",
+        "calories",
+        "proteinG",
+        "carbsG",
+        "fatG",
+        "imageUrl",
+        "ingredients",
+        "instructions",
+        "isFavorite",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Measurement": {
+      "title": "Measurement",
+      "description": "Dated body weight, body fat percentage, and circumference check-in tied to a program week.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "weekNumber": {
+          "type": "integer"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "weight": {
+          "type": "number"
+        },
+        "bodyFatPct": {
+          "type": "number"
+        },
+        "waist": {
+          "type": "number"
+        },
+        "chest": {
+          "type": "number"
+        },
+        "hips": {
+          "type": "number"
+        },
+        "arms": {
+          "type": "number"
+        },
+        "thighs": {
+          "type": "number"
+        },
+        "neck": {
+          "type": "number"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "weekNumber",
+        "date",
+        "weight",
+        "bodyFatPct",
+        "waist",
+        "chest",
+        "hips",
+        "arms",
+        "thighs",
+        "neck",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HydrationLog": {
+      "title": "HydrationLog",
+      "description": "Daily water intake log in milliliters tied to a program week and day index.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "weekNumber": {
+          "type": "integer"
+        },
+        "dayIndex": {
+          "type": "integer"
+        },
+        "amountMl": {
+          "type": "integer"
+        },
+        "goalMl": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "weekNumber",
+        "dayIndex",
+        "amountMl",
+        "goalMl",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkoutPlan": {
+      "title": "WorkoutPlan",
+      "description": "Reusable workout template that can be assigned to any weekday and edited independently.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "scheduledTime": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "defaultDays": {
+          "type": "array",
+          "description": "Default weekday indices (0-6) up to 7 entries."
+        },
+        "isRestDay": {
+          "type": "boolean"
+        },
+        "exercises": {
+          "type": "array",
+          "description": "Up to 25 structured exercise objects."
+        },
+        "cardio": {
+          "type": "object",
+          "description": "Optional walk or run cardio configuration."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "scheduledTime",
+        "defaultDays",
+        "isRestDay",
+        "exercises",
+        "cardio",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "User-defined daily discipline habit with color theme and weekly frequency goal.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "color": {
+          "type": "string",
+          "enum": ["emerald", "sky", "amber", "rose", "violet", "teal", "orange", "indigo"]
+        },
+        "weeklyGoal": {
+          "type": "integer"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "color",
+        "weeklyGoal",
+        "sortOrder",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HabitLog": {
+      "title": "HabitLog",
+      "description": "Daily habit completion record keyed by YYYY-MM-DD date storing completed habit IDs.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "date": {
+          "type": "string",
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "completedHabitIds": {
+          "type": "array",
+          "description": "List of up to 30 completed habit IDs for this date."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "date",
+        "completedHabitIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CrawlerState": {
+      "title": "CrawlerState",
+      "description": "Dungeon Crawler gamification progression, XP, level, streaks, Safe-Room Shields, cosmetic gear, achievements, and pending loot boxes.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "xp": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "weeklyClears": {
+          "type": "integer"
+        },
+        "currentStreak": {
+          "type": "integer"
+        },
+        "bestStreak": {
+          "type": "integer"
+        },
+        "streakFreezes": {
+          "type": "integer"
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "recoveryQuestActive": {
+          "type": "boolean"
+        },
+        "equippedSpriteTier": {
+          "type": "integer"
+        },
+        "equippedWeapon": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedArmor": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedAccessory": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedAura": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "unlockedGearIds": {
+          "type": "array",
+          "description": "Up to 60 unlocked cosmetic gear IDs."
+        },
+        "unlockedAchievementIds": {
+          "type": "array",
+          "description": "Up to 20 unlocked achievement IDs."
+        },
+        "pendingLootBoxes": {
+          "type": "array",
+          "description": "Up to 20 unopened loot box tiers."
+        },
+        "rewardedActionKeys": {
+          "type": "array",
+          "description": "Rolling list of up to 120 idempotent XP event keys."
+        },
+        "clearedWeekKeys": {
+          "type": "array",
+          "description": "List of up to 60 cleared weekly boss challenge keys."
+        },
+        "sfxEnabled": {
+          "type": "boolean"
+        },
+        "crawlerName": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "crawlerClass": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "crawlerMotto": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "bannerTheme": {
+          "type": "string",
+          "enum": ["amber", "crimson", "emerald", "sky", "violet"]
+        },
+        "guildId": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "guildName": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "isPublicProfile": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "xp",
+        "level",
+        "weeklyClears",
+        "currentStreak",
+        "bestStreak",
+        "streakFreezes",
+        "lastActiveDate",
+        "recoveryQuestActive",
+        "equippedSpriteTier",
+        "equippedWeapon",
+        "equippedArmor",
+        "equippedAccessory",
+        "equippedAura",
+        "unlockedGearIds",
+        "unlockedAchievementIds",
+        "pendingLootBoxes",
+        "rewardedActionKeys",
+        "clearedWeekKeys",
+        "sfxEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PublicCrawler": {
+      "title": "PublicCrawler",
+      "description": "Non-PII public RPG crawler character profile for friend inspection and global leaderboards.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "crawlerName": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "crawlerClass": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "crawlerMotto": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "bannerTheme": {
+          "type": "string",
+          "enum": ["amber", "crimson", "emerald", "sky", "violet"]
+        },
+        "xp": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "weeklyClears": {
+          "type": "integer"
+        },
+        "currentStreak": {
+          "type": "integer"
+        },
+        "bestStreak": {
+          "type": "integer"
+        },
+        "equippedSpriteTier": {
+          "type": "integer"
+        },
+        "equippedWeapon": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedArmor": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedAccessory": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedAura": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "unlockedAchievementIds": {
+          "type": "array",
+          "description": "Up to 20 unlocked achievement IDs."
+        },
+        "unlockedGearCount": {
+          "type": "integer"
+        },
+        "guildId": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "guildName": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "crawlerName",
+        "crawlerClass",
+        "crawlerMotto",
+        "bannerTheme",
+        "xp",
+        "level",
+        "weeklyClears",
+        "currentStreak",
+        "bestStreak",
+        "equippedSpriteTier",
+        "equippedWeapon",
+        "equippedArmor",
+        "equippedAccessory",
+        "equippedAura",
+        "unlockedAchievementIds",
+        "unlockedGearCount",
+        "guildId",
+        "guildName",
+        "isPublic",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Guild": {
+      "title": "Guild",
+      "description": "Shared crawler party/guild metadata, invite code, banner theme, and member count.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "motto": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "bannerTheme": {
+          "type": "string",
+          "enum": ["amber", "crimson", "emerald", "sky", "violet"]
+        },
+        "inviteCode": {
+          "type": "string",
+          "maxLength": 40,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "memberCount": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "motto",
+        "bannerTheme",
+        "inviteCode",
+        "isPublic",
+        "memberCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "GuildMember": {
+      "title": "GuildMember",
+      "description": "Guild roster and leaderboard entry synced from a crawler's public RPG profile.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "guildId": {
+          "type": "string",
+          "maxLength": 40,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["leader", "member"]
+        },
+        "crawlerName": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "crawlerClass": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "crawlerMotto": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "bannerTheme": {
+          "type": "string",
+          "enum": ["amber", "crimson", "emerald", "sky", "violet"]
+        },
+        "xp": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "weeklyClears": {
+          "type": "integer"
+        },
+        "currentStreak": {
+          "type": "integer"
+        },
+        "bestStreak": {
+          "type": "integer"
+        },
+        "equippedSpriteTier": {
+          "type": "integer"
+        },
+        "equippedWeapon": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedArmor": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedAccessory": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "equippedAura": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "unlockedAchievementIds": {
+          "type": "array",
+          "description": "Up to 20 unlocked achievement IDs."
+        },
+        "unlockedGearCount": {
+          "type": "integer"
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "guildId",
+        "role",
+        "crawlerName",
+        "crawlerClass",
+        "crawlerMotto",
+        "bannerTheme",
+        "xp",
+        "level",
+        "weeklyClears",
+        "currentStreak",
+        "bestStreak",
+        "equippedSpriteTier",
+        "equippedWeapon",
+        "equippedArmor",
+        "equippedAccessory",
+        "equippedAura",
+        "unlockedAchievementIds",
+        "unlockedGearCount",
+        "joinedAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private user program configuration and nutrition/training targets."
+    },
+    "/users/{userId}/workouts/{workoutId}": {
+      "schema": {
+        "$ref": "#/entities/WorkoutDay"
+      },
+      "description": "User weekly gym plan and exercise logs."
+    },
+    "/users/{userId}/workoutPlans/{planId}": {
+      "schema": {
+        "$ref": "#/entities/WorkoutPlan"
+      },
+      "description": "Reusable user training plan templates assignable to any weekday."
+    },
+    "/users/{userId}/mealLogs/{mealLogId}": {
+      "schema": {
+        "$ref": "#/entities/MealLog"
+      },
+      "description": "User daily diet plan and recipe-linked meal consumption logs."
+    },
+    "/users/{userId}/recipes/{recipeId}": {
+      "schema": {
+        "$ref": "#/entities/Recipe"
+      },
+      "description": "User personal and starter recipe collection with macros and prep steps."
+    },
+    "/users/{userId}/measurements/{measurementId}": {
+      "schema": {
+        "$ref": "#/entities/Measurement"
+      },
+      "description": "User chronological body measurements and weekly check-ins."
+    },
+    "/users/{userId}/hydrationLogs/{hydrationId}": {
+      "schema": {
+        "$ref": "#/entities/HydrationLog"
+      },
+      "description": "User daily water intake and hydration goal logs."
+    },
+    "/users/{userId}/habits/{habitId}": {
+      "schema": {
+        "$ref": "#/entities/Habit"
+      },
+      "description": "User editable daily habits and color preferences."
+    },
+    "/users/{userId}/habitLogs/{habitLogId}": {
+      "schema": {
+        "$ref": "#/entities/HabitLog"
+      },
+      "description": "Daily habit completion logs keyed by date."
+    },
+    "/users/{userId}/crawlerState/{stateId}": {
+      "schema": {
+        "$ref": "#/entities/CrawlerState"
+      },
+      "description": "User Dungeon Crawler XP, levels, weekly boss clears, loot boxes, custom character identity, and cosmetic gear."
+    },
+    "/publicCrawlers/{crawlerId}": {
+      "schema": {
+        "$ref": "#/entities/PublicCrawler"
+      },
+      "description": "Non-PII public crawler profile snapshots for friend profile inspection and leaderboards."
+    },
+    "/guilds/{guildId}": {
+      "schema": {
+        "$ref": "#/entities/Guild"
+      },
+      "description": "Shared guilds keyed by invite code."
+    },
+    "/guilds/{guildId}/members/{memberId}": {
+      "schema": {
+        "$ref": "#/entities/GuildMember"
+      },
+      "description": "Guild member snapshots powering the guild roster and leaderboard."
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Cadence",
+  "description": "Weekly gym and diet planner with body measurements, interactive progress charts, and integrated recipe tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
