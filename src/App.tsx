@@ -108,6 +108,7 @@ function WorkspaceShell() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileChecked, setProfileChecked] = useState(false);
   const [initializingWorkspace, setInitializingWorkspace] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [onboardSex, setOnboardSex] = useState<Sex>('unspecified');
   const [onboardStyle, setOnboardStyle] = useState<CrawlerStyle>('neutral');
 
@@ -740,6 +741,7 @@ function WorkspaceShell() {
   if (!profile) {
     const handleBootstrap = async (includeStarter: boolean) => {
       setInitializingWorkspace(true);
+      setBootstrapError(null);
       try {
         await initializeUserWorkspace(
           user.uid,
@@ -748,6 +750,16 @@ function WorkspaceShell() {
           onboardSex,
           onboardStyle
         );
+      } catch (err) {
+        // Without this the screen just stays put and the user sees nothing happen.
+        let detail = err instanceof Error ? err.message : String(err);
+        try {
+          detail = JSON.parse(detail).error ?? detail;
+        } catch {
+          // not our wrapped JSON error; show as is
+        }
+        console.error('Workspace bootstrap failed:', err);
+        setBootstrapError(detail);
       } finally {
         setInitializingWorkspace(false);
       }
@@ -777,6 +789,13 @@ function WorkspaceShell() {
               onStyleChange={setOnboardStyle}
             />
           </div>
+
+          {bootstrapError && (
+            <div role="alert" className="mb-4 rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">
+              <p className="font-semibold">{t('Could not create your workspace. Try again.')}</p>
+              <p className="mt-1 break-words font-mono text-[11px] text-rose-300/80">{bootstrapError}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button

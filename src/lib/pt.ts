@@ -1246,4 +1246,5 @@ export const PT: Record<string, string> = {
   'Average': 'Médio',
   'Muscular': 'Musculoso',
   'Tall': 'Alto',
+  'Could not create your workspace. Try again.': 'Não foi possível criar seu espaço. Tente de novo.',
 };
