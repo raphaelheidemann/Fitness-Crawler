@@ -12,12 +12,12 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
+import { CrawlerSprite } from './CrawlerSprite';
 import { CrawlerState, CrawlerStyle } from '../types';
 import {
   BANNER_THEME_STYLES,
   BOSS_MANTIS_IMG,
   CRAWLER_GEAR_CATALOG,
-  crawlerSprite,
   getLevelInfo,
   HUNTING_GROUNDS_BG,
   LOOT_CHEST_IMG,
@@ -63,8 +63,6 @@ export const HuntingGroundsStage: React.FC<Props> = ({
   const armorDef = CRAWLER_GEAR_CATALOG.find((g) => g.id === crawler.equippedArmor);
   const accDef = CRAWLER_GEAR_CATALOG.find((g) => g.id === crawler.equippedAccessory);
 
-  const spriteSrc =
-    crawlerSprite(crawler.equippedSpriteTier, spriteStyle) ?? crawlerSprite(current.spriteTier, spriteStyle);
   const auraFrame = AURA_FRAME_CLASSES[crawler.equippedAura] ?? AURA_FRAME_CLASSES.aur_none;
   const bannerStyle = BANNER_THEME_STYLES[crawler.bannerTheme ?? 'amber'];
   const shownName = crawler.crawlerName?.trim() || displayName || t('Crawler');
@@ -246,10 +244,11 @@ export const HuntingGroundsStage: React.FC<Props> = ({
               title={t('Customize your Crawler name, class & gear')}
               className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-lg border-2 bg-[#0d1117]/85 overflow-hidden flex items-center justify-center transition-transform hover:scale-[1.03] ${auraFrame}`}
             >
-              <img
-                src={spriteSrc}
+              <CrawlerSprite
+                tier={crawler.equippedSpriteTier}
+                look={crawler.look}
+                fallbackStyle={spriteStyle}
                 alt={t('{name} Level {n} Sprite', { name: shownName, n: current.level })}
-                referrerPolicy="no-referrer"
                 className="w-full h-full object-contain pixel-art animate-crawler-idle"
               />
             </button>

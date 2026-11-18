@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useT } from '../lib/i18n';
 import { X } from 'lucide-react';
-import { CrawlerStyle, Sex, UnitSystem, UserProfile } from '../types';
+import { Sex, UnitSystem, UserProfile } from '../types';
 import { IdentityFields } from './IdentityFields';
 import { updateUserProfileSettings } from '../lib/firestoreService';
 
@@ -28,7 +28,6 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
   const [mealsPerDay, setMealsPerDay] = useState(profile.mealsPerDay ?? 6);
   const [dailyWaterGoalMl, setDailyWaterGoalMl] = useState(profile.dailyWaterGoalMl ?? 3000);
   const [sex, setSex] = useState<Sex>(profile.sex ?? 'unspecified');
-  const [crawlerStyle, setCrawlerStyle] = useState<CrawlerStyle>(profile.crawlerStyle ?? 'neutral');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
       setMealsPerDay(profile.mealsPerDay ?? 6);
       setDailyWaterGoalMl(profile.dailyWaterGoalMl ?? 3000);
       setSex(profile.sex ?? 'unspecified');
-      setCrawlerStyle(profile.crawlerStyle ?? 'neutral');
     }
   }, [open, profile]);
 
@@ -74,7 +72,6 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
         mealsPerDay,
         dailyWaterGoalMl,
         sex,
-        crawlerStyle,
       });
       onClose();
     } finally {
@@ -327,9 +324,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
           <IdentityFields
             sex={sex}
-            crawlerStyle={crawlerStyle}
             onSexChange={setSex}
-            onStyleChange={setCrawlerStyle}
           />
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#253247]">

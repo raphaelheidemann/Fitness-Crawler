@@ -358,6 +358,7 @@ export interface CrawlerState {
   guildId?: string;
   guildName?: string;
   isPublicProfile?: boolean;
+  look?: string; // encoded appearance, see lib/crawlerLook
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -384,6 +385,7 @@ export interface PublicCrawler {
   guildId: string;
   guildName: string;
   isPublic: boolean;
+  look?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -422,6 +424,7 @@ export interface GuildMember {
   equippedAura: string;
   unlockedAchievementIds: string[];
   unlockedGearCount: number;
+  look?: string;
   joinedAt?: unknown;
   updatedAt?: unknown;
 }

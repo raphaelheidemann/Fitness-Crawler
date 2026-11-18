@@ -37,7 +37,6 @@ import {
 } from '../types';
 import {
   BANNER_THEME_STYLES,
-  CRAWLER_SPRITES,
   getLevelInfo,
 } from '../lib/crawlerEngine';
 import {
@@ -48,6 +47,7 @@ import {
   lookupGuildByCode,
   updateGuildDetails,
 } from '../lib/firestoreService';
+import { CrawlerSprite } from './CrawlerSprite';
 import { CrawlerProfileModal, InspectableCrawler } from './CrawlerProfileModal';
 
 interface Props {
@@ -438,10 +438,10 @@ export const GuildView: React.FC<Props> = ({
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-3 px-3.5 py-2 rounded-lg bg-[#0d121a] border border-[#253247]">
-            <img
-              src={CRAWLER_SPRITES[crawler.equippedSpriteTier] ?? CRAWLER_SPRITES[1]}
+            <CrawlerSprite
+              tier={crawler.equippedSpriteTier}
+              look={crawler.look}
               alt={myName}
-              referrerPolicy="no-referrer"
               className="w-9 h-9 rounded bg-[#131a24] object-contain pixel-art shrink-0"
             />
             <div className="min-w-0">
@@ -837,10 +837,10 @@ export const GuildView: React.FC<Props> = ({
                           >
                             #{index + 1}
                           </span>
-                          <img
-                            src={CRAWLER_SPRITES[member.equippedSpriteTier] ?? CRAWLER_SPRITES[1]}
+                          <CrawlerSprite
+                            tier={member.equippedSpriteTier}
+                            look={member.look}
                             alt={member.crawlerName}
-                            referrerPolicy="no-referrer"
                             className="w-11 h-11 rounded-md border border-[#2d3c54] bg-[#0b1017] object-contain pixel-art shrink-0"
                           />
                           <div className="min-w-0">
@@ -1127,10 +1127,10 @@ export const GuildView: React.FC<Props> = ({
                       >
                         #{index + 1}
                       </span>
-                      <img
-                        src={CRAWLER_SPRITES[entry.equippedSpriteTier] ?? CRAWLER_SPRITES[1]}
+                      <CrawlerSprite
+                        tier={entry.equippedSpriteTier}
+                        look={entry.look}
                         alt={entry.crawlerName}
-                        referrerPolicy="no-referrer"
                         className="w-11 h-11 rounded-md border border-[#2d3c54] bg-[#0b1017] object-contain pixel-art shrink-0"
                       />
                       <div className="min-w-0">

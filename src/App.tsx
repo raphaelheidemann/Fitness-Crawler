@@ -58,6 +58,7 @@ import {
 } from './lib/crawlerEngine';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './components/AuthGate';
+import { encodeLook, parseLook } from './lib/crawlerLook';
 import { IdentityFields } from './components/IdentityFields';
 import { OverviewView } from './components/OverviewView';
 import { GymPlanView } from './components/GymPlanView';
@@ -539,6 +540,7 @@ function WorkspaceShell() {
         xp: initialXp,
         level: current.level,
         equippedSpriteTier: current.spriteTier,
+        look: profile.crawlerStyle ? encodeLook(parseLook(undefined, profile.crawlerStyle)) : '',
         unlockedGearIds: Array.from(gearSet).slice(0, 60),
         unlockedAchievementIds: achIds,
         rewardedActionKeys: initialKeys,
@@ -688,6 +690,7 @@ function WorkspaceShell() {
       crawlerDoc.guildId || '',
       crawlerDoc.guildName || '',
       crawlerDoc.isPublicProfile ?? false,
+      crawlerDoc.look || '',
     ]);
     if (lastSocialSyncSigRef.current === sig) return;
     lastSocialSyncSigRef.current = sig;
@@ -836,6 +839,7 @@ function WorkspaceShell() {
       next.guildId || '',
       next.guildName || '',
       next.isPublicProfile ?? false,
+      next.look || '',
     ]);
     await syncSocialCrawlerProfile(user.uid, next, profile.displayName);
   };

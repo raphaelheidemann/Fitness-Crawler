@@ -40,6 +40,7 @@ import {
   sanitizeString,
   sanitizeStringArray,
 } from './sanitize';
+import { sanitizeLook } from './crawlerLook';
 import { ParsedMealRow, ParsedWorkoutDay, ParsedWorkoutPlan } from './csvImport';
 
 export async function updateUserWeekAndPhase(
@@ -998,6 +999,7 @@ function buildCrawlerStatePayload(
     guildId: sanitizeOptionalId(state.guildId),
     guildName: sanitizeString(state.guildName ?? '', 50, ''),
     isPublicProfile: state.isPublicProfile ?? false,
+    look: sanitizeLook(state.look),
   };
 }
 
@@ -1023,6 +1025,7 @@ function buildPublicSnapshotFields(
     equippedAura: base.equippedAura,
     unlockedAchievementIds: base.unlockedAchievementIds,
     unlockedGearCount: clampInt(base.unlockedGearIds.length, 0, 60, 0),
+    look: base.look,
   };
 }
 

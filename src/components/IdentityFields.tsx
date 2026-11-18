@@ -4,9 +4,9 @@ import { useT } from '../lib/i18n';
 
 interface Props {
   sex: Sex;
-  crawlerStyle: CrawlerStyle;
+  crawlerStyle?: CrawlerStyle;
   onSexChange: (sex: Sex) => void;
-  onStyleChange: (style: CrawlerStyle) => void;
+  onStyleChange?: (style: CrawlerStyle) => void;
 }
 
 const SEX_OPTIONS: { key: Sex; label: string }[] = [
@@ -15,13 +15,13 @@ const SEX_OPTIONS: { key: Sex; label: string }[] = [
   { key: 'unspecified', label: 'Prefer not to say' },
 ];
 
-const STYLE_OPTIONS: { key: CrawlerStyle; label: string }[] = [
+export const STYLE_OPTIONS: { key: CrawlerStyle; label: string }[] = [
   { key: 'masculine', label: 'Masculine' },
   { key: 'feminine', label: 'Feminine' },
   { key: 'neutral', label: 'Non-binary' },
 ];
 
-function Segmented<T extends string>({
+export function Segmented<T extends string>({
   value,
   options,
   onChange,
@@ -68,10 +68,12 @@ export const IdentityFields: React.FC<Props> = ({ sex, crawlerStyle, onSexChange
           </p>
         )}
       </div>
-      <div>
-        <label className="block text-xs font-medium text-slate-300 mb-1">{t('Crawler character')}</label>
-        <Segmented value={crawlerStyle} options={STYLE_OPTIONS} onChange={onStyleChange} label={t('Crawler character')} />
-      </div>
+      {crawlerStyle && onStyleChange && (
+        <div>
+          <label className="block text-xs font-medium text-slate-300 mb-1">{t('Crawler character')}</label>
+          <Segmented value={crawlerStyle} options={STYLE_OPTIONS} onChange={onStyleChange} label={t('Crawler character')} />
+        </div>
+      )}
     </div>
   );
 };
