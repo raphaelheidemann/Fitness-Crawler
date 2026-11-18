@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useT } from '../lib/i18n';
 import { X } from 'lucide-react';
 import { UnitSystem, UserProfile } from '../types';
 import { updateUserProfileSettings } from '../lib/firestoreService';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, uid }) => {
+  const t = useT();
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [currentWeek, setCurrentWeek] = useState(profile.currentWeek);
   const [phaseName, setPhaseName] = useState(profile.phaseName);
@@ -78,15 +80,15 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
       <div className="w-full max-w-2xl bg-[#131a24] border-2 border-[#33445e] rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 bg-[#0f151e] border-b border-[#253247]">
           <div>
-            <h2 className="text-lg font-semibold text-white">Program & Macro Targets</h2>
+            <h2 className="text-lg font-semibold text-white">{t('Program & Macro Targets')}</h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Configure your active week, training phase, daily meals, and nutrition targets.
+              {t('Configure your active week, training phase, daily meals, and nutrition targets.')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close settings"
+            aria-label={t('Close settings')}
             className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg transition-colors"
           >
             <X className="w-4 h-4" />
@@ -97,7 +99,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Athlete Name
+                {t('Athlete Name')}
               </label>
               <input
                 type="text"
@@ -111,7 +113,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Unit System
+                {t('Unit System')}
               </label>
               <div className="grid grid-cols-2 gap-1 p-1 bg-[#0e141d] border border-[#2d3c54] rounded-lg">
                 <button
@@ -123,7 +125,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
                       : 'text-slate-300 hover:text-white hover:bg-[#1a2332]'
                   }`}
                 >
-                  Metric (kg / cm)
+                  {t('Metric (kg / cm)')}
                 </button>
                 <button
                   type="button"
@@ -134,14 +136,14 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
                       : 'text-slate-300 hover:text-white hover:bg-[#1a2332]'
                   }`}
                 >
-                  Imperial (lbs / in)
+                  {t('Imperial (lbs / in)')}
                 </button>
               </div>
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Current Week (1–52)
+                {t('Current Week (1–52)')}
               </label>
               <input
                 type="number"
@@ -156,13 +158,13 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Program Phase
+                {t('Program Phase')}
               </label>
               <input
                 type="text"
                 required
                 maxLength={80}
-                placeholder="e.g., Lean Hypertrophy, Cut, Strength Block"
+                placeholder={t('e.g., Lean Hypertrophy, Cut, Strength Block')}
                 value={phaseName}
                 onChange={(e) => setPhaseName(e.target.value)}
                 className="w-full px-3 py-2 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
@@ -171,7 +173,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Block Start Date
+                {t('Block Start Date')}
               </label>
               <input
                 type="date"
@@ -184,7 +186,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Target Weight ({unitSystem === 'imperial' ? 'lbs' : 'kg'})
+                {t('Target Weight ({unit})', { unit: unitSystem === 'imperial' ? 'lbs' : 'kg' })}
               </label>
               <input
                 type="number"
@@ -201,16 +203,16 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
           <div className="pt-4 border-t border-[#253247]">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-white">Daily Nutrition & Gym Targets</h3>
+              <h3 className="text-sm font-semibold text-white">{t('Daily Nutrition & Gym Targets')}</h3>
               <span className="text-xs text-slate-400 tabular-nums">
-                Macro sum: {estimatedKcal.toLocaleString()} kcal
+                {t('Macro sum: {n} kcal', { n: estimatedKcal.toLocaleString() })}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Calories
+                  {t('Calories')}
                 </label>
                 <input
                   type="number"
@@ -225,7 +227,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Protein (g)
+                  {t('Protein (g)')}
                 </label>
                 <input
                   type="number"
@@ -240,7 +242,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Carbs (g)
+                  {t('Carbs (g)')}
                 </label>
                 <input
                   type="number"
@@ -255,7 +257,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Fat (g)
+                  {t('Fat (g)')}
                 </label>
                 <input
                   type="number"
@@ -270,7 +272,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Sessions / Wk
+                  {t('Sessions / Wk')}
                 </label>
                 <input
                   type="number"
@@ -285,7 +287,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Meals / Day
+                  {t('Meals / Day')}
                 </label>
                 <input
                   type="number"
@@ -300,7 +302,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Water Goal (ml)
+                  {t('Water Goal (ml)')}
                 </label>
                 <input
                   type="number"
@@ -322,14 +324,14 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-slate-200 hover:bg-[#1a2332] rounded-lg transition-colors whitespace-nowrap"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="px-4 py-2 text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
             >
-              {saving ? 'Saving...' : 'Save Targets'}
+              {saving ? t('Saving...') : t('Save Targets')}
             </button>
           </div>
         </form>
