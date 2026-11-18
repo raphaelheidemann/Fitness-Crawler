@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useT } from '../lib/i18n';
 import {
   collection,
   doc,
@@ -66,6 +67,7 @@ export const GuildView: React.FC<Props> = ({
   crawlerDocExists,
   onOpenCustomize,
 }) => {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<'guild' | 'leaderboard'>('guild');
   const [sortBy, setSortBy] = useState<SortKey>('xp');
   const [searchTerm, setSearchTerm] = useState('');
@@ -250,12 +252,15 @@ export const GuildView: React.FC<Props> = ({
       setGuildMottoInput('');
       setFeedback({
         type: 'ok',
-        text: `Guild "${result.guildName}" created! Share invite code ${result.guildId} with friends.`,
+        text: t('Guild "{name}" created! Share invite code {code} with friends.', {
+          name: result.guildName,
+          code: result.guildId,
+        }),
       });
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Unable to create guild.',
+        text: err instanceof Error ? err.message : t('Unable to create guild.'),
       });
     } finally {
       setCreatingGuild(false);
@@ -271,7 +276,7 @@ export const GuildView: React.FC<Props> = ({
     try {
       const found = await lookupGuildByCode(raw);
       if (!found) {
-        setFeedback({ type: 'err', text: 'No guild found with that invite code.' });
+        setFeedback({ type: 'err', text: t('No guild found with that invite code.') });
         return;
       }
       await joinGuild({
@@ -282,11 +287,11 @@ export const GuildView: React.FC<Props> = ({
         guild: found,
       });
       setInviteCodeInput('');
-      setFeedback({ type: 'ok', text: `Joined "${found.name}"!` });
+      setFeedback({ type: 'ok', text: t('Joined "{name}"!', { name: found.name }) });
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Unable to join guild.',
+        text: err instanceof Error ? err.message : t('Unable to join guild.'),
       });
     } finally {
       setJoiningCode(false);
@@ -305,11 +310,11 @@ export const GuildView: React.FC<Props> = ({
         fallbackName: displayName,
         guild,
       });
-      setFeedback({ type: 'ok', text: `Joined "${guild.name}"!` });
+      setFeedback({ type: 'ok', text: t('Joined "{name}"!', { name: guild.name }) });
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Unable to join guild.',
+        text: err instanceof Error ? err.message : t('Unable to join guild.'),
       });
     } finally {
       setJoiningPublicId(null);
@@ -338,11 +343,11 @@ export const GuildView: React.FC<Props> = ({
         isPublic: editPublic,
       });
       setEditingGuild(false);
-      setFeedback({ type: 'ok', text: 'Guild settings updated.' });
+      setFeedback({ type: 'ok', text: t('Guild settings updated.') });
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Unable to update guild.',
+        text: err instanceof Error ? err.message : t('Unable to update guild.'),
       });
     } finally {
       setSavingEdit(false);
@@ -359,11 +364,11 @@ export const GuildView: React.FC<Props> = ({
         guildId: activeGuildId,
         crawlerDocExists,
       });
-      setFeedback({ type: 'ok', text: 'You left the guild.' });
+      setFeedback({ type: 'ok', text: t('You left the guild.') });
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Unable to leave guild.',
+        text: err instanceof Error ? err.message : t('Unable to leave guild.'),
       });
     } finally {
       setLeavingOrDisbanding(false);
@@ -381,11 +386,11 @@ export const GuildView: React.FC<Props> = ({
         crawlerDocExists,
       });
       setConfirmDisband(false);
-      setFeedback({ type: 'ok', text: `Guild "${myGuild.name}" has been disbanded.` });
+      setFeedback({ type: 'ok', text: t('Guild "{name}" has been disbanded.', { name: myGuild.name }) });
     } catch (err) {
       setFeedback({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Unable to disband guild.',
+        text: err instanceof Error ? err.message : t('Unable to disband guild.'),
       });
     } finally {
       setLeavingOrDisbanding(false);
@@ -397,18 +402,21 @@ export const GuildView: React.FC<Props> = ({
     const text =
       kind === 'code'
         ? myGuild.inviteCode
-        : `Join my Fitness Crawler guild "${myGuild.name}"! Open the app, go to Guild & Ranks, and enter invite code: ${myGuild.inviteCode}`;
+        : t('Join my Fitness Crawler guild "{name}"! Open the app, go to Guild & Ranks, and enter invite code: {code}', {
+            name: myGuild.name,
+            code: myGuild.inviteCode,
+          });
     try {
       await navigator.clipboard.writeText(text);
       setCopiedCode(kind);
       window.setTimeout(() => setCopiedCode(null), 2000);
     } catch {
-      setFeedback({ type: 'err', text: 'Clipboard blocked. Copy the invite code manually.' });
+      setFeedback({ type: 'err', text: t('Clipboard blocked. Copy the invite code manually.') });
     }
   };
 
   const myName = crawler.crawlerName || displayName;
-  const myClass = crawler.crawlerClass || 'Primal Brawler';
+  const myClass = t(crawler.crawlerClass || 'Primal Brawler');
   const myLevel = getLevelInfo(crawler.xp, crawler.weeklyClears).current;
   const isLeader = myGuild?.ownerId === uid;
 
@@ -418,14 +426,13 @@ export const GuildView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <p className="text-xs text-slate-400">
-            Floor 3 Social Hub · Guilds &amp; Crawler Rankings
+            {t('Floor 3 Social Hub · Guilds & Crawler Rankings')}
           </p>
           <h1 className="text-xl sm:text-2xl font-bold text-white mt-1">
-            Guilds &amp; Leaderboard
+            {t('Guilds & Leaderboard')}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Invite friends, compare XP and boss clears, and inspect each other&apos;s 8-bit loadouts.
-            Workouts, meals, and weights remain private.
+            {t('Invite friends, compare XP and boss clears, and inspect each other’s 8-bit loadouts. Workouts, meals, and weights remain private.')}
           </p>
         </div>
 
@@ -440,7 +447,7 @@ export const GuildView: React.FC<Props> = ({
             <div className="min-w-0">
               <p className="text-xs font-semibold text-white truncate">{myName}</p>
               <p className="text-[11px] font-mono text-amber-400 tabular-nums">
-                LV {myLevel.level} · {myClass}
+                {t('LV {n}', { n: myLevel.level })} · {myClass}
               </p>
             </div>
           </div>
@@ -450,7 +457,7 @@ export const GuildView: React.FC<Props> = ({
             onClick={onOpenCustomize}
             className="min-h-[42px] px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md transition-colors whitespace-nowrap"
           >
-            Customize Crawler
+            {t('Customize Crawler')}
           </button>
         </div>
       </div>
@@ -470,7 +477,7 @@ export const GuildView: React.FC<Props> = ({
             onClick={() => setFeedback(null)}
             className="text-xs underline shrink-0"
           >
-            Dismiss
+            {t('Dismiss')}
           </button>
         </div>
       )}
@@ -488,7 +495,7 @@ export const GuildView: React.FC<Props> = ({
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            {myGuild ? myGuild.name : 'My Guild'}
+            {myGuild ? myGuild.name : t('My Guild')}
           </button>
           <button
             type="button"
@@ -500,17 +507,17 @@ export const GuildView: React.FC<Props> = ({
             }`}
           >
             <Trophy className="w-3.5 h-3.5" />
-            Global Leaderboard ({publicCrawlers.length})
+            {t('Global Leaderboard ({n})', { n: publicCrawlers.length })}
           </button>
         </div>
 
         <div className="inline-flex items-center gap-1 p-1 bg-[#131a24] border border-[#263347] rounded-lg self-start sm:self-auto">
-          <span className="text-[11px] text-slate-400 px-2">Rank by</span>
+          <span className="text-[11px] text-slate-400 px-2">{t('Rank by')}</span>
           {(
             [
               { key: 'xp', label: 'XP' },
-              { key: 'clears', label: 'Bosses' },
-              { key: 'streak', label: 'Streak' },
+              { key: 'clears', label: t('Bosses') },
+              { key: 'streak', label: t('Streak') },
             ] as const
           ).map((opt) => (
             <button
@@ -536,10 +543,10 @@ export const GuildView: React.FC<Props> = ({
             <div className="bg-[#131a24] border-2 border-amber-500/40 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 className="text-base font-semibold text-white">
-                  Previous Guild No Longer Exists
+                  {t('Previous Guild No Longer Exists')}
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  The guild leader disbanded it. Clear your old guild badge to create or join a new guild.
+                  {t('The guild leader disbanded it. Clear your old guild badge to create or join a new guild.')}
                 </p>
               </div>
               <button
@@ -548,7 +555,7 @@ export const GuildView: React.FC<Props> = ({
                 onClick={() => void handleLeaveGuild()}
                 className="min-h-[42px] px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md whitespace-nowrap"
               >
-                {leavingOrDisbanding ? 'Clearing...' : 'Clear Guild Status'}
+                {leavingOrDisbanding ? t('Clearing...') : t('Clear Guild Status')}
               </button>
             </div>
           ) : myGuild ? (
@@ -568,23 +575,23 @@ export const GuildView: React.FC<Props> = ({
                             .accentText
                         }`}
                       >
-                        Guild Hall
+                        {t('Guild Hall')}
                       </span>
                       <span aria-hidden="true">·</span>
                       <span className="inline-flex items-center gap-1">
                         {myGuild.isPublic ? (
                           <>
-                            <Globe className="w-3.5 h-3.5 text-emerald-400" /> Public Guild
+                            <Globe className="w-3.5 h-3.5 text-emerald-400" /> {t('Public Guild')}
                           </>
                         ) : (
                           <>
-                            <Lock className="w-3.5 h-3.5 text-amber-400" /> Invite-Only
+                            <Lock className="w-3.5 h-3.5 text-amber-400" /> {t('Invite-Only')}
                           </>
                         )}
                       </span>
                       <span aria-hidden="true">·</span>
                       <span className="font-mono tabular-nums">
-                        {guildMembers.length || myGuild.memberCount}/50 Crawlers
+                        {t('{n}/50 Crawlers', { n: guildMembers.length || myGuild.memberCount })}
                       </span>
                     </div>
                     <h2 className="font-pixel text-lg sm:text-xl text-white">{myGuild.name}</h2>
@@ -596,14 +603,14 @@ export const GuildView: React.FC<Props> = ({
                   {/* Invite Code & Guild Actions */}
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0d121a] border border-[#2b3a52]">
-                      <span className="text-[11px] text-slate-400">Invite Code</span>
+                      <span className="text-[11px] text-slate-400">{t('Invite Code')}</span>
                       <span className="font-mono text-xs font-bold text-amber-400 tracking-wider">
                         {myGuild.inviteCode}
                       </span>
                       <button
                         type="button"
                         onClick={() => void handleCopyInvite('code')}
-                        aria-label="Copy invite code"
+                        aria-label={t('Copy invite code')}
                         className="p-1 text-slate-300 hover:text-white"
                       >
                         {copiedCode === 'code' ? (
@@ -624,7 +631,7 @@ export const GuildView: React.FC<Props> = ({
                       ) : (
                         <UserPlus className="w-3.5 h-3.5" />
                       )}
-                      {copiedCode === 'invite' ? 'Invite Copied' : 'Copy Friend Invite'}
+                      {copiedCode === 'invite' ? t('Invite Copied') : t('Copy Friend Invite')}
                     </button>
 
                     {isLeader ? (
@@ -635,7 +642,7 @@ export const GuildView: React.FC<Props> = ({
                           className="min-h-[40px] px-3 py-2 text-xs font-medium text-slate-200 bg-[#1a2434] hover:bg-[#233044] border border-[#344662] rounded-md inline-flex items-center gap-1.5 whitespace-nowrap"
                         >
                           <Settings2 className="w-3.5 h-3.5" />
-                          Edit
+                          {t('Edit')}
                         </button>
                         <button
                           type="button"
@@ -643,7 +650,7 @@ export const GuildView: React.FC<Props> = ({
                           className="min-h-[40px] px-3 py-2 text-xs font-medium text-rose-300 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-500/40 rounded-md inline-flex items-center gap-1.5 whitespace-nowrap"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          Disband
+                          {t('Disband')}
                         </button>
                       </>
                     ) : (
@@ -654,7 +661,7 @@ export const GuildView: React.FC<Props> = ({
                         className="min-h-[40px] px-3 py-2 text-xs font-medium text-rose-300 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-500/40 rounded-md inline-flex items-center gap-1.5 whitespace-nowrap"
                       >
                         <LogOut className="w-3.5 h-3.5" />
-                        {leavingOrDisbanding ? 'Leaving...' : 'Leave Guild'}
+                        {leavingOrDisbanding ? t('Leaving...') : t('Leave Guild')}
                       </button>
                     )}
                   </div>
@@ -664,7 +671,7 @@ export const GuildView: React.FC<Props> = ({
                 {confirmDisband && isLeader && (
                   <div className="p-4 rounded-lg bg-rose-950/30 border border-rose-500/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <p className="text-xs text-rose-200">
-                      Disbanding deletes <strong>{myGuild.name}</strong> for all members. Your personal XP and gear are never affected.
+                      {t('Disbanding deletes')} <strong>{myGuild.name}</strong> {t('for all members. Your personal XP and gear are never affected.')}
                     </p>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
@@ -672,7 +679,7 @@ export const GuildView: React.FC<Props> = ({
                         onClick={() => setConfirmDisband(false)}
                         className="min-h-[38px] px-3 py-1.5 text-xs text-slate-300 bg-[#1a2434] rounded-md"
                       >
-                        Cancel
+                        {t('Cancel')}
                       </button>
                       <button
                         type="button"
@@ -680,7 +687,7 @@ export const GuildView: React.FC<Props> = ({
                         onClick={() => void handleDisbandGuild()}
                         className="min-h-[38px] px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-md"
                       >
-                        {leavingOrDisbanding ? 'Disbanding...' : 'Confirm Disband'}
+                        {leavingOrDisbanding ? t('Disbanding...') : t('Confirm Disband')}
                       </button>
                     </div>
                   </div>
@@ -695,7 +702,7 @@ export const GuildView: React.FC<Props> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-slate-300 mb-1">
-                          Guild Name
+                          {t('Guild Name')}
                         </label>
                         <input
                           type="text"
@@ -709,7 +716,7 @@ export const GuildView: React.FC<Props> = ({
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-300 mb-1">
-                          Guild Motto
+                          {t('Guild Motto')}
                         </label>
                         <input
                           type="text"
@@ -723,18 +730,18 @@ export const GuildView: React.FC<Props> = ({
 
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400">Banner:</span>
-                        {BANNER_THEME_OPTIONS.map((t) => (
+                        <span className="text-xs text-slate-400">{t('Banner:')}</span>
+                        {BANNER_THEME_OPTIONS.map((themeKey) => (
                           <button
-                            key={t}
+                            key={themeKey}
                             type="button"
-                            onClick={() => setEditTheme(t)}
-                            aria-label={BANNER_THEME_STYLES[t].label}
+                            onClick={() => setEditTheme(themeKey)}
+                            aria-label={t(BANNER_THEME_STYLES[themeKey].label)}
                             className={`w-7 h-7 rounded-md flex items-center justify-center border ${
-                              editTheme === t ? 'border-white scale-105' : 'border-transparent opacity-70'
+                              editTheme === themeKey ? 'border-white scale-105' : 'border-transparent opacity-70'
                             } bg-[#131a24]`}
                           >
-                            <span className={`w-4 h-4 rounded-sm ${BANNER_THEME_STYLES[t].swatch}`} />
+                            <span className={`w-4 h-4 rounded-sm ${BANNER_THEME_STYLES[themeKey].swatch}`} />
                           </button>
                         ))}
                       </div>
@@ -746,7 +753,7 @@ export const GuildView: React.FC<Props> = ({
                           onChange={(e) => setEditPublic(e.target.checked)}
                           className="rounded border-slate-600 bg-[#131a24] text-emerald-500"
                         />
-                        List in Open Guilds Directory
+                        {t('List in Open Guilds Directory')}
                       </label>
                     </div>
 
@@ -763,7 +770,7 @@ export const GuildView: React.FC<Props> = ({
                         disabled={savingEdit}
                         className="min-h-[38px] px-4 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md"
                       >
-                        {savingEdit ? 'Saving...' : 'Save Guild'}
+                        {savingEdit ? t('Saving...') : t('Save Guild')}
                       </button>
                     </div>
                   </form>
@@ -772,19 +779,19 @@ export const GuildView: React.FC<Props> = ({
                 {/* Guild Stats Summary */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3.5 rounded-lg bg-[#0e141d] border border-[#253247]">
-                    <p className="text-xs text-slate-400">Combined Guild XP</p>
+                    <p className="text-xs text-slate-400">{t('Combined Guild XP')}</p>
                     <p className="text-lg font-bold font-mono text-amber-400 mt-1 tabular-nums">
                       {guildTotals.xp.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-lg bg-[#0e141d] border border-[#253247]">
-                    <p className="text-xs text-slate-400">Total Bosses Slain</p>
+                    <p className="text-xs text-slate-400">{t('Total Bosses Slain')}</p>
                     <p className="text-lg font-bold font-mono text-rose-400 mt-1 tabular-nums">
                       {guildTotals.clears}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-lg bg-[#0e141d] border border-[#253247]">
-                    <p className="text-xs text-slate-400">Active Crawlers</p>
+                    <p className="text-xs text-slate-400">{t('Active Crawlers')}</p>
                     <p className="text-lg font-bold font-mono text-emerald-400 mt-1 tabular-nums">
                       {guildMembers.length}
                     </p>
@@ -796,9 +803,9 @@ export const GuildView: React.FC<Props> = ({
               <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#253247] flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-white">Guild Leaderboard</h3>
+                    <h3 className="text-sm font-semibold text-white">{t('Guild Leaderboard')}</h3>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Click any crawler to inspect their 8-bit sprite, gear loadout, and achievements.
+                      {t('Click any crawler to inspect their 8-bit sprite, gear loadout, and achievements.')}
                     </p>
                   </div>
                 </div>
@@ -846,12 +853,12 @@ export const GuildView: React.FC<Props> = ({
                               )}
                               {isSelf && (
                                 <span className="text-[11px] font-mono text-emerald-400 shrink-0">
-                                  You
+                                  {t('You')}
                                 </span>
                               )}
                             </div>
                             <p className="text-xs text-slate-400 truncate">
-                              LV {lvl.level} · {member.crawlerClass}
+                              {t('LV {n}', { n: lvl.level })} · {t(member.crawlerClass)}
                             </p>
                           </div>
                         </div>
@@ -884,23 +891,23 @@ export const GuildView: React.FC<Props> = ({
                 className="lg:col-span-7 bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 space-y-4"
               >
                 <div>
-                  <h2 className="text-base font-semibold text-white">Create a Guild</h2>
+                  <h2 className="text-base font-semibold text-white">{t('Create a Guild')}</h2>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Start a Dungeon Party and get an invite code to share with friends.
+                    {t('Start a Dungeon Party and get an invite code to share with friends.')}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-300 mb-1">
-                      Guild Name
+                      {t('Guild Name')}
                     </label>
                     <input
                       type="text"
                       required
                       minLength={2}
                       maxLength={SCHEMA_LIMITS.GUILD_NAME_MAX}
-                      placeholder="e.g. Princess Posse"
+                      placeholder={t('e.g. Princess Posse')}
                       value={guildNameInput}
                       onChange={(e) => setGuildNameInput(e.target.value)}
                       className="w-full min-h-[42px] px-3 py-2 text-sm bg-[#0d121a] border border-[#2d3c54] rounded-md text-white placeholder:text-slate-500"
@@ -908,12 +915,12 @@ export const GuildView: React.FC<Props> = ({
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-300 mb-1">
-                      Guild Motto (optional)
+                      {t('Guild Motto (optional)')}
                     </label>
                     <input
                       type="text"
                       maxLength={SCHEMA_LIMITS.GUILD_MOTTO_MAX}
-                      placeholder="e.g. No skipped leg days on Floor 3"
+                      placeholder={t('e.g. No skipped leg days on Floor 3')}
                       value={guildMottoInput}
                       onChange={(e) => setGuildMottoInput(e.target.value)}
                       className="w-full min-h-[42px] px-3 py-2 text-sm bg-[#0d121a] border border-[#2d3c54] rounded-md text-white placeholder:text-slate-500"
@@ -923,20 +930,20 @@ export const GuildView: React.FC<Props> = ({
 
                 <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">Banner Theme:</span>
-                    {BANNER_THEME_OPTIONS.map((t) => (
+                    <span className="text-xs text-slate-400">{t('Banner Theme:')}</span>
+                    {BANNER_THEME_OPTIONS.map((themeKey) => (
                       <button
-                        key={t}
+                        key={themeKey}
                         type="button"
-                        onClick={() => setGuildThemeInput(t)}
-                        aria-label={BANNER_THEME_STYLES[t].label}
+                        onClick={() => setGuildThemeInput(themeKey)}
+                        aria-label={t(BANNER_THEME_STYLES[themeKey].label)}
                         className={`w-8 h-8 rounded-md flex items-center justify-center border transition-transform ${
-                          guildThemeInput === t
+                          guildThemeInput === themeKey
                             ? 'border-white scale-105'
                             : 'border-[#253247] opacity-70 hover:opacity-100'
                         } bg-[#0d121a]`}
                       >
-                        <span className={`w-4 h-4 rounded-sm ${BANNER_THEME_STYLES[t].swatch}`} />
+                        <span className={`w-4 h-4 rounded-sm ${BANNER_THEME_STYLES[themeKey].swatch}`} />
                       </button>
                     ))}
                   </div>
@@ -948,7 +955,7 @@ export const GuildView: React.FC<Props> = ({
                       onChange={(e) => setGuildPublicInput(e.target.checked)}
                       className="rounded border-slate-600 bg-[#0d121a] text-emerald-500"
                     />
-                    Public (appear in Open Guilds list)
+                    {t('Public (appear in Open Guilds list)')}
                   </label>
                 </div>
 
@@ -958,7 +965,7 @@ export const GuildView: React.FC<Props> = ({
                   className="min-h-[44px] px-5 py-2.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 rounded-md inline-flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  {creatingGuild ? 'Creating Guild...' : 'Create Guild'}
+                  {creatingGuild ? t('Creating Guild...') : t('Create Guild')}
                 </button>
               </form>
 
@@ -969,15 +976,15 @@ export const GuildView: React.FC<Props> = ({
               >
                 <div className="space-y-3">
                   <div>
-                    <h2 className="text-base font-semibold text-white">Join with Invite Code</h2>
+                    <h2 className="text-base font-semibold text-white">{t('Join with Invite Code')}</h2>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Got a code from a friend (like <span className="font-mono text-slate-300">PRIN-7K9M</span>)? Enter it below.
+                      {t('Got a code from a friend (like')} <span className="font-mono text-slate-300">PRIN-7K9M</span>{t(')? Enter it below.')}
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-slate-300 mb-1">
-                      Invite Code
+                      {t('Invite Code')}
                     </label>
                     <input
                       type="text"
@@ -997,22 +1004,22 @@ export const GuildView: React.FC<Props> = ({
                   className="w-full min-h-[44px] px-5 py-2.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-md inline-flex items-center justify-center gap-2"
                 >
                   <UserPlus className="w-4 h-4" />
-                  {joiningCode ? 'Joining...' : 'Join Guild'}
+                  {joiningCode ? t('Joining...') : t('Join Guild')}
                 </button>
               </form>
 
               {/* Open Guilds Directory */}
               <div className="lg:col-span-12 bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 space-y-4">
                 <div>
-                  <h2 className="text-base font-semibold text-white">Open Guilds</h2>
+                  <h2 className="text-base font-semibold text-white">{t('Open Guilds')}</h2>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Public Hunting Grounds parties currently open to new Crawlers.
+                    {t('Public Hunting Grounds parties currently open to new Crawlers.')}
                   </p>
                 </div>
 
                 {publicGuilds.length === 0 ? (
                   <p className="text-xs text-slate-400 py-4">
-                    No public guilds yet. Create the first one above and invite your friends!
+                    {t('No public guilds yet. Create the first one above and invite your friends!')}
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1031,7 +1038,7 @@ export const GuildView: React.FC<Props> = ({
                               </span>
                             </div>
                             <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                              {g.motto || 'Ready to clear Floor 3.'}
+                              {g.motto || t('Ready to clear Floor 3.')}
                             </p>
                           </div>
 
@@ -1046,10 +1053,10 @@ export const GuildView: React.FC<Props> = ({
                               className="min-h-[38px] px-3.5 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-md"
                             >
                               {joiningPublicId === g.id
-                                ? 'Joining...'
+                                ? t('Joining...')
                                 : g.memberCount >= 50
-                                ? 'Full'
-                                : 'Join'}
+                                ? t('Full')
+                                : t('Join')}
                             </button>
                           </div>
                         </div>
@@ -1069,10 +1076,10 @@ export const GuildView: React.FC<Props> = ({
           <div className="px-5 py-4 border-b border-[#253247] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-white">
-                Floor 3 Crawler Leaderboard
+                {t('Floor 3 Crawler Leaderboard')}
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Tap any Crawler to inspect their character profile, gear, and achievements.
+                {t('Tap any Crawler to inspect their character profile, gear, and achievements.')}
               </p>
             </div>
 
@@ -1082,7 +1089,7 @@ export const GuildView: React.FC<Props> = ({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search crawler, class, guild..."
+                placeholder={t('Search crawler, class, guild...')}
                 className="w-full min-h-[38px] pl-9 pr-3 py-1.5 text-xs bg-[#0d121a] border border-[#2d3c54] rounded-md text-white placeholder:text-slate-500"
               />
             </div>
@@ -1090,7 +1097,7 @@ export const GuildView: React.FC<Props> = ({
 
           {sortedPublicCrawlers.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400">
-              No public crawlers match your search yet.
+              {t('No public crawlers match your search yet.')}
             </div>
           ) : (
             <div className="divide-y divide-[#1f2a3c]">
@@ -1133,12 +1140,12 @@ export const GuildView: React.FC<Props> = ({
                           </span>
                           {isSelf && (
                             <span className="text-[11px] font-mono text-emerald-400 shrink-0">
-                              You
+                              {t('You')}
                             </span>
                           )}
                         </div>
                         <p className="text-xs text-slate-400 truncate">
-                          LV {lvl.level} · {entry.crawlerClass}
+                          {t('LV {n}', { n: lvl.level })} · {t(entry.crawlerClass)}
                           {entry.guildName ? ` · ${entry.guildName}` : ''}
                         </p>
                       </div>

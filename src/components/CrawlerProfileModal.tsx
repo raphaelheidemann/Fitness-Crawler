@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../lib/i18n';
 import { Award, Flame, Shield, Skull, Swords, Users, X } from 'lucide-react';
 import { GuildMember, PublicCrawler } from '../types';
 import {
@@ -35,6 +36,7 @@ export const CrawlerProfileModal: React.FC<Props> = ({
   isSelf = false,
   onClose,
 }) => {
+  const t = useT();
   if (!open || !crawler) return null;
 
   const { current, next } = getLevelInfo(crawler.xp, crawler.weeklyClears);
@@ -54,7 +56,7 @@ export const CrawlerProfileModal: React.FC<Props> = ({
 
   const guildName =
     'guildName' in crawler && crawler.guildName ? crawler.guildName : guildNameFallback;
-  const roleLabel = 'role' in crawler && crawler.role === 'leader' ? 'Guild Leader' : '';
+  const roleLabel = 'role' in crawler && crawler.role === 'leader' ? t('Guild Leader') : '';
 
   return (
     <div
@@ -68,7 +70,7 @@ export const CrawlerProfileModal: React.FC<Props> = ({
         <div className="relative h-44 bg-[#0b1017] border-b border-[#253247] shrink-0">
           <img
             src={HUNTING_GROUNDS_BG}
-            alt="Hunting Grounds forest backdrop"
+            alt={t('Hunting Grounds forest backdrop')}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover opacity-45 pixel-art"
           />
@@ -77,7 +79,7 @@ export const CrawlerProfileModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close profile"
+            aria-label={t('Close profile')}
             className="absolute top-3 right-3 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg bg-[#0d121a]/85 border border-[#2d3c54] text-slate-300 hover:text-white"
           >
             <X className="w-4 h-4" />
@@ -89,7 +91,7 @@ export const CrawlerProfileModal: React.FC<Props> = ({
             >
               <img
                 src={spriteSrc}
-                alt={`${crawler.crawlerName} sprite`}
+                alt={t('{name} sprite', { name: crawler.crawlerName })}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain pixel-art animate-crawler-idle"
               />
@@ -104,14 +106,14 @@ export const CrawlerProfileModal: React.FC<Props> = ({
                   {crawler.crawlerName}
                 </h2>
                 {isSelf && (
-                  <span className="text-xs font-mono text-emerald-400">You</span>
+                  <span className="text-xs font-mono text-emerald-400">{t('You')}</span>
                 )}
                 {roleLabel && (
                   <span className="text-xs font-mono text-amber-400">· {roleLabel}</span>
                 )}
               </div>
               <p className={`text-xs font-semibold ${theme.accentText} mt-0.5`}>
-                {crawler.crawlerClass} · LV {current.level} {current.title}
+                {t(crawler.crawlerClass)} · {t('LV {n}', { n: current.level })} {t(current.title)}
               </p>
               {guildName && (
                 <p className="text-xs text-slate-300 mt-1 inline-flex items-center gap-1.5">
@@ -127,7 +129,7 @@ export const CrawlerProfileModal: React.FC<Props> = ({
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {crawler.crawlerMotto && (
             <div className={`p-3.5 rounded-lg border ${theme.border} bg-[#0e141d]`}>
-              <p className="text-xs text-slate-400 mb-1">Battle Motto</p>
+              <p className="text-xs text-slate-400 mb-1">{t('Battle Motto')}</p>
               <p className="text-sm text-slate-100 italic">&ldquo;{crawler.crawlerMotto}&rdquo;</p>
             </div>
           )}
@@ -140,8 +142,11 @@ export const CrawlerProfileModal: React.FC<Props> = ({
               </span>
               <span className="text-slate-400">
                 {next
-                  ? `${Math.max(0, next.xpRequired - crawler.xp).toLocaleString()} XP to Lv ${next.level}`
-                  : 'Max Crawler Tier'}
+                  ? t('{xp} XP to Lv {n}', {
+                      xp: Math.max(0, next.xpRequired - crawler.xp).toLocaleString(),
+                      n: next.level,
+                    })
+                  : t('Max Crawler Tier')}
               </span>
             </div>
             <div className="h-2.5 w-full bg-[#0a0f16] border border-[#29374c] rounded overflow-hidden">
@@ -155,28 +160,28 @@ export const CrawlerProfileModal: React.FC<Props> = ({
           {/* Key Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3 rounded-lg bg-[#0e141d] border border-[#253247]">
-              <p className="text-xs text-slate-400">Bosses Slain</p>
+              <p className="text-xs text-slate-400">{t('Bosses Slain')}</p>
               <p className="text-lg font-bold font-mono text-rose-400 mt-1 tabular-nums inline-flex items-center gap-1.5">
                 <Skull className="w-4 h-4" />
                 {crawler.weeklyClears}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-[#0e141d] border border-[#253247]">
-              <p className="text-xs text-slate-400">Current Streak</p>
+              <p className="text-xs text-slate-400">{t('Current Streak')}</p>
               <p className="text-lg font-bold font-mono text-amber-400 mt-1 tabular-nums inline-flex items-center gap-1.5">
                 <Flame className="w-4 h-4" />
-                {crawler.currentStreak}d
+                {crawler.currentStreak}{t('d')}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-[#0e141d] border border-[#253247]">
-              <p className="text-xs text-slate-400">Best Streak</p>
+              <p className="text-xs text-slate-400">{t('Best Streak')}</p>
               <p className="text-lg font-bold font-mono text-emerald-400 mt-1 tabular-nums inline-flex items-center gap-1.5">
                 <Shield className="w-4 h-4" />
-                {crawler.bestStreak}d
+                {crawler.bestStreak}{t('d')}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-[#0e141d] border border-[#253247]">
-              <p className="text-xs text-slate-400">Gear Unlocked</p>
+              <p className="text-xs text-slate-400">{t('Gear Unlocked')}</p>
               <p className="text-lg font-bold font-mono text-sky-400 mt-1 tabular-nums inline-flex items-center gap-1.5">
                 <Swords className="w-4 h-4" />
                 {crawler.unlockedGearCount}
@@ -187,14 +192,14 @@ export const CrawlerProfileModal: React.FC<Props> = ({
           {/* Equipped Loadout */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2.5">
-              Equipped Loadout
+              {t('Equipped Loadout')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {[
-                { label: 'Weapon', item: weaponDef },
-                { label: 'Armor', item: armorDef },
-                { label: 'Headgear & Relic', item: accDef },
-                { label: 'Stage Aura', item: auraDef },
+                { label: t('Weapon'), item: weaponDef },
+                { label: t('Armor'), item: armorDef },
+                { label: t('Headgear & Relic'), item: accDef },
+                { label: t('Stage Aura'), item: auraDef },
               ].map(({ label, item }) => (
                 <div
                   key={label}
@@ -203,15 +208,15 @@ export const CrawlerProfileModal: React.FC<Props> = ({
                   <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
                     <span>{label}</span>
                     {item && (
-                      <span className="font-mono uppercase text-amber-300">{item.rarity}</span>
+                      <span className="font-mono uppercase text-amber-300">{t(item.rarity)}</span>
                     )}
                   </div>
                   <p className="text-sm font-semibold text-slate-100 mt-1">
-                    {item?.name ?? 'Default Starter'}
+                    {item ? t(item.name) : t('Default Starter')}
                   </p>
                   {item && (
                     <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                      {item.description}
+                      {t(item.description)}
                     </p>
                   )}
                 </div>
@@ -222,7 +227,7 @@ export const CrawlerProfileModal: React.FC<Props> = ({
           {/* Achievements */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2.5">
-              Achievements ({crawler.unlockedAchievementIds.length}/6)
+              {t('Achievements ({n}/6)', { n: crawler.unlockedAchievementIds.length })}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {CRAWLER_ACHIEVEMENTS.map((ach) => {
@@ -242,8 +247,8 @@ export const CrawlerProfileModal: React.FC<Props> = ({
                       }`}
                     />
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-slate-100">{ach.title}</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{ach.description}</p>
+                      <p className="text-xs font-semibold text-slate-100">{t(ach.title)}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{t(ach.description)}</p>
                     </div>
                   </div>
                 );
