@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useT } from '../lib/i18n';
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Measurement, SCHEMA_LIMITS, UserProfile } from '../types';
 import { lengthUnit, todayIsoDate, weightUnit } from '../lib/sanitize';
@@ -19,6 +20,7 @@ export const MeasurementsView: React.FC<Props> = ({
   externalOpenCreate,
   onCloseExternalCreate,
 }) => {
+  const t = useT();
   const wUnit = weightUnit(profile.unitSystem);
   const lUnit = lengthUnit(profile.unitSystem);
 
@@ -127,10 +129,10 @@ export const MeasurementsView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-xs text-slate-400">
-            {measurements.length} recorded check-ins · Units in {wUnit} and {lUnit}
+            {t('{n} recorded check-ins · Units in {w} and {l}', { n: measurements.length, w: wUnit, l: lUnit })}
           </p>
           <h1 className="text-xl font-bold text-white mt-1">
-            Body Measurements & Check-ins
+            {t('Body Measurements & Check-ins')}
           </h1>
         </div>
 
@@ -140,7 +142,7 @@ export const MeasurementsView: React.FC<Props> = ({
           className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          Log Measurement
+          {t('Log Measurement')}
         </button>
       </div>
 
@@ -148,12 +150,12 @@ export const MeasurementsView: React.FC<Props> = ({
       {latest && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: 'Weight', val: latest.weight, base: baseline?.weight, unit: wUnit },
-            { label: 'Body Fat', val: latest.bodyFatPct, base: baseline?.bodyFatPct, unit: '%' },
-            { label: 'Waist', val: latest.waist, base: baseline?.waist, unit: lUnit },
-            { label: 'Chest', val: latest.chest, base: baseline?.chest, unit: lUnit },
-            { label: 'Arms', val: latest.arms, base: baseline?.arms, unit: lUnit },
-            { label: 'Thighs', val: latest.thighs, base: baseline?.thighs, unit: lUnit },
+            { label: t('Weight'), val: latest.weight, base: baseline?.weight, unit: wUnit },
+            { label: t('Body Fat'), val: latest.bodyFatPct, base: baseline?.bodyFatPct, unit: '%' },
+            { label: t('Waist'), val: latest.waist, base: baseline?.waist, unit: lUnit },
+            { label: t('Chest'), val: latest.chest, base: baseline?.chest, unit: lUnit },
+            { label: t('Arms'), val: latest.arms, base: baseline?.arms, unit: lUnit },
+            { label: t('Thighs'), val: latest.thighs, base: baseline?.thighs, unit: lUnit },
           ].map((stat) => {
             const d = deltaLabel(stat.val, stat.base, stat.unit);
             return (
@@ -163,7 +165,7 @@ export const MeasurementsView: React.FC<Props> = ({
                   {stat.val > 0 ? `${stat.val} ${stat.unit}` : '—'}
                 </p>
                 <p className="text-[11px] text-slate-400 font-mono tabular-nums mt-1">
-                  {d ? `${d} vs W${baseline.weekNumber}` : 'Baseline'}
+                  {d ? `${d} ${t('vs W{n}', { n: baseline.weekNumber })}` : t('Baseline')}
                 </p>
               </div>
             );
@@ -175,16 +177,16 @@ export const MeasurementsView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl overflow-hidden">
         {sortedDesc.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-sm font-medium text-slate-200">No measurements recorded yet</p>
+            <p className="text-sm font-medium text-slate-200">{t('No measurements recorded yet')}</p>
             <p className="text-xs text-slate-400 mt-1 mb-4">
-              Record your current weight, body fat, and circumferences to track weekly progress.
+              {t('Record your current weight, body fat, and circumferences to track weekly progress.')}
             </p>
             <button
               type="button"
               onClick={openCreate}
               className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
             >
-              Log First Check-in
+              {t('Log First Check-in')}
             </button>
           </div>
         ) : (
@@ -192,17 +194,17 @@ export const MeasurementsView: React.FC<Props> = ({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#0e141d] border-b border-[#253247] text-xs font-medium text-slate-400">
-                  <th className="py-3 px-4">Week</th>
-                  <th className="py-3 px-3">Date</th>
-                  <th className="py-3 px-3 text-right">Weight ({wUnit})</th>
-                  <th className="py-3 px-3 text-right">BF %</th>
-                  <th className="py-3 px-3 text-right">Waist ({lUnit})</th>
-                  <th className="py-3 px-3 text-right">Chest ({lUnit})</th>
-                  <th className="py-3 px-3 text-right">Hips ({lUnit})</th>
-                  <th className="py-3 px-3 text-right">Arms ({lUnit})</th>
-                  <th className="py-3 px-3 text-right">Thighs ({lUnit})</th>
-                  <th className="py-3 px-3">Notes</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">{t('Week')}</th>
+                  <th className="py-3 px-3">{t('Date')}</th>
+                  <th className="py-3 px-3 text-right">{t('Weight ({unit})', { unit: wUnit })}</th>
+                  <th className="py-3 px-3 text-right">{t('BF %')}</th>
+                  <th className="py-3 px-3 text-right">{t('Waist ({unit})', { unit: lUnit })}</th>
+                  <th className="py-3 px-3 text-right">{t('Chest ({unit})', { unit: lUnit })}</th>
+                  <th className="py-3 px-3 text-right">{t('Hips ({unit})', { unit: lUnit })}</th>
+                  <th className="py-3 px-3 text-right">{t('Arms ({unit})', { unit: lUnit })}</th>
+                  <th className="py-3 px-3 text-right">{t('Thighs ({unit})', { unit: lUnit })}</th>
+                  <th className="py-3 px-3">{t('Notes')}</th>
+                  <th className="py-3 px-4 text-right">{t('Actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b] text-sm">
@@ -242,7 +244,7 @@ export const MeasurementsView: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => openEdit(m)}
-                        aria-label={`Edit W${m.weekNumber} measurement`}
+                        aria-label={t('Edit W{n} measurement', { n: m.weekNumber })}
                         className="p-1.5 text-slate-400 hover:text-white rounded-md"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -250,7 +252,7 @@ export const MeasurementsView: React.FC<Props> = ({
                       <button
                         type="button"
                         onClick={() => void deleteMeasurement(uid, m.id)}
-                        aria-label={`Delete W${m.weekNumber} measurement`}
+                        aria-label={t('Delete W{n} measurement', { n: m.weekNumber })}
                         className="p-1.5 text-slate-400 hover:text-rose-400 rounded-md ml-1"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -270,12 +272,12 @@ export const MeasurementsView: React.FC<Props> = ({
           <div className="w-full max-w-xl bg-[#131a24] border-2 border-[#33445e] rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 bg-[#0f151e] border-b border-[#253247]">
               <h2 className="text-base font-semibold text-white">
-                {editingId ? 'Edit Check-in' : 'Log Body Measurement'}
+                {editingId ? t('Edit Check-in') : t('Log Body Measurement')}
               </h2>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                aria-label="Close measurement modal"
+                aria-label={t('Close measurement modal')}
                 className="p-2 text-slate-400 hover:text-white rounded-lg"
               >
                 <X className="w-4 h-4" />
@@ -285,7 +287,7 @@ export const MeasurementsView: React.FC<Props> = ({
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Week #</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Week #')}</label>
                   <input
                     type="number"
                     min={1}
@@ -297,7 +299,7 @@ export const MeasurementsView: React.FC<Props> = ({
                   />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Date</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Date')}</label>
                   <input
                     type="date"
                     required
@@ -308,7 +310,7 @@ export const MeasurementsView: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Weight ({wUnit})
+                    {t('Weight ({unit})', { unit: wUnit })}
                   </label>
                   <input
                     type="number"
@@ -323,7 +325,7 @@ export const MeasurementsView: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Body Fat (%)
+                    {t('Body Fat (%)')}
                   </label>
                   <input
                     type="number"
@@ -339,11 +341,11 @@ export const MeasurementsView: React.FC<Props> = ({
 
               <div className="pt-2 border-t border-[#253247]">
                 <p className="text-xs font-medium text-slate-300 mb-2">
-                  Circumferences ({lUnit}) — leave 0 if unmeasured
+                  {t('Circumferences ({unit}) — leave 0 if unmeasured', { unit: lUnit })}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Waist</label>
+                    <label className="block text-xs text-slate-400 mb-1">{t('Waist')}</label>
                     <input
                       type="number"
                       step="0.1"
@@ -355,7 +357,7 @@ export const MeasurementsView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Chest</label>
+                    <label className="block text-xs text-slate-400 mb-1">{t('Chest')}</label>
                     <input
                       type="number"
                       step="0.1"
@@ -367,7 +369,7 @@ export const MeasurementsView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Hips</label>
+                    <label className="block text-xs text-slate-400 mb-1">{t('Hips')}</label>
                     <input
                       type="number"
                       step="0.1"
@@ -379,7 +381,7 @@ export const MeasurementsView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Arms</label>
+                    <label className="block text-xs text-slate-400 mb-1">{t('Arms')}</label>
                     <input
                       type="number"
                       step="0.1"
@@ -391,7 +393,7 @@ export const MeasurementsView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Thighs</label>
+                    <label className="block text-xs text-slate-400 mb-1">{t('Thighs')}</label>
                     <input
                       type="number"
                       step="0.1"
@@ -403,7 +405,7 @@ export const MeasurementsView: React.FC<Props> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Neck</label>
+                    <label className="block text-xs text-slate-400 mb-1">{t('Neck')}</label>
                     <input
                       type="number"
                       step="0.1"
@@ -418,13 +420,13 @@ export const MeasurementsView: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Notes</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">{t('Notes')}</label>
                 <textarea
                   rows={2}
                   maxLength={SCHEMA_LIMITS.NOTES_MAX}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Sleep quality, hydration, strength PRs..."
+                  placeholder={t('Sleep quality, hydration, strength PRs...')}
                   className="w-full px-3 py-2 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                 />
               </div>
@@ -435,14 +437,14 @@ export const MeasurementsView: React.FC<Props> = ({
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2 text-xs font-medium text-slate-200 hover:bg-[#1a2332] rounded-lg"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
                   className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
                 >
-                  {saving ? 'Saving...' : 'Save Check-in'}
+                  {saving ? t('Saving...') : t('Save Check-in')}
                 </button>
               </div>
             </form>

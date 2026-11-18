@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../lib/i18n';
 import {
   Award,
   Flame,
@@ -50,6 +51,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
   onOpenGuild,
   onToggleSfx,
 }) => {
+  const t = useT();
   const { current, next } = getLevelInfo(crawler.xp, crawler.weeklyClears);
   const xpIntoLevel = Math.max(0, crawler.xp - current.xpRequired);
   const xpSpan = next ? Math.max(1, next.xpRequired - current.xpRequired) : 1;
@@ -63,8 +65,8 @@ export const HuntingGroundsStage: React.FC<Props> = ({
     CRAWLER_SPRITES[crawler.equippedSpriteTier] ?? CRAWLER_SPRITES[current.spriteTier];
   const auraFrame = AURA_FRAME_CLASSES[crawler.equippedAura] ?? AURA_FRAME_CLASSES.aur_none;
   const bannerStyle = BANNER_THEME_STYLES[crawler.bannerTheme ?? 'amber'];
-  const shownName = crawler.crawlerName?.trim() || displayName || 'Crawler';
-  const shownClass = crawler.crawlerClass?.trim() || 'Primal Brawler';
+  const shownName = crawler.crawlerName?.trim() || displayName || t('Crawler');
+  const shownClass = crawler.crawlerClass?.trim() || t('Primal Brawler');
 
   return (
     <section className={`relative overflow-hidden rounded-lg border-2 ${bannerStyle.border} bg-[#0b1017]`}>
@@ -104,7 +106,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
                   {shownName}
                 </span>
                 <span className="text-xs font-semibold text-slate-200">
-                  LV {current.level} · {shownClass}
+                  {t('LV {n}', { n: current.level })} · {t(shownClass)}
                 </span>
                 {crawler.guildName && (
                   <button
@@ -117,7 +119,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
                 )}
               </div>
               <span className="text-[11px] font-mono text-slate-300 tabular-nums">
-                {crawler.weeklyClears} Bosses Slain
+                {t('{n} Bosses Slain', { n: crawler.weeklyClears })}
               </span>
             </div>
 
@@ -135,8 +137,11 @@ export const HuntingGroundsStage: React.FC<Props> = ({
                 </span>
                 <span className="text-slate-300">
                   {next
-                    ? `${Math.max(0, next.xpRequired - crawler.xp).toLocaleString()} XP to Lv ${next.level}`
-                    : 'Max Tier'}
+                    ? t('{xp} XP to Lv {n}', {
+                        xp: Math.max(0, next.xpRequired - crawler.xp).toLocaleString(),
+                        n: next.level,
+                      })
+                    : t('Max Tier')}
                 </span>
               </div>
               <div className="h-2.5 w-full bg-[#090d12] border border-[#2c3b52] rounded-[3px] overflow-hidden">
@@ -150,23 +155,23 @@ export const HuntingGroundsStage: React.FC<Props> = ({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-200">
               <span className="inline-flex items-center gap-1 font-mono tabular-nums">
                 <Flame className="w-3.5 h-3.5 text-amber-400" />
-                {crawler.currentStreak}d Streak
+                {t('{n}d Streak', { n: crawler.currentStreak })}
               </span>
               <span
                 className="inline-flex items-center gap-1 font-mono tabular-nums text-sky-300"
-                title="Safe-Room Shields protect your streak if you miss a day"
+                title={t('Safe-Room Shields protect your streak if you miss a day')}
               >
                 <Shield className="w-3.5 h-3.5 text-sky-400" />
-                {crawler.streakFreezes} {crawler.streakFreezes === 1 ? 'Shield' : 'Shields'}
+                {crawler.streakFreezes} {crawler.streakFreezes === 1 ? t('Shield') : t('Shields')}
               </span>
               <span className="text-slate-400 truncate">
-                {weaponDef?.name ?? 'Knuckle Wraps'} · {armorDef?.name ?? 'Leather Jacket'} ·{' '}
-                {accDef?.name ?? 'Crawler Grit'}
+                {t(weaponDef?.name ?? 'Knuckle Wraps')} · {t(armorDef?.name ?? 'Leather Jacket')} ·{' '}
+                {t(accDef?.name ?? 'Crawler Grit')}
               </span>
             </div>
             {crawler.recoveryQuestActive && (
               <p className="text-[11px] text-amber-300 font-medium">
-                Second Wind active: log 1 workout or habit today to mend streak
+                {t('Second Wind active: log 1 workout or habit today to mend streak')}
               </p>
             )}
           </div>
@@ -181,7 +186,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
                   }`}
                 />
                 <span className="font-pixel text-xs text-slate-100 truncate">
-                  W{weekNumber} Boss: {weeklySummary.bossName}
+                  {t('W{n} Boss: {name}', { n: weekNumber, name: t(weeklySummary.bossName) })}
                 </span>
               </div>
               <span
@@ -189,7 +194,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
                   weeklySummary.isBossSlain ? 'text-emerald-400' : 'text-rose-400'
                 }`}
               >
-                {weeklySummary.bossHpRemaining}% HP
+                {t('{n}% HP', { n: weeklySummary.bossHpRemaining })}
               </span>
             </div>
 
@@ -204,27 +209,27 @@ export const HuntingGroundsStage: React.FC<Props> = ({
 
             <div className="grid grid-cols-4 gap-1.5 text-[11px] font-mono tabular-nums text-slate-200">
               <div className="bg-[#121a26]/85 px-2 py-1 rounded text-center">
-                <span className="block text-[10px] text-slate-400">Gym</span>
+                <span className="block text-[10px] text-slate-400">{t('Gym')}</span>
                 {weeklySummary.completedWorkouts}/{weeklySummary.targetWorkouts}
               </div>
               <div className="bg-[#121a26]/85 px-2 py-1 rounded text-center">
-                <span className="block text-[10px] text-slate-400">Diet</span>
-                {weeklySummary.nutritionDaysHit}/5d
+                <span className="block text-[10px] text-slate-400">{t('Diet')}</span>
+                {weeklySummary.nutritionDaysHit}/5{t('d')}
               </div>
               <div className="bg-[#121a26]/85 px-2 py-1 rounded text-center">
-                <span className="block text-[10px] text-slate-400">Habits</span>
+                <span className="block text-[10px] text-slate-400">{t('Habits')}</span>
                 {weeklySummary.habitCompletionsThisWeek}/{weeklySummary.habitTargetThisWeek}
               </div>
               <div className="bg-[#121a26]/85 px-2 py-1 rounded text-center">
-                <span className="block text-[10px] text-slate-400">Water</span>
-                {weeklySummary.hydrationDaysHit}/5d
+                <span className="block text-[10px] text-slate-400">{t('Water')}</span>
+                {weeklySummary.hydrationDaysHit}/5{t('d')}
               </div>
             </div>
 
             <p className="text-[11px] text-slate-300 truncate">
               {weeklySummary.isBossSlain
-                ? 'Slain! Weekly Level-Up & Loot Box earned'
-                : `Hit 85% week discipline to slay (${weeklySummary.overallPct}% / 85%)`}
+                ? t('Slain! Weekly Level-Up & Loot Box earned')
+                : t('Hit 85% week discipline to slay ({n}% / 85%)', { n: weeklySummary.overallPct })}
             </p>
           </div>
         </div>
@@ -236,12 +241,12 @@ export const HuntingGroundsStage: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => onOpenArmory('customize')}
-              title="Customize your Crawler name, class & gear"
+              title={t('Customize your Crawler name, class & gear')}
               className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-lg border-2 bg-[#0d1117]/85 overflow-hidden flex items-center justify-center transition-transform hover:scale-[1.03] ${auraFrame}`}
             >
               <img
                 src={spriteSrc}
-                alt={`${shownName} Level ${current.level} Sprite`}
+                alt={t('{name} Level {n} Sprite', { name: shownName, n: current.level })}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain pixel-art animate-crawler-idle"
               />
@@ -254,10 +259,10 @@ export const HuntingGroundsStage: React.FC<Props> = ({
           {/* Open Center Clearing Indicator */}
           <div className="flex-1 flex flex-col items-center justify-end pb-5 text-center pointer-events-none select-none min-w-0">
             <span className="font-pixel text-xs sm:text-sm text-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
-              {weeklySummary.isBossSlain ? 'BOSS SLAIN' : 'VS'}
+              {weeklySummary.isBossSlain ? t('BOSS SLAIN') : t('VS')}
             </span>
             <span className="text-[11px] font-mono text-slate-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] hidden sm:block">
-              Floor 3 · {current.title}
+              {t('Floor 3')} · {t(current.title)}
             </span>
           </div>
 
@@ -272,14 +277,14 @@ export const HuntingGroundsStage: React.FC<Props> = ({
             >
               <img
                 src={BOSS_MANTIS_IMG}
-                alt={weeklySummary.bossName}
+                alt={t(weeklySummary.bossName)}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain pixel-art animate-crawler-idle"
                 style={{ animationDelay: '0.6s' }}
               />
             </div>
             <span className="font-pixel text-[10px] text-rose-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] text-right">
-              {weeklySummary.bossName}
+              {t(weeklySummary.bossName)}
             </span>
           </div>
         </div>
@@ -292,7 +297,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
             className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-100 bg-[#131b27]/90 hover:bg-[#1f2c3f] border border-[#344662] rounded-md transition-colors whitespace-nowrap"
           >
             <UserCog className="w-3.5 h-3.5 text-sky-400" />
-            Customize
+            {t('Customize')}
           </button>
 
           <button
@@ -301,7 +306,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
             className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-100 bg-[#131b27]/90 hover:bg-[#1f2c3f] border border-[#344662] rounded-md transition-colors whitespace-nowrap"
           >
             <Swords className="w-3.5 h-3.5 text-amber-400" />
-            Armory
+            {t('Armory')}
           </button>
 
           {onOpenGuild && (
@@ -311,7 +316,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
               className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-100 bg-[#131b27]/90 hover:bg-[#1f2c3f] border border-[#344662] rounded-md transition-colors whitespace-nowrap"
             >
               <Users className="w-3.5 h-3.5 text-emerald-400" />
-              Guild
+              {t('Guild')}
             </button>
           )}
 
@@ -337,15 +342,15 @@ export const HuntingGroundsStage: React.FC<Props> = ({
                 className="w-4 h-4 rounded-[2px] pixel-art object-cover"
               />
               <PackageOpen className="w-3.5 h-3.5 hidden" />
-              Open Box ({crawler.pendingLootBoxes.length})
+              {t('Open Box ({n})', { n: crawler.pendingLootBoxes.length })}
             </button>
           )}
 
           <button
             type="button"
             onClick={onToggleSfx}
-            aria-label={crawler.sfxEnabled ? 'Mute 8-bit sound effects' : 'Enable 8-bit sound effects'}
-            title={crawler.sfxEnabled ? '8-Bit SFX On' : '8-Bit SFX Off'}
+            aria-label={crawler.sfxEnabled ? t('Mute 8-bit sound effects') : t('Enable 8-bit sound effects')}
+            title={crawler.sfxEnabled ? t('8-Bit SFX On') : t('8-Bit SFX Off')}
             className="min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-300 hover:text-white bg-[#131b27]/90 hover:bg-[#1f2c3f] border border-[#344662] rounded-md transition-colors ml-auto"
           >
             {crawler.sfxEnabled ? (

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../lib/i18n';
 import {
   Area,
   AreaChart,
@@ -87,6 +88,7 @@ export const OverviewView: React.FC<Props> = ({
   onOpenQuickMeasurement,
   onOpenQuickFood,
 }) => {
+  const t = useT();
   const wUnit = weightUnit(profile.unitSystem);
   const lUnit = lengthUnit(profile.unitSystem);
   const dUnit = distanceUnit(profile.unitSystem);
@@ -192,14 +194,14 @@ export const OverviewView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span>Active Training Block</span>
+            <span>{t('Active Training Block')}</span>
             <span aria-hidden="true">·</span>
-            <span>Started {profile.startDate}</span>
+            <span>{t('Started {date}', { date: profile.startDate })}</span>
             <span aria-hidden="true">·</span>
-            <span>{profile.unitSystem === 'imperial' ? 'Imperial' : 'Metric'}</span>
+            <span>{profile.unitSystem === 'imperial' ? t('Imperial') : t('Metric')}</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white mt-1">
-            Week {profile.currentWeek}: {profile.phaseName}
+            {t('Week {n}', { n: profile.currentWeek })}: {profile.phaseName}
           </h1>
         </div>
 
@@ -209,19 +211,19 @@ export const OverviewView: React.FC<Props> = ({
               type="button"
               onClick={() => void handleStepWeek(-1)}
               disabled={profile.currentWeek <= 1}
-              aria-label="Previous week"
+              aria-label={t('Previous week')}
               className="p-1.5 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded disabled:opacity-40 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="px-3 text-xs font-mono font-medium text-slate-100 tabular-nums whitespace-nowrap">
-              Week {profile.currentWeek} of 52
+              {t('Week {n} of 52', { n: profile.currentWeek })}
             </span>
             <button
               type="button"
               onClick={() => void handleStepWeek(1)}
               disabled={profile.currentWeek >= 52}
-              aria-label="Next week"
+              aria-label={t('Next week')}
               className="p-1.5 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded disabled:opacity-40 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
@@ -234,7 +236,7 @@ export const OverviewView: React.FC<Props> = ({
             className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md transition-colors whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
-            Log Food Eaten
+            {t('Log Food Eaten')}
           </button>
 
           <button
@@ -243,7 +245,7 @@ export const OverviewView: React.FC<Props> = ({
             className="min-h-[42px] inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-md transition-colors whitespace-nowrap"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            Edit Week &amp; Targets
+            {t('Edit Week & Targets')}
           </button>
         </div>
       </div>
@@ -251,10 +253,10 @@ export const OverviewView: React.FC<Props> = ({
       {/* 4-Column KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-400">Current Weight</p>
+          <p className="text-xs font-medium text-slate-400">{t('Current Weight')}</p>
           <div className="mt-2 flex items-baseline justify-between gap-2">
             <span className="text-2xl font-bold text-white font-mono tabular-nums">
-              {latestMeas ? `${latestMeas.weight} ${wUnit}` : 'No check-in'}
+              {latestMeas ? `${latestMeas.weight} ${wUnit}` : t('No check-in')}
             </span>
             {weightDelta !== null && (
               <span
@@ -262,51 +264,54 @@ export const OverviewView: React.FC<Props> = ({
                   weightDelta <= 0 ? 'text-emerald-400' : 'text-amber-400'
                 }`}
               >
-                {weightDelta > 0 ? `+${weightDelta}` : weightDelta} {wUnit} vs W{firstMeas.weekNumber}
+                {weightDelta > 0 ? `+${weightDelta}` : weightDelta} {wUnit} {t('vs W{n}', { n: firstMeas.weekNumber })}
               </span>
             )}
           </div>
           <p className="text-xs text-slate-400 mt-2 font-mono tabular-nums">
-            Target: {profile.targetWeight} {wUnit}
+            {t('Target: {n} {unit}', { n: profile.targetWeight, unit: wUnit })}
           </p>
         </div>
 
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
           <p className="text-xs font-medium text-slate-400">
-            Week {profile.currentWeek} Gym Sessions
+            {t('Week {n} Gym Sessions', { n: profile.currentWeek })}
           </p>
           <div className="mt-2 flex items-baseline justify-between gap-2">
             <span className="text-2xl font-bold text-white font-mono tabular-nums">
               {completedSessions} / {profile.weeklyWorkoutTarget}
             </span>
             <span className="text-xs font-mono font-medium text-emerald-400 tabular-nums">
-              {Math.round(totalWeekVolume).toLocaleString()} {wUnit} vol
+              {t('{n} {unit} vol', { n: Math.round(totalWeekVolume).toLocaleString(), unit: wUnit })}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-2">
-            {trainingDays.length} training days scheduled
+            {t('{n} training days scheduled', { n: trainingDays.length })}
           </p>
         </div>
 
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
           <p className="text-xs font-medium text-slate-400">
-            Avg Logged Intake (W{profile.currentWeek})
+            {t('Avg Logged Intake (W{n})', { n: profile.currentWeek })}
           </p>
           <div className="mt-2 flex items-baseline justify-between gap-2">
             <span className="text-2xl font-bold text-white font-mono tabular-nums">
               {avgConsumedKcal > 0 ? `${avgConsumedKcal.toLocaleString()} kcal` : '0 kcal'}
             </span>
             <span className="text-xs font-mono font-medium text-sky-400 tabular-nums">
-              {avgProteinG}g P/d
+              {t('{n}g P/d', { n: avgProteinG })}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-2 font-mono tabular-nums">
-            Target: {profile.dailyCalorieTarget.toLocaleString()} kcal · {profile.proteinTargetG}g P
+            {t('Target: {kcal} kcal · {p}g P', {
+              kcal: profile.dailyCalorieTarget.toLocaleString(),
+              p: profile.proteinTargetG,
+            })}
           </p>
         </div>
 
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-400">Waist &amp; Body Fat</p>
+          <p className="text-xs font-medium text-slate-400">{t('Waist & Body Fat')}</p>
           <div className="mt-2 flex items-baseline justify-between gap-2">
             <span className="text-2xl font-bold text-white font-mono tabular-nums">
               {latestMeas && latestMeas.waist > 0 ? `${latestMeas.waist} ${lUnit}` : '—'}
@@ -319,8 +324,8 @@ export const OverviewView: React.FC<Props> = ({
           </div>
           <p className="text-xs text-slate-400 mt-2 font-mono tabular-nums">
             {latestMeas && latestMeas.bodyFatPct > 0
-              ? `Est. Body Fat: ${latestMeas.bodyFatPct}%`
-              : 'Log body fat on next check-in'}
+              ? t('Est. Body Fat: {n}%', { n: latestMeas.bodyFatPct })
+              : t('Log body fat on next check-in')}
           </p>
         </div>
       </div>
@@ -333,9 +338,9 @@ export const OverviewView: React.FC<Props> = ({
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-semibold text-white">Body Weight Trajectory</h2>
+              <h2 className="text-base font-semibold text-white">{t('Body Weight Trajectory')}</h2>
               <p className="text-xs text-slate-400">
-                Logged check-ins vs {profile.targetWeight} {wUnit} target
+                {t('Logged check-ins vs {n} {unit} target', { n: profile.targetWeight, unit: wUnit })}
               </p>
             </div>
             <button
@@ -343,22 +348,22 @@ export const OverviewView: React.FC<Props> = ({
               onClick={onOpenQuickMeasurement}
               className="text-xs font-medium text-amber-400 hover:text-amber-300 whitespace-nowrap"
             >
-              + Log check-in
+              {t('+ Log check-in')}
             </button>
           </div>
 
           {weightChartData.length === 0 ? (
             <div className="h-64 flex flex-col items-center justify-center border border-dashed border-[#2c3b52] rounded-lg text-center p-6">
-              <p className="text-sm font-medium text-slate-200">No measurements logged yet</p>
+              <p className="text-sm font-medium text-slate-200">{t('No measurements logged yet')}</p>
               <p className="text-xs text-slate-400 mt-1 mb-4">
-                Add your first weight and waist measurement to plot progress.
+                {t('Add your first weight and waist measurement to plot progress.')}
               </p>
               <button
                 type="button"
                 onClick={onOpenQuickMeasurement}
                 className="px-3.5 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md"
               >
-                Log First Measurement
+                {t('Log First Measurement')}
               </button>
             </div>
           ) : (
@@ -392,7 +397,7 @@ export const OverviewView: React.FC<Props> = ({
                       color: '#f1f5f9',
                       fontSize: '12px',
                     }}
-                    formatter={(value: unknown) => [`${value} ${wUnit}`, 'Weight']}
+                    formatter={(value: unknown) => [`${value} ${wUnit}`, t('Weight')]}
                     labelFormatter={(label, payload) => {
                       const row = payload?.[0]?.payload as { date?: string } | undefined;
                       return `${label}${row?.date ? ` · ${row.date}` : ''}`;
@@ -403,7 +408,7 @@ export const OverviewView: React.FC<Props> = ({
                     stroke="#38bdf8"
                     strokeDasharray="4 4"
                     label={{
-                      value: `Target ${profile.targetWeight}${wUnit}`,
+                      value: `${t('Target')} ${profile.targetWeight}${wUnit}`,
                       position: 'insideTopRight',
                       fill: '#38bdf8',
                       fontSize: 11,
@@ -428,10 +433,12 @@ export const OverviewView: React.FC<Props> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-semibold text-white">
-                Week {profile.currentWeek} Calorie Compliance
+                {t('Week {n} Calorie Compliance', { n: profile.currentWeek })}
               </h2>
               <p className="text-xs text-slate-400">
-                Planned vs consumed kcal compared to {profile.dailyCalorieTarget.toLocaleString()} target
+                {t('Planned vs consumed kcal compared to {n} target', {
+                  n: profile.dailyCalorieTarget.toLocaleString(),
+                })}
               </p>
             </div>
             <button
@@ -439,7 +446,7 @@ export const OverviewView: React.FC<Props> = ({
               onClick={() => onNavigate('charts')}
               className="inline-flex items-center gap-1 text-xs font-medium text-amber-400 hover:text-amber-300 whitespace-nowrap"
             >
-              All charts
+              {t('All charts')}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -473,8 +480,8 @@ export const OverviewView: React.FC<Props> = ({
                   stroke="#f59e0b"
                   strokeDasharray="4 4"
                 />
-                <Bar dataKey="plannedKcal" name="Planned kcal" fill="#334155" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="consumedKcal" name="Consumed kcal" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="plannedKcal" name={t('Planned kcal')} fill="#334155" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="consumedKcal" name={t('Consumed kcal')} fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -498,10 +505,10 @@ export const OverviewView: React.FC<Props> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-semibold text-white">
-                Week {profile.currentWeek} Dungeon Split
+                {t('Week {n} Dungeon Split', { n: profile.currentWeek })}
               </h2>
               <p className="text-xs text-slate-400">
-                Complete a session for +50 XP &amp; Boss damage
+                {t('Complete a session for +50 XP & Boss damage')}
               </p>
             </div>
             <button
@@ -509,7 +516,7 @@ export const OverviewView: React.FC<Props> = ({
               onClick={() => onNavigate('gym')}
               className="inline-flex items-center gap-1 text-xs font-medium text-amber-400 hover:text-amber-300 whitespace-nowrap"
             >
-              Open Gym Plan
+              {t('Open Gym Plan')}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -517,14 +524,14 @@ export const OverviewView: React.FC<Props> = ({
           {currentWeekWorkouts.length === 0 ? (
             <div className="py-10 text-center border border-dashed border-[#2c3b52] rounded-lg">
               <p className="text-sm text-slate-300">
-                No workouts planned for Week {profile.currentWeek} yet.
+                {t('No workouts planned for Week {n} yet.', { n: profile.currentWeek })}
               </p>
               <button
                 type="button"
                 onClick={() => onNavigate('gym')}
                 className="mt-3 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md"
               >
-                Build Week {profile.currentWeek} Split
+                {t('Build Week {n} Split', { n: profile.currentWeek })}
               </button>
             </div>
           ) : (
@@ -535,7 +542,7 @@ export const OverviewView: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => void toggleWorkoutCompleted(uid, day.id, !day.completed)}
-                      aria-label={`Toggle ${DAY_SHORT[day.dayIndex]} workout`}
+                      aria-label={t('Toggle {day} workout', { day: t(DAY_SHORT[day.dayIndex]) })}
                       className={`w-7 h-7 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
                         day.completed
                           ? 'bg-emerald-500 border-emerald-400 text-slate-950'
@@ -546,16 +553,16 @@ export const OverviewView: React.FC<Props> = ({
                     </button>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-slate-100 truncate">
-                        {DAY_SHORT[day.dayIndex]} · {day.focus}
+                        {t(DAY_SHORT[day.dayIndex])} · {t(day.focus)}
                       </p>
                       <p className="text-xs text-slate-400 font-mono tabular-nums">
                         {day.isRestDay
-                          ? 'Safe Room / Recovery'
-                          : `${day.exercises.length} exercises · ${Math.round(
+                          ? t('Safe Room / Recovery')
+                          : `${t('{n} exercises', { n: day.exercises.length })} · ${Math.round(
                               computeExerciseVolume(day.exercises)
                             ).toLocaleString()} ${wUnit}`}
                         {day.cardio && day.cardio.activityType !== 'none'
-                          ? ` · ${day.cardio.activityType === 'walk' ? 'Walk' : 'Run'} ${
+                          ? ` · ${day.cardio.activityType === 'walk' ? t('Walk') : t('Run')} ${
                               day.cardio.distance
                             } ${dUnit} (${day.cardio.durationMinutes}m)`
                           : ''}
@@ -571,7 +578,7 @@ export const OverviewView: React.FC<Props> = ({
                         : 'text-amber-400'
                     }`}
                   >
-                    {day.completed ? 'Cleared' : day.isRestDay ? 'Rest' : 'Active'}
+                    {day.completed ? t('Cleared') : day.isRestDay ? t('Rest') : t('Active')}
                   </span>
                 </div>
               ))}
@@ -583,10 +590,10 @@ export const OverviewView: React.FC<Props> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-semibold text-white">
-                {DAY_SHORT[todayIdx]} Rations (Week {profile.currentWeek})
+                {t('{day} Rations (Week {n})', { day: t(DAY_SHORT[todayIdx]), n: profile.currentWeek })}
               </h2>
               <p className="text-xs text-slate-400">
-                Check off meals as you eat them (+25 XP/day)
+                {t('Check off meals as you eat them (+25 XP/day)')}
               </p>
             </div>
             <button
@@ -594,7 +601,7 @@ export const OverviewView: React.FC<Props> = ({
               onClick={() => onNavigate('diet')}
               className="inline-flex items-center gap-1 text-xs font-medium text-amber-400 hover:text-amber-300 whitespace-nowrap"
             >
-              Diet &amp; Recipes
+              {t('Diet & Recipes')}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -602,14 +609,17 @@ export const OverviewView: React.FC<Props> = ({
           {todayMeals.length === 0 ? (
             <div className="py-10 text-center border border-dashed border-[#2c3b52] rounded-lg">
               <p className="text-sm text-slate-300">
-                No meals scheduled for {DAY_SHORT[todayIdx]} in Week {profile.currentWeek}.
+                {t('No meals scheduled for {day} in Week {n}.', {
+                  day: t(DAY_SHORT[todayIdx]),
+                  n: profile.currentWeek,
+                })}
               </p>
               <button
                 type="button"
                 onClick={() => onNavigate('diet')}
                 className="mt-3 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md"
               >
-                Schedule Meals
+                {t('Schedule Meals')}
               </button>
             </div>
           ) : (
@@ -620,7 +630,7 @@ export const OverviewView: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => void toggleMealConsumed(uid, meal.id, !meal.consumed)}
-                      aria-label={`Mark ${meal.title} consumed`}
+                      aria-label={t('Mark {name} consumed', { name: meal.title })}
                       className={`w-7 h-7 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
                         meal.consumed
                           ? 'bg-emerald-500 border-emerald-400 text-slate-950'
@@ -638,7 +648,10 @@ export const OverviewView: React.FC<Props> = ({
                         {meal.title}
                       </p>
                       <p className="text-xs text-slate-400">
-                        {getMealSlotLabel(meal.slot)} · {meal.servings}x serving
+                        {(() => {
+                          const l = getMealSlotLabel(meal.slot);
+                          return l.startsWith('Meal ') ? t('Meal {n}', { n: l.slice(5) }) : t(l);
+                        })()} · {t('{n}x serving', { n: meal.servings })}
                       </p>
                     </div>
                   </div>

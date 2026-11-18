@@ -69,6 +69,19 @@ import { CrawlerArmoryModal } from './components/CrawlerArmoryModal';
 import { GuildView } from './components/GuildView';
 import { PWAInstallButton } from './components/PWAInstallButton';
 
+/** XP reasons are built in English; translate known shapes at display time. */
+function translateReason(t: (s: string, v?: Record<string, string | number>) => string, reason: string): string {
+  const prefixes: [string, string][] = [
+    ['Cleared ', 'Cleared {x}'],
+    ['Habit: ', 'Habit: {x}'],
+    ['Defeated ', 'Defeated {x}'],
+  ];
+  for (const [prefix, key] of prefixes) {
+    if (reason.startsWith(prefix)) return t(key, { x: t(reason.slice(prefix.length)) });
+  }
+  return t(reason);
+}
+
 const NAV_ITEMS: {
   id: NavSection;
   label: string;
@@ -733,16 +746,17 @@ function WorkspaceShell() {
     return (
       <div className="min-h-screen bg-[#090d12] flex items-center justify-center p-6">
         <div className="max-w-xl w-full bg-[#131a24] border-2 border-[#2a384e] rounded-xl p-8 shadow-2xl">
-          <p className="font-pixel text-xs text-amber-400 mb-3">
-            FLOOR 3 · THE HUNTING GROUNDS
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-pixel text-xs text-amber-400 mb-3">
+              {t('FLOOR 3 · THE HUNTING GROUNDS')}
+            </p>
+            <LanguageToggle />
+          </div>
           <h1 className="text-2xl font-bold text-white mb-3">
-            Enter your training and discipline workspace
+            {t('Enter your training and discipline workspace')}
           </h1>
           <p className="text-sm text-slate-300 leading-relaxed mb-6">
-            Start with a 4-week sample hypertrophy program, 4 high-protein recipes, and check-in
-            history so you can explore charts right away — or open a clean Week 1 slate to import
-            your own CSV schedule.
+            {t('Start with a 4-week sample hypertrophy program, 4 high-protein recipes, and check-in history so you can explore charts right away — or open a clean Week 1 slate to import your own CSV schedule.')}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -752,7 +766,7 @@ function WorkspaceShell() {
               onClick={() => void handleBootstrap(true)}
               className="min-h-[44px] px-4 py-3 text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg transition-colors"
             >
-              {initializingWorkspace ? 'Entering Dungeon...' : 'Load 4-Week Starter Plan'}
+              {initializingWorkspace ? t('Entering Dungeon...') : t('Load 4-Week Starter Plan')}
             </button>
             <button
               type="button"
@@ -760,7 +774,7 @@ function WorkspaceShell() {
               onClick={() => void handleBootstrap(false)}
               className="min-h-[44px] px-4 py-3 text-sm font-semibold text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] disabled:opacity-50 rounded-lg transition-colors"
             >
-              Start Blank (Week 1)
+              {t('Start Blank (Week 1)')}
             </button>
           </div>
         </div>
@@ -851,7 +865,7 @@ function WorkspaceShell() {
               className="w-full text-left p-3 rounded-lg bg-[#131a24] border border-[#263347] hover:border-amber-500/50 transition-colors"
             >
               <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>Current Week</span>
+                <span>{t('Current Week')}</span>
                 <SlidersHorizontal className="w-3.5 h-3.5" />
               </div>
               <p className="text-sm font-semibold text-white mt-0.5 tabular-nums">
@@ -895,7 +909,7 @@ function WorkspaceShell() {
               >
                 <span className="inline-flex items-center gap-2">
                   <PackageOpen className="w-4 h-4 shrink-0" />
-                  Loot Boxes Ready
+                  {t('Loot Boxes Ready')}
                 </span>
                 <span className="font-mono">{effectiveCrawler.pendingLootBoxes.length}</span>
               </button>
@@ -939,7 +953,7 @@ function WorkspaceShell() {
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  aria-label="Close navigation"
+                  aria-label={t('Close navigation')}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white"
                 >
                   <X className="w-4 h-4" />
@@ -1029,7 +1043,7 @@ function WorkspaceShell() {
               <button
                 type="button"
                 onClick={() => setImportFeedback(null)}
-                aria-label="Dismiss import notice"
+                aria-label={t('Dismiss import notice')}
                 className="p-1 text-emerald-300 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
@@ -1048,7 +1062,7 @@ function WorkspaceShell() {
                     : 'text-slate-300'
                 }`}
               >
-                Measurements
+                {t('Measurements')}
               </button>
               <button
                 type="button"
@@ -1059,7 +1073,7 @@ function WorkspaceShell() {
                     : 'text-slate-300'
                 }`}
               >
-                Progress Charts
+                {t('Progress Charts')}
               </button>
             </div>
           )}
@@ -1158,21 +1172,21 @@ function WorkspaceShell() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-pixel text-[11px] text-amber-400">
                   {rewardToast.leveledUpTo
-                    ? `LEVEL UP! LV ${rewardToast.leveledUpTo}`
+                    ? t('LEVEL UP! LV {n}', { n: rewardToast.leveledUpTo })
                     : rewardToast.isCrit
-                    ? '2X CRITICAL DISCIPLINE!'
-                    : 'SYSTEM AI REWARD'}
+                    ? t('2X CRITICAL DISCIPLINE!')
+                    : t('SYSTEM AI REWARD')}
                 </span>
                 <span className="text-xs font-mono font-bold text-emerald-400 tabular-nums">
                   +{rewardToast.xpAdded} XP
                 </span>
               </div>
-              <p className="text-xs text-slate-200 mt-1">{rewardToast.reason}</p>
+              <p className="text-xs text-slate-200 mt-1">{translateReason(t, rewardToast.reason)}</p>
             </div>
             <button
               type="button"
               onClick={() => setRewardToast(null)}
-              aria-label="Dismiss reward notification"
+              aria-label={t('Dismiss reward notification')}
               className="p-1 text-slate-400 hover:text-white shrink-0"
             >
               <X className="w-4 h-4" />
@@ -1181,7 +1195,7 @@ function WorkspaceShell() {
 
           {rewardToast.newAchievements && rewardToast.newAchievements.length > 0 && (
             <p className="text-[11px] text-emerald-300 font-medium">
-              {rewardToast.newAchievements[0]}
+              {t(rewardToast.newAchievements[0])}
             </p>
           )}
 
@@ -1199,8 +1213,8 @@ function WorkspaceShell() {
             >
               <Sparkles className="w-3.5 h-3.5" />
               {rewardToast.newLootBox
-                ? `Open ${rewardToast.newLootBox.toUpperCase()} Loot Box`
-                : 'Inspect New Sprite & Gear'}
+                ? t('Open {tier} Loot Box', { tier: t(rewardToast.newLootBox).toUpperCase() })
+                : t('Inspect New Sprite & Gear')}
             </button>
           )}
         </div>
@@ -1208,7 +1222,7 @@ function WorkspaceShell() {
 
       {/* Mobile Fixed Thumb-Zone Bottom Tab Bar */}
       <nav
-        aria-label="Mobile navigation"
+        aria-label={t('Mobile navigation')}
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-14 bg-[#0d121a]/95 backdrop-blur-md border-t border-[#1f293a] grid grid-cols-5 items-center"
       >
         {mobileBottomItems.map((item) => {
