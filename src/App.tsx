@@ -69,6 +69,19 @@ import { CrawlerArmoryModal } from './components/CrawlerArmoryModal';
 import { GuildView } from './components/GuildView';
 import { PWAInstallButton } from './components/PWAInstallButton';
 
+/** XP reasons are built in English; translate known shapes at display time. */
+function translateReason(t: (s: string, v?: Record<string, string | number>) => string, reason: string): string {
+  const prefixes: [string, string][] = [
+    ['Cleared ', 'Cleared {x}'],
+    ['Habit: ', 'Habit: {x}'],
+    ['Defeated ', 'Defeated {x}'],
+  ];
+  for (const [prefix, key] of prefixes) {
+    if (reason.startsWith(prefix)) return t(key, { x: t(reason.slice(prefix.length)) });
+  }
+  return t(reason);
+}
+
 const NAV_ITEMS: {
   id: NavSection;
   label: string;
@@ -1158,21 +1171,21 @@ function WorkspaceShell() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-pixel text-[11px] text-amber-400">
                   {rewardToast.leveledUpTo
-                    ? `LEVEL UP! LV ${rewardToast.leveledUpTo}`
+                    ? t('LEVEL UP! LV {n}', { n: rewardToast.leveledUpTo })
                     : rewardToast.isCrit
-                    ? '2X CRITICAL DISCIPLINE!'
-                    : 'SYSTEM AI REWARD'}
+                    ? t('2X CRITICAL DISCIPLINE!')
+                    : t('SYSTEM AI REWARD')}
                 </span>
                 <span className="text-xs font-mono font-bold text-emerald-400 tabular-nums">
                   +{rewardToast.xpAdded} XP
                 </span>
               </div>
-              <p className="text-xs text-slate-200 mt-1">{rewardToast.reason}</p>
+              <p className="text-xs text-slate-200 mt-1">{translateReason(t, rewardToast.reason)}</p>
             </div>
             <button
               type="button"
               onClick={() => setRewardToast(null)}
-              aria-label="Dismiss reward notification"
+              aria-label={t('Dismiss reward notification')}
               className="p-1 text-slate-400 hover:text-white shrink-0"
             >
               <X className="w-4 h-4" />
@@ -1181,7 +1194,7 @@ function WorkspaceShell() {
 
           {rewardToast.newAchievements && rewardToast.newAchievements.length > 0 && (
             <p className="text-[11px] text-emerald-300 font-medium">
-              {rewardToast.newAchievements[0]}
+              {t(rewardToast.newAchievements[0])}
             </p>
           )}
 
@@ -1199,8 +1212,8 @@ function WorkspaceShell() {
             >
               <Sparkles className="w-3.5 h-3.5" />
               {rewardToast.newLootBox
-                ? `Open ${rewardToast.newLootBox.toUpperCase()} Loot Box`
-                : 'Inspect New Sprite & Gear'}
+                ? t('Open {tier} Loot Box', { tier: t(rewardToast.newLootBox).toUpperCase() })
+                : t('Inspect New Sprite & Gear')}
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useI18n } from '../lib/i18n';
 import { Check, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import {
   Habit,
@@ -107,10 +108,10 @@ function formatIsoOffset(daysAgo: number): string {
   return `${y}-${m}-${day}`;
 }
 
-function formatReadableDate(isoDate: string): string {
+function formatReadableDate(isoDate: string, locale?: string): string {
   const [y, m, d] = isoDate.split('-').map(Number);
   const dt = new Date(y, (m || 1) - 1, d || 1);
-  return dt.toLocaleDateString(undefined, {
+  return dt.toLocaleDateString(locale, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -135,6 +136,8 @@ function getMosaicTileClasses(completedCount: number, totalCount: number): strin
 }
 
 export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) => {
+  const { t, lang } = useI18n();
+  const fmtDate = (d: string) => formatReadableDate(d, lang === 'pt' ? 'pt-BR' : 'en-US');
   const today = todayIsoDate();
 
   const [editMode, setEditMode] = useState(false);
@@ -321,21 +324,22 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
         <div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <h2 className="font-pixel text-sm text-amber-400">
-              Daily Quests &amp; Goal Squares
+              {t('Daily Quests & Goal Squares')}
             </h2>
             {totalHabitsCount > 0 && (
               <span className="text-xs font-mono text-slate-400 tabular-nums">
                 <strong className="text-emerald-400 font-semibold">
                   {todayCompletedCount}/{totalHabitsCount}
                 </strong>{' '}
-                done today ·{' '}
-                <strong className="text-slate-100 font-semibold">{last7Stats.pct}%</strong> 7d
-                · <strong className="text-amber-300 font-semibold">{bestActiveStreak}d</strong> best
+                {t('done today')} ·{' '}
+                <strong className="text-slate-100 font-semibold">{last7Stats.pct}%</strong> {t('7d')}
+                · <strong className="text-amber-300 font-semibold">{bestActiveStreak}{t('d')}</strong>{' '}
+                {t('best')}
               </span>
             )}
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            +10 XP per habit square · +25 XP full daily sweep bonus · Damages the Weekly Boss.
+            {t('+10 XP per habit square · +25 XP full daily sweep bonus · Damages the Weekly Boss.')}
           </p>
         </div>
 
@@ -354,7 +358,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
               }`}
             >
               <Pencil className="w-3.5 h-3.5" />
-              {editMode ? 'Done Editing' : 'Edit Habits'}
+              {editMode ? t('Done Editing') : t('Edit Habits')}
             </button>
           )}
           {sortedHabits.length < SCHEMA_LIMITS.HABITS_MAX && (
@@ -364,7 +368,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
               className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md transition-colors whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add Habit
+              {t('Add Habit')}
             </button>
           )}
         </div>
@@ -372,10 +376,9 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
 
       {totalHabitsCount === 0 ? (
         <div className="py-10 px-6 text-center border-2 border-dashed border-[#2a384f] rounded-lg space-y-3">
-          <p className="text-sm font-medium text-slate-200">No daily quests configured yet</p>
+          <p className="text-sm font-medium text-slate-200">{t('No daily quests configured yet')}</p>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Add daily routines like Creatine, Made the bed, or Washed the dishes and watch your
-            colored rune squares light up every day.
+            {t('Add daily routines like Creatine, Made the bed, or Washed the dishes and watch your colored rune squares light up every day.')}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             <button
@@ -383,7 +386,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
               onClick={openAddModal}
               className="min-h-[42px] px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md"
             >
-              + Add Custom Habit
+              {t('+ Add Custom Habit')}
             </button>
             <button
               type="button"
@@ -392,7 +395,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
               className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-slate-200 bg-[#1c2636] hover:bg-[#253247] rounded-md disabled:opacity-50"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              {restoringStarters ? 'Adding...' : 'Load Starter Habits'}
+              {restoringStarters ? t('Adding...') : t('Load Starter Habits')}
             </button>
           </div>
         </div>
@@ -403,8 +406,8 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
               <div className="flex items-center gap-2.5">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {selectedMosaicDate === today ? "Today's Check-In" : 'Selected Day Check-In'} ·{' '}
-                  {formatReadableDate(selectedMosaicDate)}
+                  {selectedMosaicDate === today ? t("Today's Check-In") : t('Selected Day Check-In')} ·{' '}
+                  {fmtDate(selectedMosaicDate)}
                 </h3>
                 {selectedMosaicDate !== today && (
                   <button
@@ -412,14 +415,14 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                     onClick={() => setSelectedMosaicDate(today)}
                     className="text-xs font-semibold text-amber-400 hover:text-amber-300 underline"
                   >
-                    Back to Today
+                    {t('Back to Today')}
                   </button>
                 )}
               </div>
               <span className="text-xs font-mono text-slate-400 tabular-nums">
                 {selectedDateCount === totalHabitsCount
-                  ? 'All daily quests complete (+25 XP Sweep)'
-                  : `${totalHabitsCount - selectedDateCount} remaining`}
+                  ? t('All daily quests complete (+25 XP Sweep)')
+                  : t('{n} remaining', { n: totalHabitsCount - selectedDateCount })}
               </span>
             </div>
 
@@ -463,13 +466,13 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                           )}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">{habit.title}</p>
+                          <p className="text-sm font-semibold truncate">{t(habit.title)}</p>
                           <p
                             className={`text-[11px] font-mono tabular-nums ${
                               isDoneSelected && !editMode ? 'text-white/90' : 'text-slate-400'
                             }`}
                           >
-                            {weekDone}/{habit.weeklyGoal} weekly goal
+                            {t('{done}/{goal} weekly goal', { done: weekDone, goal: habit.weeklyGoal })}
                           </p>
                         </div>
                       </div>
@@ -479,7 +482,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                           isDoneSelected && !editMode ? 'text-white' : palette.softText
                         }`}
                       >
-                        {editMode ? 'Edit' : isDoneSelected ? 'Done' : '+10 XP'}
+                        {editMode ? t('Edit') : isDoneSelected ? t('Done') : '+10 XP'}
                       </span>
                     </button>
 
@@ -487,11 +490,11 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                       <button
                         type="button"
                         onClick={() => void handleDeleteHabit(habit.id)}
-                        aria-label={`Delete ${habit.title}`}
+                        aria-label={t('Delete {name}', { name: t(habit.title) })}
                         title={
                           confirmDeleteId === habit.id
-                            ? 'Click again to confirm delete'
-                            : `Delete ${habit.title}`
+                            ? t('Click again to confirm delete')
+                            : t('Delete {name}', { name: t(habit.title) })
                         }
                         className={`min-h-[54px] min-w-[44px] px-2.5 rounded-lg border-2 flex items-center justify-center transition-colors shrink-0 ${
                           confirmDeleteId === habit.id
@@ -513,15 +516,15 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  10-Week Dungeon Mosaic (70 Squares)
+                  {t('10-Week Dungeon Mosaic (70 Squares)')}
                 </h3>
                 <p className="text-xs text-slate-300 mt-0.5 tabular-nums">
-                  {formatReadableDate(selectedMosaicDate)}:{' '}
+                  {fmtDate(selectedMosaicDate)}:{' '}
                   <strong className="font-semibold text-white">
-                    {selectedDateCount} of {totalHabitsCount}
+                    {t('{n} of {total}', { n: selectedDateCount, total: totalHabitsCount })}
                   </strong>{' '}
-                  habits ({selectedDatePct}%)
-                  {selectedMosaicDate === today ? ' · Today' : ''}
+                  {t('habits')} ({selectedDatePct}%)
+                  {selectedMosaicDate === today ? ` · ${t('Today')}` : ''}
                 </p>
               </div>
 
@@ -549,8 +552,12 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                           key={dateStr}
                           type="button"
                           onClick={() => setSelectedMosaicDate(dateStr)}
-                          title={`${formatReadableDate(dateStr)} · ${count}/${totalHabitsCount} habits`}
-                          aria-label={`${formatReadableDate(dateStr)}, ${count} of ${totalHabitsCount} habits completed`}
+                          title={`${fmtDate(dateStr)} · ${count}/${totalHabitsCount} ${t('habits')}`}
+                          aria-label={t('{date}, {n} of {total} habits completed', {
+                            date: fmtDate(dateStr),
+                            n: count,
+                            total: totalHabitsCount,
+                          })}
                           className={`w-5 h-5 sm:w-6 sm:h-6 rounded-[4px] border transition-transform hover:scale-105 ${getMosaicTileClasses(
                             count,
                             totalHabitsCount
@@ -574,9 +581,9 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
           <div className="pt-4 border-t border-[#233044]">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Habit Streaks · Last 21 Days (Click Any Square)
+                {t('Habit Streaks · Last 21 Days (Click Any Square)')}
               </h3>
-              <span className="text-[11px] font-mono text-slate-500">Oldest → Today</span>
+              <span className="text-[11px] font-mono text-slate-500">{t('Oldest → Today')}</span>
             </div>
 
             <div className="divide-y divide-[#1e293b]">
@@ -603,7 +610,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                           onClick={() => openEditModal(habit)}
                           className="text-sm font-medium text-slate-100 hover:text-amber-300 truncate text-left"
                         >
-                          {habit.title}
+                          {t(habit.title)}
                         </button>
                       </div>
 
@@ -618,7 +625,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                         <button
                           type="button"
                           onClick={() => openEditModal(habit)}
-                          aria-label={`Edit ${habit.title}`}
+                          aria-label={t('Edit {name}', { name: t(habit.title) })}
                           className="p-1.5 text-slate-400 hover:text-white rounded-md transition-colors"
                         >
                           <Pencil className="w-3.5 h-3.5" />
@@ -638,11 +645,11 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                             key={dateStr}
                             type="button"
                             onClick={() => void handleToggle(dateStr, habit.id)}
-                            title={`${habit.title} · ${formatReadableDate(dateStr)} · ${
-                              completed ? 'Done' : 'Not logged'
+                            title={`${t(habit.title)} · ${fmtDate(dateStr)} · ${
+                              completed ? t('Done') : t('Not logged')
                             }`}
-                            aria-label={`${habit.title} on ${formatReadableDate(dateStr)}: ${
-                              completed ? 'completed' : 'not completed'
+                            aria-label={`${t(habit.title)} · ${fmtDate(dateStr)}: ${
+                              completed ? t('completed') : t('not completed')
                             }`}
                             className={`${
                               hideOnNarrow ? 'hidden sm:flex' : 'flex'
@@ -680,12 +687,12 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
           <div className="bg-[#131a24] border-2 border-[#33445e] rounded-xl w-full max-w-md p-6 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 id="habit-modal-title" className="font-pixel text-sm text-amber-400">
-                {editingHabit ? 'Edit Daily Quest' : 'Add Daily Quest'}
+                {editingHabit ? t('Edit Daily Quest') : t('Add Daily Quest')}
               </h3>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                aria-label="Close modal"
+                aria-label={t('Close modal')}
                 className="min-h-[40px] min-w-[40px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
               >
                 <X className="w-4 h-4" />
@@ -698,7 +705,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                   htmlFor="habit-title-input"
                   className="block text-xs font-semibold text-slate-300 mb-1.5"
                 >
-                  Habit Name
+                  {t('Habit Name')}
                 </label>
                 <input
                   id="habit-title-input"
@@ -707,14 +714,14 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                   maxLength={SCHEMA_LIMITS.HABIT_TITLE_MAX}
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g., Creatine (5g), Made the bed, Cold shower"
+                  placeholder={t('e.g., Creatine (5g), Made the bed, Cold shower')}
                   className="w-full min-h-[44px] px-3 py-2 text-sm text-white bg-[#0e141d] border border-[#32435c] rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
 
               <div>
                 <span className="block text-xs font-semibold text-slate-300 mb-2">
-                  Rune Square Color
+                  {t('Rune Square Color')}
                 </span>
                 <div className="grid grid-cols-4 gap-2">
                   {HABIT_COLOR_OPTIONS.map((colorKey) => {
@@ -736,7 +743,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                             selected ? 'bg-white/90' : palette.swatch
                           }`}
                         />
-                        <span>{palette.label}</span>
+                        <span>{t(palette.label)}</span>
                       </button>
                     );
                   })}
@@ -745,7 +752,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
 
               <div>
                 <span className="block text-xs font-semibold text-slate-300 mb-2">
-                  Weekly Goal (Days / Week)
+                  {t('Weekly Goal (Days / Week)')}
                 </span>
                 <div className="grid grid-cols-7 gap-1.5">
                   {[1, 2, 3, 4, 5, 6, 7].map((n) => (
@@ -777,7 +784,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                         : 'bg-[#0e141d] border-rose-500/40 text-rose-400 hover:bg-rose-950/50'
                     }`}
                   >
-                    {confirmDeleteId === editingHabit.id ? 'Confirm Delete' : 'Delete Habit'}
+                    {confirmDeleteId === editingHabit.id ? t('Confirm Delete') : t('Delete Habit')}
                   </button>
                 ) : (
                   <span />
@@ -789,14 +796,14 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
                     onClick={() => setModalOpen(false)}
                     className="min-h-[44px] px-4 py-2 text-xs font-medium text-slate-300 bg-[#1c2636] hover:bg-[#253247] rounded-lg"
                   >
-                    Cancel
+                    {t('Cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={submittingHabit || !formTitle.trim()}
                     className="min-h-[44px] px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
                   >
-                    {submittingHabit ? 'Saving...' : editingHabit ? 'Save Changes' : 'Add Habit'}
+                    {submittingHabit ? t('Saving...') : editingHabit ? t('Save Changes') : t('Add Habit')}
                   </button>
                 </div>
               </div>

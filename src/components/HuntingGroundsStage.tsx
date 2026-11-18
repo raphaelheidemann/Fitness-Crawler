@@ -106,7 +106,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
                   {shownName}
                 </span>
                 <span className="text-xs font-semibold text-slate-200">
-                  {t('LV {n}', { n: current.level })} · {shownClass}
+                  {t('LV {n}', { n: current.level })} · {t(shownClass)}
                 </span>
                 {crawler.guildName && (
                   <button
