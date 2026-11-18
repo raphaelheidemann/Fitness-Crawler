@@ -547,7 +547,7 @@ export function buildDefaultCrawlerState(
     bannerTheme: 'amber',
     guildId: '',
     guildName: '',
-    isPublicProfile: true,
+    isPublicProfile: false,
   };
 }
 
@@ -744,7 +744,7 @@ export function applyCrawlerProgressionUpdate(params: {
     bannerTheme: state.bannerTheme ?? 'amber',
     guildId: state.guildId ?? '',
     guildName: state.guildName ?? '',
-    isPublicProfile: state.isPublicProfile ?? true,
+    isPublicProfile: state.isPublicProfile ?? false,
   };
 
   if (xpDelta === 0 && !leveledUpTo && newAchievements.length === 0 && !newLootBox) {
