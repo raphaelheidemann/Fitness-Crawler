@@ -161,8 +161,9 @@ export async function initializeUserWorkspace(
         },
       ];
 
-      recipes.forEach((rec) => {
-        batch.set(doc(db, 'users', uid, 'recipes', rec.id), {
+      recipes.forEach(({ id, ...rec }) => {
+        // firestore.rules rejects an `id` field: the id lives in the doc path
+        batch.set(doc(db, 'users', uid, 'recipes', id), {
           ownerId: uid,
           ...rec,
           createdAt: serverTimestamp(),
@@ -230,8 +231,8 @@ export async function initializeUserWorkspace(
         },
       ];
 
-      measurements.forEach((m) => {
-        batch.set(doc(db, 'users', uid, 'measurements', m.id), {
+      measurements.forEach(({ id, ...m }) => {
+        batch.set(doc(db, 'users', uid, 'measurements', id), {
           ownerId: uid,
           ...m,
           createdAt: serverTimestamp(),
