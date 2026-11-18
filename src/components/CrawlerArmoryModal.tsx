@@ -77,7 +77,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
   const [crawlerClass, setCrawlerClass] = useState(crawler.crawlerClass || 'Primal Brawler');
   const [crawlerMotto, setCrawlerMotto] = useState(crawler.crawlerMotto || '');
   const [bannerTheme, setBannerTheme] = useState<BannerTheme>(crawler.bannerTheme ?? 'amber');
-  const [isPublicProfile, setIsPublicProfile] = useState(crawler.isPublicProfile ?? true);
+  const [isPublicProfile, setIsPublicProfile] = useState(crawler.isPublicProfile ?? false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSavedMsg, setProfileSavedMsg] = useState<string | null>(null);
 
@@ -89,7 +89,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
       setCrawlerClass(crawler.crawlerClass || 'Primal Brawler');
       setCrawlerMotto(crawler.crawlerMotto || '');
       setBannerTheme(crawler.bannerTheme ?? 'amber');
-      setIsPublicProfile(crawler.isPublicProfile ?? true);
+      setIsPublicProfile(crawler.isPublicProfile ?? false);
       setProfileSavedMsg(null);
     }
   }, [

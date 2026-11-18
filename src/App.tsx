@@ -650,7 +650,7 @@ function WorkspaceShell() {
       crawlerDoc.unlockedGearIds.length,
       crawlerDoc.guildId || '',
       crawlerDoc.guildName || '',
-      crawlerDoc.isPublicProfile ?? true,
+      crawlerDoc.isPublicProfile ?? false,
     ]);
     if (lastSocialSyncSigRef.current === sig) return;
     lastSocialSyncSigRef.current = sig;
@@ -786,7 +786,7 @@ function WorkspaceShell() {
       next.unlockedGearIds.length,
       next.guildId || '',
       next.guildName || '',
-      next.isPublicProfile ?? true,
+      next.isPublicProfile ?? false,
     ]);
     await syncSocialCrawlerProfile(user.uid, next, profile.displayName);
   };

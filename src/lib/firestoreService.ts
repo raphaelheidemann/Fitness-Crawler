@@ -988,7 +988,7 @@ function buildCrawlerStatePayload(
     bannerTheme: sanitizeBannerTheme(state.bannerTheme),
     guildId: sanitizeOptionalId(state.guildId),
     guildName: sanitizeString(state.guildName ?? '', 50, ''),
-    isPublicProfile: state.isPublicProfile ?? true,
+    isPublicProfile: state.isPublicProfile ?? false,
   };
 }
 
@@ -1054,7 +1054,7 @@ export async function syncSocialCrawlerProfile(
   const snapshotFields = buildPublicSnapshotFields(state, fallbackName);
   const cleanGuildId = sanitizeOptionalId(state.guildId);
   const cleanGuildName = sanitizeString(state.guildName ?? '', 50, '');
-  const isPublic = state.isPublicProfile ?? true;
+  const isPublic = state.isPublicProfile ?? false;
 
   const publicRef = doc(db, 'publicCrawlers', uid);
   const publicPath = `publicCrawlers/${uid}`;
@@ -1107,10 +1107,13 @@ export function generateGuildInviteCode(guildName: string): string {
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '')
       .slice(0, 4) || 'CRWL';
+  // 32 symbols (no 0/O/1/I): 256 % 32 === 0, so `byte % 32` has no modulo bias.
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
   let suffix = '';
-  for (let i = 0; i < 4; i++) {
-    suffix += chars[Math.floor(Math.random() * chars.length)];
+  for (const b of bytes) {
+    suffix += chars[b % chars.length];
   }
   return sanitizeId(`${prefix}-${suffix}`);
 }
