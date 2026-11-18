@@ -1,8 +1,11 @@
-import { MealSlot } from '../types';
+import { MealSlot, Sex } from '../types';
 import { ParsedMealRow } from './csvImport';
 import { formatFoodTitle, getStarterFood, macrosForGrams } from './foodDb';
 
-export type Sex = 'male' | 'female';
+export type { Sex };
+
+const SEX_BMR_OFFSET: Record<Sex, number> = { male: 5, female: -161, unspecified: -78 };
+const SEX_MIN_KCAL: Record<Sex, number> = { male: 1500, female: 1200, unspecified: 1350 };
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
 export type DietGoal = 'lose' | 'maintain' | 'gain';
 
@@ -34,12 +37,12 @@ export interface DietTargets {
 
 /** Mifflin-St Jeor BMR, activity multiplier, then a goal adjustment. */
 export function computeDietTargets(i: DietInputs): DietTargets {
-  const bmr = 10 * i.weightKg + 6.25 * i.heightCm - 5 * i.age + (i.sex === 'male' ? 5 : -161);
+  const bmr = 10 * i.weightKg + 6.25 * i.heightCm - 5 * i.age + SEX_BMR_OFFSET[i.sex];
   const factor = ACTIVITY_OPTIONS.find((a) => a.key === i.activity)?.factor ?? 1.2;
   const tdee = bmr * factor;
 
   let calories = tdee;
-  if (i.goal === 'lose') calories = Math.max(tdee * 0.8, bmr, i.sex === 'male' ? 1500 : 1200);
+  if (i.goal === 'lose') calories = Math.max(tdee * 0.8, bmr, SEX_MIN_KCAL[i.sex]);
   if (i.goal === 'gain') calories = tdee * 1.1;
   calories = Math.round(calories / 10) * 10;
 

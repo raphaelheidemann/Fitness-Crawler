@@ -1204,4 +1204,11 @@ export const PT: Record<string, string> = {
   'Remove set': 'Remover série',
   'Select RPE': 'Selecionar RPE',
   'Slide or tap to rate your effort': 'Deslize ou toque para avaliar seu esforço',
+  'Sex (used for metabolic rate)': 'Sexo (usado na taxa metabólica)',
+  'Prefer not to say': 'Prefiro não dizer',
+  'We will use an average of the male and female formulas.': 'Vamos usar a média das fórmulas masculina e feminina.',
+  'Crawler character': 'Personagem do Crawler',
+  'Masculine': 'Masculino',
+  'Feminine': 'Feminino',
+  'Non-binary': 'Não binário',
 };

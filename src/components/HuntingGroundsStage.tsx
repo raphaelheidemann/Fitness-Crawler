@@ -12,12 +12,12 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { CrawlerState } from '../types';
+import { CrawlerState, CrawlerStyle } from '../types';
 import {
   BANNER_THEME_STYLES,
   BOSS_MANTIS_IMG,
   CRAWLER_GEAR_CATALOG,
-  CRAWLER_SPRITES,
+  crawlerSprite,
   getLevelInfo,
   HUNTING_GROUNDS_BG,
   LOOT_CHEST_IMG,
@@ -27,6 +27,7 @@ import {
 interface Props {
   crawler: CrawlerState;
   displayName?: string;
+  spriteStyle?: CrawlerStyle;
   weekNumber: number;
   weeklySummary: WeeklyChallengeSummary;
   onOpenArmory: (initialTab?: 'customize' | 'armory' | 'loot' | 'achievements') => void;
@@ -45,6 +46,7 @@ const AURA_FRAME_CLASSES: Record<string, string> = {
 export const HuntingGroundsStage: React.FC<Props> = ({
   crawler,
   displayName,
+  spriteStyle,
   weekNumber,
   weeklySummary,
   onOpenArmory,
@@ -62,7 +64,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
   const accDef = CRAWLER_GEAR_CATALOG.find((g) => g.id === crawler.equippedAccessory);
 
   const spriteSrc =
-    CRAWLER_SPRITES[crawler.equippedSpriteTier] ?? CRAWLER_SPRITES[current.spriteTier];
+    crawlerSprite(crawler.equippedSpriteTier, spriteStyle) ?? crawlerSprite(current.spriteTier, spriteStyle);
   const auraFrame = AURA_FRAME_CLASSES[crawler.equippedAura] ?? AURA_FRAME_CLASSES.aur_none;
   const bannerStyle = BANNER_THEME_STYLES[crawler.bannerTheme ?? 'amber'];
   const shownName = crawler.crawlerName?.trim() || displayName || t('Crawler');

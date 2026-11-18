@@ -14,6 +14,7 @@ import {
   BannerTheme,
   CrawlerState,
   Guild,
+  CrawlerStyle,
   Habit,
   HabitColor,
   HabitLog,
@@ -22,6 +23,7 @@ import {
   Measurement,
   Recipe,
   SCHEMA_LIMITS,
+  Sex,
   UserProfile,
   WorkoutDay,
   WorkoutPlan,
@@ -84,6 +86,11 @@ export async function updateDailyWaterGoal(
   }
 }
 
+export const normalizeSex = (v: unknown): Sex =>
+  v === 'male' || v === 'female' ? v : 'unspecified';
+export const normalizeCrawlerStyle = (v: unknown): CrawlerStyle =>
+  v === 'masculine' || v === 'feminine' ? v : 'neutral';
+
 export async function updateUserProfileSettings(
   uid: string,
   settings: Omit<UserProfile, 'ownerId' | 'createdAt' | 'updatedAt'>
@@ -104,6 +111,8 @@ export async function updateUserProfileSettings(
       weeklyWorkoutTarget: clampInt(settings.weeklyWorkoutTarget, 1, 7, 5),
       mealsPerDay: clampInt(settings.mealsPerDay ?? 6, 1, 10, 6),
       dailyWaterGoalMl: clampInt(settings.dailyWaterGoalMl ?? 3000, 500, 10000, 3000),
+      ...(settings.sex ? { sex: normalizeSex(settings.sex) } : {}),
+      ...(settings.crawlerStyle ? { crawlerStyle: normalizeCrawlerStyle(settings.crawlerStyle) } : {}),
       updatedAt: serverTimestamp(),
     });
   } catch (error) {

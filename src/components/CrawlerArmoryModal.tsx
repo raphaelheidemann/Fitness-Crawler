@@ -15,6 +15,7 @@ import {
   BANNER_THEME_OPTIONS,
   BannerTheme,
   CrawlerState,
+  CrawlerStyle,
   GearSlot,
   LootBoxTier,
   SCHEMA_LIMITS,
@@ -25,7 +26,7 @@ import {
   CRAWLER_CLASS_PRESETS,
   CRAWLER_GEAR_CATALOG,
   CRAWLER_LEVELS,
-  CRAWLER_SPRITES,
+  crawlerSprite,
   GearItemDef,
   getLevelInfo,
   LOOT_CHEST_IMG,
@@ -40,6 +41,7 @@ interface Props {
   initialTab?: ArmoryTab;
   onClose: () => void;
   crawler: CrawlerState;
+  spriteStyle?: CrawlerStyle;
   onUpdateCrawler: (next: Omit<CrawlerState, 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
@@ -63,6 +65,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
   initialTab = 'armory',
   onClose,
   crawler,
+  spriteStyle,
   onUpdateCrawler,
 }) => {
   const t = useT();
@@ -110,7 +113,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
   const maxUnlockedSpriteTier = current.spriteTier;
   const themeStyle = BANNER_THEME_STYLES[bannerTheme];
   const previewSprite =
-    CRAWLER_SPRITES[crawler.equippedSpriteTier] ?? CRAWLER_SPRITES[current.spriteTier];
+    crawlerSprite(crawler.equippedSpriteTier, spriteStyle) ?? crawlerSprite(current.spriteTier, spriteStyle);
   const previewAuraBorder =
     AURA_BORDER_PREVIEW[crawler.equippedAura] ?? AURA_BORDER_PREVIEW.aur_none;
 
@@ -493,7 +496,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                       >
                         <div className="w-20 h-20 rounded bg-[#0d1117] flex items-center justify-center overflow-hidden">
                           <img
-                            src={CRAWLER_SPRITES[tierNum]}
+                            src={crawlerSprite(tierNum, spriteStyle)}
                             alt={t(tierLabel)}
                             referrerPolicy="no-referrer"
                             className={`w-full h-full object-contain pixel-art ${

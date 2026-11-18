@@ -36,6 +36,8 @@ import {
   Measurement,
   NavSection,
   Recipe,
+  CrawlerStyle,
+  Sex,
   UserProfile,
   WorkoutDay,
   WorkoutPlan,
@@ -56,6 +58,7 @@ import {
 } from './lib/crawlerEngine';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './components/AuthGate';
+import { IdentityFields } from './components/IdentityFields';
 import { OverviewView } from './components/OverviewView';
 import { GymPlanView } from './components/GymPlanView';
 import { DietPlanView } from './components/DietPlanView';
@@ -104,6 +107,8 @@ function WorkspaceShell() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileChecked, setProfileChecked] = useState(false);
   const [initializingWorkspace, setInitializingWorkspace] = useState(false);
+  const [onboardSex, setOnboardSex] = useState<Sex>('unspecified');
+  const [onboardStyle, setOnboardStyle] = useState<CrawlerStyle>('neutral');
 
   const [workouts, setWorkouts] = useState<WorkoutDay[]>([]);
   const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
@@ -736,7 +741,9 @@ function WorkspaceShell() {
         await initializeUserWorkspace(
           user.uid,
           user.displayName || user.email?.split('@')[0] || 'Crawler',
-          includeStarter
+          includeStarter,
+          onboardSex,
+          onboardStyle
         );
       } finally {
         setInitializingWorkspace(false);
@@ -758,6 +765,15 @@ function WorkspaceShell() {
           <p className="text-sm text-slate-300 leading-relaxed mb-6">
             {t('Start with a 4-week sample hypertrophy program, 4 high-protein recipes, and check-in history so you can explore charts right away — or open a clean Week 1 slate to import your own CSV schedule.')}
           </p>
+
+          <div className="mb-6">
+            <IdentityFields
+              sex={onboardSex}
+              crawlerStyle={onboardStyle}
+              onSexChange={setOnboardSex}
+              onStyleChange={setOnboardStyle}
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
@@ -1251,6 +1267,7 @@ function WorkspaceShell() {
         initialTab={armoryState.tab}
         onClose={() => setArmoryState((prev) => ({ ...prev, open: false }))}
         crawler={effectiveCrawler}
+        spriteStyle={profile.crawlerStyle}
         onUpdateCrawler={handleUpdateCrawler}
       />
 

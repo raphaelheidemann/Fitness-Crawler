@@ -74,6 +74,9 @@ export interface ExerciseCatalogItem {
   instructions: string[];
 }
 
+export type Sex = 'male' | 'female' | 'unspecified';
+export type CrawlerStyle = 'masculine' | 'feminine' | 'neutral';
+
 export interface UserProfile {
   ownerId: string;
   displayName: string;
@@ -89,6 +92,8 @@ export interface UserProfile {
   weeklyWorkoutTarget: number;
   mealsPerDay?: number;
   dailyWaterGoalMl?: number;
+  sex?: Sex; // drives BMR; 'unspecified' uses the average of both formulas
+  crawlerStyle?: CrawlerStyle;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
