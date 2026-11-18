@@ -8,6 +8,7 @@ import {
   macrosForGrams,
   STARTER_FOODS,
 } from '../lib/foodDb';
+import { useT } from '../lib/i18n';
 import {
   createMealLog,
   deleteCustomFood,
@@ -39,6 +40,7 @@ export const FoodPickerModal: React.FC<Props> = ({
   day,
   customFoods,
 }) => {
+  const t = useT();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Food | null>(null);
   const [grams, setGrams] = useState(100);
@@ -81,7 +83,7 @@ export const FoodPickerModal: React.FC<Props> = ({
     try {
       await fn();
     } catch {
-      setError('Something went wrong. Check your connection and try again.');
+      setError(t('Something went wrong. Check your connection and try again.'));
     } finally {
       setBusy(false);
     }
@@ -91,7 +93,7 @@ export const FoodPickerModal: React.FC<Props> = ({
     run(async () => {
       const name = newName.trim();
       if (!name) {
-        setError('Give the food a name.');
+        setError(t('Give the food a name.'));
         return;
       }
       const id = await saveCustomFood(uid, {
@@ -145,7 +147,9 @@ export const FoodPickerModal: React.FC<Props> = ({
 
   const preview = selected ? macrosForGrams(selected, grams) : null;
   const heading =
-    target.kind === 'replace' ? `Replace "${target.meal.title}"` : 'Add food from database';
+    target.kind === 'replace'
+      ? t('Replace "{name}"', { name: target.meal.title })
+      : t('Add food from database');
 
   return (
     <div
@@ -164,7 +168,7 @@ export const FoodPickerModal: React.FC<Props> = ({
                   setSelected(null);
                   setCreating(false);
                 }}
-                aria-label="Back to food list"
+                aria-label={t('Back to food list')}
                 className="w-9 h-9 inline-flex items-center justify-center text-slate-300 hover:text-white rounded-lg"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -175,7 +179,7 @@ export const FoodPickerModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="w-9 h-9 inline-flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
           >
             <X className="w-4 h-4" />
@@ -191,7 +195,7 @@ export const FoodPickerModal: React.FC<Props> = ({
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search: frango, arroz, banana..."
+                  placeholder={t('Search: frango, arroz, banana...')}
                   autoFocus
                   className={`${inputCls} pl-9`}
                 />
@@ -207,18 +211,18 @@ export const FoodPickerModal: React.FC<Props> = ({
                       <span className="block text-sm text-slate-100 truncate">
                         {f.name}
                         {f.custom && (
-                          <span className="ml-1.5 text-[10px] text-amber-300">mine</span>
+                          <span className="ml-1.5 text-[10px] text-amber-300">{t('mine')}</span>
                         )}
                       </span>
                       <span className="block text-[11px] text-slate-400 font-mono tabular-nums">
-                        100g: {f.calories} kcal · {f.proteinG}P · {f.carbsG}C · {f.fatG}F
+                        {t('100g: {kcal} kcal · {p}P · {c}C · {f}F', { kcal: f.calories, p: f.proteinG, c: f.carbsG, f: f.fatG })}
                       </span>
                     </button>
                     {f.custom && (
                       <button
                         type="button"
                         onClick={() => void deleteCustomFood(uid, f.id)}
-                        aria-label={`Delete ${f.name} from my foods`}
+                        aria-label={t('Delete {name} from my foods', { name: f.name })}
                         className="w-10 h-10 inline-flex items-center justify-center text-slate-500 hover:text-rose-400"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -227,7 +231,7 @@ export const FoodPickerModal: React.FC<Props> = ({
                   </li>
                 ))}
                 {results.length === 0 && (
-                  <li className="py-4 text-xs text-slate-400">No food found. Create it below.</li>
+                  <li className="py-4 text-xs text-slate-400">{t('No food found. Create it below.')}</li>
                 )}
               </ul>
               <button
@@ -239,7 +243,7 @@ export const FoodPickerModal: React.FC<Props> = ({
                 className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Create new food (saved for next time)
+                {t('Create new food (saved for next time)')}
               </button>
             </>
           )}
@@ -247,10 +251,10 @@ export const FoodPickerModal: React.FC<Props> = ({
           {creating && (
             <div className="space-y-3">
               <p className="text-xs text-slate-400">
-                Fill in the macros per 100g once. It stays in your food list.
+                {t('Fill in the macros per 100g once. It stays in your food list.')}
               </p>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Name</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">{t('Name')}</label>
                 <input
                   type="text"
                   value={newName}
@@ -270,7 +274,7 @@ export const FoodPickerModal: React.FC<Props> = ({
                 ).map(([label, value, set]) => (
                   <div key={label}>
                     <label className="block text-xs font-medium text-slate-300 mb-1">
-                      {label} per 100g
+                      {t('{label} per 100g', { label: t(label) })}
                     </label>
                     <input
                       type="number"
@@ -288,7 +292,7 @@ export const FoodPickerModal: React.FC<Props> = ({
                 onClick={() => void handleCreateFood()}
                 className="w-full min-h-[44px] text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
               >
-                {busy ? 'Saving...' : 'Save food'}
+                {busy ? t('Saving...') : t('Save food')}
               </button>
             </div>
           )}
@@ -298,12 +302,16 @@ export const FoodPickerModal: React.FC<Props> = ({
               <div>
                 <p className="text-sm font-semibold text-white">{selected.name}</p>
                 <p className="text-[11px] text-slate-400 font-mono tabular-nums">
-                  100g: {selected.calories} kcal · {selected.proteinG}P · {selected.carbsG}C ·{' '}
-                  {selected.fatG}F
+                  {t('100g: {kcal} kcal · {p}P · {c}C · {f}F', {
+                    kcal: selected.calories,
+                    p: selected.proteinG,
+                    c: selected.carbsG,
+                    f: selected.fatG,
+                  })}
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Amount (g)</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">{t('Amount (g)')}</label>
                 <input
                   type="number"
                   min={1}
@@ -351,7 +359,11 @@ export const FoodPickerModal: React.FC<Props> = ({
                 onClick={() => void handleConfirm()}
                 className="w-full min-h-[44px] text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
               >
-                {busy ? 'Saving...' : target.kind === 'replace' ? 'Replace item' : 'Add to day'}
+                {busy
+                  ? t('Saving...')
+                  : target.kind === 'replace'
+                    ? t('Replace item')
+                    : t('Add to day')}
               </button>
             </div>
           )}

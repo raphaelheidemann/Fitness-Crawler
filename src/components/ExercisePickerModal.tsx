@@ -9,6 +9,7 @@ import {
   Timer,
   X,
 } from 'lucide-react';
+import { useT } from '../lib/i18n';
 import { ExerciseCatalogItem } from '../types';
 
 interface ExerciseCatalogResponse {
@@ -102,6 +103,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
   onClose,
   onSelectExercise,
 }) => {
+  const t = useT();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [muscles, setMuscles] = useState<string[]>([]);
@@ -135,7 +137,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
       })
       .catch((err) => {
         if (!active) return;
-        setError(err instanceof Error ? err.message : 'Failed to load exercise catalog');
+        setError(err instanceof Error ? err.message : t('Failed to load exercise catalog'));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -181,7 +183,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={mode === 'match' ? 'Match Exercise from Database' : 'Exercise Database'}
+      aria-label={mode === 'match' ? t('Match Exercise from Database') : t('Exercise Database')}
       className="fixed inset-0 z-50 bg-black/75 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <div className="bg-[#131a24] w-full sm:max-w-5xl h-[92dvh] sm:h-[86vh] rounded-t-2xl sm:rounded-2xl border-2 border-[#33445e] shadow-2xl flex flex-col overflow-hidden">
@@ -195,17 +197,17 @@ export const ExercisePickerModal: React.FC<Props> = ({
                 className="min-h-[40px] px-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to results
+                {t('Back to results')}
               </button>
             ) : (
               <div>
                 <h2 className="text-base font-bold text-white">
-                  {mode === 'match' ? 'Link Exercise Photo & Muscle' : 'Exercise Database'}
+                  {mode === 'match' ? t('Link Exercise Photo & Muscle') : t('Exercise Database')}
                 </h2>
                 <p className="text-xs text-slate-400 tabular-nums">
                   {allExercises.length > 0
-                    ? `${filteredExercises.length} of ${allExercises.length} exercises`
-                    : 'Search verified exercises with form photos by muscle group'}
+                    ? t('{n} of {total} exercises', { n: filteredExercises.length, total: allExercises.length })
+                    : t('Search verified exercises with form photos by muscle group')}
                 </p>
               </div>
             )}
@@ -214,7 +216,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close exercise database"
+            aria-label={t('Close exercise database')}
             className="w-10 h-10 inline-flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -227,13 +229,13 @@ export const ExercisePickerModal: React.FC<Props> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-medium text-emerald-400">
-                  {formatMuscleLabel(detailItem.muscleGroup)} ·{' '}
-                  {formatMuscleLabel(detailItem.equipment)} · {formatMuscleLabel(detailItem.level)}
+                  {t(formatMuscleLabel(detailItem.muscleGroup))} ·{' '}
+                  {t(formatMuscleLabel(detailItem.equipment))} · {t(formatMuscleLabel(detailItem.level))}
                 </p>
                 <h3 className="text-xl font-bold text-white mt-1">{detailItem.name}</h3>
                 {detailItem.secondaryMuscles.length > 0 && (
                   <p className="text-xs text-slate-400 mt-1">
-                    Secondary: {detailItem.secondaryMuscles.map(formatMuscleLabel).join(', ')}
+                    {t('Secondary')}: {detailItem.secondaryMuscles.map((m) => t(formatMuscleLabel(m))).join(', ')}
                   </p>
                 )}
               </div>
@@ -246,12 +248,12 @@ export const ExercisePickerModal: React.FC<Props> = ({
                 {addedIds[detailItem.id] ? (
                   <>
                     <Check className="w-4 h-4" />
-                    Added to Day
+                    {t('Added to Day')}
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    {mode === 'match' ? 'Use This Exercise' : `Add (${defaultRest}s rest)`}
+                    {mode === 'match' ? t('Use This Exercise') : t('Add ({sec}s rest)', { sec: defaultRest })}
                   </>
                 )}
               </button>
@@ -266,11 +268,11 @@ export const ExercisePickerModal: React.FC<Props> = ({
                   >
                     <CatalogImage
                       src={imgUrl}
-                      alt={`${detailItem.name} position ${idx + 1}`}
+                      alt={t('{name} position {n}', { name: detailItem.name, n: idx + 1 })}
                       className="w-full aspect-[4/3]"
                     />
                     <div className="px-3 py-2 text-xs font-medium text-slate-300 border-t border-[#253247] bg-[#0f151e]">
-                      {idx === 0 ? 'Start Position' : 'End / Peak Position'}
+                      {idx === 0 ? t('Start Position') : t('End / Peak Position')}
                     </div>
                   </div>
                 ))}
@@ -279,7 +281,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
 
             {detailItem.instructions.length > 0 && (
               <div className="bg-[#0e141d] border border-[#263347] rounded-xl p-4 space-y-2.5">
-                <h4 className="text-sm font-semibold text-white">Execution Steps</h4>
+                <h4 className="text-sm font-semibold text-white">{t('Execution Steps')}</h4>
                 <ol className="space-y-2 text-sm text-slate-200 list-decimal list-inside">
                   {detailItem.instructions.map((step, idx) => (
                     <li key={idx} className="leading-relaxed">
@@ -304,14 +306,14 @@ export const ExercisePickerModal: React.FC<Props> = ({
                       setQuery(e.target.value);
                       setVisibleLimit(PAGE_SIZE);
                     }}
-                    placeholder="Search exercise name or equipment (e.g. bench press, dumbbell, squat)..."
+                    placeholder={t('Search exercise name or equipment (e.g. bench press, dumbbell, squat)...')}
                     className="w-full min-h-[42px] pl-9 pr-9 py-2 text-sm text-white placeholder:text-slate-500 bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                   />
                   {query && (
                     <button
                       type="button"
                       onClick={() => setQuery('')}
-                      aria-label="Clear search"
+                      aria-label={t('Clear search')}
                       className="w-8 h-8 inline-flex items-center justify-center text-slate-400 hover:text-white absolute right-1.5 top-1/2 -translate-y-1/2"
                     >
                       <X className="w-4 h-4" />
@@ -322,7 +324,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                 {mode === 'add' && (
                   <div className="flex items-center gap-1.5 bg-[#131a24] border border-[#2d3c54] rounded-lg px-2.5 py-1.5 shrink-0">
                     <Timer className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-xs text-slate-300">Default rest:</span>
+                    <span className="text-xs text-slate-300">{t('Default rest:')}</span>
                     {DEFAULT_REST_OPTIONS.map((sec) => (
                       <button
                         key={sec}
@@ -355,7 +357,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                       : 'bg-[#131a24] border border-[#2d3c54] text-slate-300 hover:bg-[#1a2332]'
                   }`}
                 >
-                  All Muscles
+                  {t('All Muscles')}
                 </button>
                 {muscles.map((muscle) => (
                   <button
@@ -371,7 +373,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                         : 'bg-[#131a24] border border-[#2d3c54] text-slate-300 hover:bg-[#1a2332]'
                     }`}
                   >
-                    {formatMuscleLabel(muscle)}
+                    {t(formatMuscleLabel(muscle))}
                   </button>
                 ))}
               </div>
@@ -380,7 +382,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
             <div className="flex-1 overflow-y-auto p-4 sm:p-5">
               {loading ? (
                 <div className="py-16 text-center text-sm text-slate-400">
-                  Loading exercise catalog...
+                  {t('Loading exercise catalog...')}
                 </div>
               ) : error ? (
                 <div className="py-12 text-center space-y-3">
@@ -398,22 +400,22 @@ export const ExercisePickerModal: React.FC<Props> = ({
                           setAllExercises(data.exercises);
                         })
                         .catch((err) =>
-                          setError(err instanceof Error ? err.message : 'Failed to reload')
+                          setError(err instanceof Error ? err.message : t('Failed to reload'))
                         )
                         .finally(() => setLoading(false));
                     }}
                     className="px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg"
                   >
-                    Retry
+                    {t('Retry')}
                   </button>
                 </div>
               ) : visibleExercises.length === 0 ? (
                 <div className="py-14 text-center space-y-2">
                   <p className="text-sm font-medium text-slate-200">
-                    No matching exercises found
+                    {t('No matching exercises found')}
                   </p>
                   <p className="text-xs text-slate-400">
-                    Try clearing your search or choosing &ldquo;All Muscles&rdquo;.
+                    {t('Try clearing your search or choosing “All Muscles”.')}
                   </p>
                 </div>
               ) : (
@@ -438,7 +440,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                             />
                             <span className="absolute bottom-2 right-2 px-2 py-1 text-[11px] font-medium bg-[#090d12]/85 text-white border border-[#33445e] rounded-md inline-flex items-center gap-1">
                               <Eye className="w-3 h-3" />
-                              Form
+                              {t('Form')}
                             </span>
                           </button>
 
@@ -448,9 +450,9 @@ export const ExercisePickerModal: React.FC<Props> = ({
                                 {ex.name}
                               </h3>
                               <p className="text-xs text-slate-400 mt-1">
-                                {formatMuscleLabel(ex.muscleGroup)}
-                                {ex.equipment ? ` · ${formatMuscleLabel(ex.equipment)}` : ''}
-                                {ex.level ? ` · ${formatMuscleLabel(ex.level)}` : ''}
+                                {t(formatMuscleLabel(ex.muscleGroup))}
+                                {ex.equipment ? ` · ${t(formatMuscleLabel(ex.equipment))}` : ''}
+                                {ex.level ? ` · ${t(formatMuscleLabel(ex.level))}` : ''}
                               </p>
                             </div>
 
@@ -460,7 +462,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                                 onClick={() => setDetailItem(ex)}
                                 className="min-h-[40px] px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors"
                               >
-                                Guide
+                                {t('Guide')}
                               </button>
                               <button
                                 type="button"
@@ -474,12 +476,12 @@ export const ExercisePickerModal: React.FC<Props> = ({
                                 {isAdded ? (
                                   <>
                                     <Check className="w-3.5 h-3.5" />
-                                    Added
+                                    {t('Added')}
                                   </>
                                 ) : (
                                   <>
                                     <Plus className="w-3.5 h-3.5" />
-                                    {mode === 'match' ? 'Select' : 'Add to Day'}
+                                    {mode === 'match' ? t('Select') : t('Add to Day')}
                                   </>
                                 )}
                               </button>
@@ -497,7 +499,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                         onClick={() => setVisibleLimit((n) => n + PAGE_SIZE)}
                         className="min-h-[42px] px-5 py-2 text-xs font-semibold text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors tabular-nums"
                       >
-                        Show more ({filteredExercises.length - visibleLimit} remaining)
+                        {t('Show more ({n} remaining)', { n: filteredExercises.length - visibleLimit })}
                       </button>
                     </div>
                   )}

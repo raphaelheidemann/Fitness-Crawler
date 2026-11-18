@@ -1,4 +1,5 @@
 import React from 'react';
+import { useT } from '../lib/i18n';
 import { Pause, Play, RotateCcw, Timer, Volume2, VolumeX, X } from 'lucide-react';
 
 export function formatRestDuration(totalSeconds: number): string {
@@ -82,6 +83,7 @@ export const RestTimerBar: React.FC<Props> = ({
   onSelectPreset,
   onDismiss,
 }) => {
+  const t = useT();
   const isFinished = secondsLeft <= 0;
   const pct =
     targetSeconds > 0
@@ -91,7 +93,7 @@ export const RestTimerBar: React.FC<Props> = ({
   return (
     <div
       role="region"
-      aria-label="Rest timer"
+      aria-label={t('Rest timer')}
       className="fixed bottom-16 lg:bottom-5 right-3 left-3 sm:left-auto sm:w-[400px] z-30 bg-slate-900 text-white border border-slate-800 rounded-xl shadow-xl overflow-hidden"
     >
       {/* Progress bar */}
@@ -109,10 +111,10 @@ export const RestTimerBar: React.FC<Props> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400">
               <Timer className="w-3.5 h-3.5 shrink-0" />
-              <span>{isFinished ? 'Rest Complete' : 'Rest Timer'}</span>
+              <span>{isFinished ? t('Rest Complete') : t('Rest Timer')}</span>
             </div>
             <p className="text-sm font-semibold text-white truncate mt-0.5">
-              {exerciseName || 'Between Sets'}
+              {exerciseName || t('Between Sets')}
             </p>
           </div>
 
@@ -128,7 +130,7 @@ export const RestTimerBar: React.FC<Props> = ({
             <button
               type="button"
               onClick={onToggleSound}
-              aria-label={soundEnabled ? 'Mute timer chime' : 'Unmute timer chime'}
+              aria-label={soundEnabled ? t('Mute timer chime') : t('Unmute timer chime')}
               className="ml-1.5 w-9 h-9 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -137,7 +139,7 @@ export const RestTimerBar: React.FC<Props> = ({
             <button
               type="button"
               onClick={onDismiss}
-              aria-label="Dismiss rest timer"
+              aria-label={t('Dismiss rest timer')}
               className="w-9 h-9 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             >
               <X className="w-4 h-4" />
@@ -168,11 +170,11 @@ export const RestTimerBar: React.FC<Props> = ({
             <button
               type="button"
               onClick={onReset}
-              aria-label="Reset rest timer"
+              aria-label={t('Reset rest timer')}
               className="min-h-[38px] px-2.5 inline-flex items-center gap-1 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Reset
+              {t('Reset')}
             </button>
 
             <button
@@ -183,17 +185,17 @@ export const RestTimerBar: React.FC<Props> = ({
               {isFinished ? (
                 <>
                   <RotateCcw className="w-3.5 h-3.5" />
-                  Restart
+                  {t('Restart')}
                 </>
               ) : isRunning ? (
                 <>
                   <Pause className="w-3.5 h-3.5" />
-                  Pause
+                  {t('Pause')}
                 </>
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5" />
-                  Resume
+                  {t('Resume')}
                 </>
               )}
             </button>
@@ -201,7 +203,7 @@ export const RestTimerBar: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-slate-800">
-          <span className="text-[11px] text-slate-400">Quick set</span>
+          <span className="text-[11px] text-slate-400">{t('Quick set')}</span>
           <div className="flex items-center gap-1.5">
             {PRESETS.map((preset) => (
               <button

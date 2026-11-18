@@ -51,6 +51,7 @@ import { ExercisePickerModal, formatMuscleLabel } from './ExercisePickerModal';
 import { RestTimerBar, playRestCompleteChime } from './RestTimerBar';
 import { WorkoutPlanModal } from './WorkoutPlanModal';
 import { WorkoutTemplatesModal } from './WorkoutTemplatesModal';
+import { useT } from '../lib/i18n';
 
 interface ExerciseThumbProps {
   src?: string;
@@ -59,6 +60,7 @@ interface ExerciseThumbProps {
 }
 
 const ExerciseThumb: React.FC<ExerciseThumbProps> = ({ src, alt, onClick }) => {
+  const t = useT();
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -69,8 +71,8 @@ const ExerciseThumb: React.FC<ExerciseThumbProps> = ({ src, alt, onClick }) => {
     <button
       type="button"
       onClick={onClick}
-      title={src ? 'Preview exercise form' : 'Match photo from exercise database'}
-      aria-label={src ? `Preview ${alt}` : `Find photo for ${alt}`}
+      title={src ? t('Preview exercise form') : t('Match photo from exercise database')}
+      aria-label={src ? t('Preview {name}', { name: alt }) : t('Find photo for {name}', { name: alt })}
       className="w-12 h-12 rounded-lg border border-[#2d3c54] bg-[#0e141d] overflow-hidden shrink-0 flex items-center justify-center hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
     >
       {src && !failed ? (
@@ -132,6 +134,7 @@ export const GymPlanView: React.FC<Props> = ({
   mealLogs,
   onOpenCsvImport,
 }) => {
+  const t = useT();
   const [subTab, setSubTab] = useState<'schedule' | 'plans'>('schedule');
   const [selectedWeek, setSelectedWeek] = useState<number>(profile.currentWeek);
   const [selectedDay, setSelectedDay] = useState<number>(0);
@@ -385,7 +388,13 @@ export const GymPlanView: React.FC<Props> = ({
       if (switchTab) {
         setSubTab('schedule');
       }
-      setSaveFeedback(`Loaded "${plan.name}" onto ${DAY_FULL[targetDayIdx]} (Week ${selectedWeek})`);
+      setSaveFeedback(
+        t('Loaded "{name}" onto {day} (Week {week})', {
+          name: plan.name,
+          day: t(DAY_FULL[targetDayIdx]),
+          week: selectedWeek,
+        })
+      );
     } finally {
       setApplyingPlanId(null);
     }
@@ -416,7 +425,7 @@ export const GymPlanView: React.FC<Props> = ({
         },
         Boolean(existingDayDoc)
       );
-      setSaveFeedback(`Set ${DAY_FULL[selectedDay]} as Rest / Recovery`);
+      setSaveFeedback(t('Set {day} as Rest / Recovery', { day: t(DAY_FULL[selectedDay]) }));
       return;
     }
 
@@ -445,7 +454,9 @@ export const GymPlanView: React.FC<Props> = ({
         true
       );
       setPlanName(focus.trim() || linkedPlan.name);
-      setSaveFeedback(`Updated reusable plan "${focus.trim() || linkedPlan.name}"`);
+      setSaveFeedback(
+        t('Updated reusable plan "{name}"', { name: focus.trim() || linkedPlan.name })
+      );
     } finally {
       setUpdatingTemplate(false);
     }
@@ -456,7 +467,7 @@ export const GymPlanView: React.FC<Props> = ({
       uid,
       {
         id: '',
-        name: `${plan.name.slice(0, 70)} (Copy)`,
+        name: `${plan.name.slice(0, 70)} (${t('Copy')})`,
         scheduledTime: plan.scheduledTime,
         defaultDays: plan.defaultDays,
         isRestDay: plan.isRestDay,
@@ -466,7 +477,7 @@ export const GymPlanView: React.FC<Props> = ({
       },
       false
     );
-    setSaveFeedback(`Duplicated plan "${plan.name}"`);
+    setSaveFeedback(t('Duplicated plan "{name}"', { name: plan.name }));
   };
 
   const handleSaveDay = async (e: React.FormEvent) => {
@@ -491,7 +502,7 @@ export const GymPlanView: React.FC<Props> = ({
         },
         Boolean(existingDayDoc)
       );
-      setSaveFeedback('Day plan saved');
+      setSaveFeedback(t('Day plan saved'));
     } finally {
       setSaving(false);
     }
@@ -509,7 +520,7 @@ export const GymPlanView: React.FC<Props> = ({
         .map((w) => w.id);
       await copyWeekPlans(uid, weekWorkouts, sourceMeals, targetWeek, existingTargetIds);
       setSelectedWeek(targetWeek);
-      setSaveFeedback(`Copied split & meals to Week ${targetWeek}`);
+      setSaveFeedback(t('Copied split & meals to Week {week}', { week: targetWeek }));
     } finally {
       setCopying(false);
     }
@@ -517,7 +528,7 @@ export const GymPlanView: React.FC<Props> = ({
 
   const handleMakeCurrentWeek = async () => {
     await updateUserWeekAndPhase(uid, selectedWeek, profile.phaseName);
-    setSaveFeedback(`Active program set to Week ${selectedWeek}`);
+    setSaveFeedback(t('Active program set to Week {week}', { week: selectedWeek }));
   };
 
   const previewExercise =
@@ -537,25 +548,25 @@ export const GymPlanView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-            <span>Weekly Split &amp; Exercise Log</span>
+            <span>{t('Weekly Split & Exercise Log')}</span>
             <span aria-hidden="true">·</span>
-            <span className="tabular-nums">{completedCount} training sessions done</span>
+            <span className="tabular-nums">{t('{n} training sessions done', { n: completedCount })}</span>
             <span aria-hidden="true">·</span>
             <span className="tabular-nums">
-              {Math.round(weekVolume).toLocaleString()} {wUnit} weekly volume
+              {t('{vol} {unit} weekly volume', { vol: Math.round(weekVolume).toLocaleString(), unit: wUnit })}
             </span>
             {weekCardioDistance > 0 && (
               <>
                 <span aria-hidden="true">·</span>
                 <span className="tabular-nums text-sky-400 font-medium">
-                  {Number(weekCardioDistance.toFixed(1))} {dUnit} walk/run
+                  {t('{dist} {unit} walk/run', { dist: Number(weekCardioDistance.toFixed(1)), unit: dUnit })}
                 </span>
               </>
             )}
           </div>
           <h1 className="text-xl font-bold text-white mt-1">
-            Week {selectedWeek} Gym Plan
-            {selectedWeek === profile.currentWeek ? ' (Active Week)' : ''}
+            {t('Week {week} Gym Plan', { week: selectedWeek })}
+            {selectedWeek === profile.currentWeek ? ` (${t('Active Week')})` : ''}
           </h1>
         </div>
 
@@ -565,20 +576,20 @@ export const GymPlanView: React.FC<Props> = ({
               type="button"
               onClick={() => setSelectedWeek((w) => Math.max(1, w - 1))}
               disabled={selectedWeek <= 1}
-              aria-label="Previous week"
+              aria-label={t('Previous week')}
               className="p-1.5 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded-md disabled:opacity-40"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <select
-              aria-label="Select week"
+              aria-label={t('Select week')}
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
               className="bg-transparent px-2 text-xs font-mono font-medium text-slate-100 focus:outline-none tabular-nums"
             >
               {Array.from({ length: 52 }, (_, i) => i + 1).map((wk) => (
                 <option key={wk} value={wk} className="bg-[#0e141d] text-slate-100">
-                  Week {wk}
+                  {t('Week {n}', { n: wk })}
                 </option>
               ))}
             </select>
@@ -586,7 +597,7 @@ export const GymPlanView: React.FC<Props> = ({
               type="button"
               onClick={() => setSelectedWeek((w) => Math.min(52, w + 1))}
               disabled={selectedWeek >= 52}
-              aria-label="Next week"
+              aria-label={t('Next week')}
               className="p-1.5 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded-md disabled:opacity-40"
             >
               <ChevronRight className="w-4 h-4" />
@@ -599,7 +610,7 @@ export const GymPlanView: React.FC<Props> = ({
               onClick={() => void handleMakeCurrentWeek()}
               className="px-3 py-2 text-xs font-medium text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors whitespace-nowrap"
             >
-              Set as Current Week
+              {t('Set as Current Week')}
             </button>
           )}
 
@@ -611,7 +622,7 @@ export const GymPlanView: React.FC<Props> = ({
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
             >
               <Copy className="w-3.5 h-3.5" />
-              {copying ? 'Copying...' : `Copy to Week ${selectedWeek + 1}`}
+              {copying ? t('Copying...') : t('Copy to Week {week}', { week: selectedWeek + 1 })}
             </button>
           )}
 
@@ -621,7 +632,7 @@ export const GymPlanView: React.FC<Props> = ({
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
           >
             <Upload className="w-3.5 h-3.5" />
-            CSV Templates &amp; Import
+            {t('CSV Templates & Import')}
           </button>
         </div>
       </div>
@@ -639,7 +650,7 @@ export const GymPlanView: React.FC<Props> = ({
             }`}
           >
             <Dumbbell className="w-3.5 h-3.5" />
-            Weekly Schedule (Mon–Sun)
+            {t('Weekly Schedule (Mon–Sun)')}
           </button>
           <button
             type="button"
@@ -651,7 +662,7 @@ export const GymPlanView: React.FC<Props> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            Training Plans ({workoutPlans.length})
+            {t('Training Plans ({n})', { n: workoutPlans.length })}
           </button>
         </div>
 
@@ -662,7 +673,7 @@ export const GymPlanView: React.FC<Props> = ({
             className="min-h-[40px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors"
           >
             <Layers className="w-3.5 h-3.5" />
-            Ready-made Workouts
+            {t('Ready-made Workouts')}
           </button>
           {subTab === 'plans' && (
             <button
@@ -673,7 +684,7 @@ export const GymPlanView: React.FC<Props> = ({
               className="min-h-[40px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              Create New Plan
+              {t('Create New Plan')}
             </button>
           )}
         </div>
@@ -693,11 +704,12 @@ export const GymPlanView: React.FC<Props> = ({
                 <Layers className="w-5 h-5" />
               </div>
               <h2 className="text-base font-semibold text-white">
-                No reusable training plans yet
+                {t('No reusable training plans yet')}
               </h2>
               <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                Extract the training CSV template to build your week with your preferred AI agent,
-                upload it back to auto-create reusable plans, or build one manually.
+                {t(
+                  'Extract the training CSV template to build your week with your preferred AI agent, upload it back to auto-create reusable plans, or build one manually.'
+                )}
               </p>
               <div className="pt-2 flex flex-wrap items-center justify-center gap-2.5">
                 <button
@@ -706,7 +718,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  Get Template / Import CSV
+                  {t('Get Template / Import CSV')}
                 </button>
                 <button
                   type="button"
@@ -716,7 +728,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Create Plan Manually
+                  {t('Create Plan Manually')}
                 </button>
               </div>
             </div>
@@ -738,15 +750,15 @@ export const GymPlanView: React.FC<Props> = ({
                           </h3>
                           <p className="text-xs text-slate-400 mt-0.5 tabular-nums">
                             {plan.defaultDays.length > 0
-                              ? plan.defaultDays.map((d) => DAY_SHORT[d]).join(', ')
-                              : 'Any day'}
+                              ? plan.defaultDays.map((d) => t(DAY_SHORT[d])).join(', ')
+                              : t('Any day')}
                             {plan.scheduledTime ? ` · ${plan.scheduledTime}` : ''}
                             {' · '}
                             {plan.isRestDay
-                              ? 'Rest template'
-                              : `${plan.exercises.length} exercises`}
+                              ? t('Rest template')
+                              : t('{n} exercises', { n: plan.exercises.length })}
                             {plan.cardio.activityType !== 'none'
-                              ? ` · ${plan.cardio.activityType === 'walk' ? 'Walk' : 'Run'}${
+                              ? ` · ${plan.cardio.activityType === 'walk' ? t('Walk') : t('Run')}${
                                   plan.cardio.durationMinutes > 0
                                     ? ` ${plan.cardio.durationMinutes} min`
                                     : ''
@@ -765,8 +777,8 @@ export const GymPlanView: React.FC<Props> = ({
                                 seedFromDay: null,
                               })
                             }
-                            aria-label={`Edit ${plan.name}`}
-                            title="Edit plan"
+                            aria-label={t('Edit {name}', { name: plan.name })}
+                            title={t('Edit plan')}
                             className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg"
                           >
                             <Pencil className="w-4 h-4" />
@@ -774,8 +786,8 @@ export const GymPlanView: React.FC<Props> = ({
                           <button
                             type="button"
                             onClick={() => void handleDuplicatePlan(plan)}
-                            aria-label={`Duplicate ${plan.name}`}
-                            title="Duplicate plan"
+                            aria-label={t('Duplicate {name}', { name: plan.name })}
+                            title={t('Duplicate plan')}
                             className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg"
                           >
                             <Copy className="w-4 h-4" />
@@ -784,10 +796,10 @@ export const GymPlanView: React.FC<Props> = ({
                             type="button"
                             onClick={() => {
                               void deleteWorkoutPlan(uid, plan.id);
-                              setSaveFeedback(`Deleted plan "${plan.name}"`);
+                              setSaveFeedback(t('Deleted plan "{name}"', { name: plan.name }));
                             }}
-                            aria-label={`Delete ${plan.name}`}
-                            title="Delete plan"
+                            aria-label={t('Delete {name}', { name: plan.name })}
+                            title={t('Delete plan')}
                             className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -810,7 +822,7 @@ export const GymPlanView: React.FC<Props> = ({
                           ))}
                           {plan.exercises.length > 4 && (
                             <li className="text-[11px] text-slate-500">
-                              +{plan.exercises.length - 4} more exercises
+                              {t('+{n} more exercises', { n: plan.exercises.length - 4 })}
                             </li>
                           )}
                         </ul>
@@ -819,7 +831,7 @@ export const GymPlanView: React.FC<Props> = ({
 
                     <div className="pt-3 border-t border-[#1e293b] flex items-center gap-2">
                       <select
-                        aria-label={`Select day to assign ${plan.name}`}
+                        aria-label={t('Select day to assign {name}', { name: plan.name })}
                         value={chosenApplyDay}
                         onChange={(e) =>
                           setApplyDayChoiceByPlan((prev) => ({
@@ -831,7 +843,7 @@ export const GymPlanView: React.FC<Props> = ({
                       >
                         {DAY_FULL.map((dName, dIdx) => (
                           <option key={dName} value={dIdx}>
-                            {dName} (W{selectedWeek})
+                            {t(dName)} (W{selectedWeek})
                           </option>
                         ))}
                       </select>
@@ -842,7 +854,7 @@ export const GymPlanView: React.FC<Props> = ({
                         className="flex-1 min-h-[38px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 rounded-lg transition-colors"
                       >
                         <Play className="w-3.5 h-3.5" />
-                        {applyingPlanId === plan.id ? 'Assigning...' : 'Start on This Day'}
+                        {applyingPlanId === plan.id ? t('Assigning...') : t('Start on This Day')}
                       </button>
                     </div>
                   </div>
@@ -875,7 +887,7 @@ export const GymPlanView: React.FC<Props> = ({
                         isSelected ? 'text-amber-400' : 'text-slate-400'
                       }`}
                     >
-                      {shortName}
+                      {t(shortName)}
                     </span>
                     {dayDoc?.completed && (
                       <Check
@@ -886,7 +898,7 @@ export const GymPlanView: React.FC<Props> = ({
                     )}
                   </div>
                   <p className="text-xs font-medium mt-1.5 truncate text-white">
-                    {dayDoc ? dayDoc.focus : 'Unscheduled'}
+                    {dayDoc ? t(dayDoc.focus) : t('Unscheduled')}
                   </p>
                   <p
                     className={`text-[11px] mt-1 tabular-nums ${
@@ -895,13 +907,13 @@ export const GymPlanView: React.FC<Props> = ({
                   >
                     {dayDoc ? (
                       <>
-                        {dayDoc.isRestDay ? 'Rest' : `${dayDoc.exercises.length} ex`}
+                        {dayDoc.isRestDay ? t('Rest') : `${dayDoc.exercises.length} ${t('ex')}`}
                         {dayDoc.cardio && dayDoc.cardio.activityType !== 'none'
-                          ? ` · ${dayDoc.cardio.activityType === 'walk' ? 'Walk' : 'Run'} ${dayDoc.cardio.distance}${dUnit}`
+                          ? ` · ${dayDoc.cardio.activityType === 'walk' ? t('Walk') : t('Run')} ${dayDoc.cardio.distance}${dUnit}`
                           : ''}
                       </>
                     ) : (
-                      'Pick a plan'
+                      t('Pick a plan')
                     )}
                   </p>
                 </button>
@@ -919,29 +931,29 @@ export const GymPlanView: React.FC<Props> = ({
               <div className="flex flex-wrap items-center gap-2.5 min-w-0">
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-200 whitespace-nowrap">
                   <Layers className="w-3.5 h-3.5 text-amber-400" />
-                  Plan for {DAY_FULL[selectedDay]}:
+                  {t('Plan for {day}:', { day: t(DAY_FULL[selectedDay]) })}
                 </span>
                 <select
-                  aria-label={`Select training plan for ${DAY_FULL[selectedDay]}`}
+                  aria-label={t('Select training plan for {day}', { day: t(DAY_FULL[selectedDay]) })}
                   value={planId || ''}
                   onChange={(e) => void handleSelectPlanFromDayDropdown(e.target.value)}
                   className="min-h-[38px] px-3 py-1.5 text-xs font-medium text-slate-100 bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400 max-w-full sm:max-w-xs"
                 >
                   <option value="">
                     {sortedPlans.length > 0
-                      ? 'Choose a saved Training Plan...'
-                      : 'No saved plans yet — create or import CSV'}
+                      ? t('Choose a saved Training Plan...')
+                      : t('No saved plans yet — create or import CSV')}
                   </option>
                   {sortedPlans.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.isRestDay ? 'Rest' : `${p.exercises.length} ex`})
+                      {p.name} ({p.isRestDay ? t('Rest') : `${p.exercises.length} ${t('ex')}`})
                     </option>
                   ))}
-                  <option value="__rest__">Rest / Recovery Day</option>
+                  <option value="__rest__">{t('Rest / Recovery Day')}</option>
                 </select>
                 {planName && (
                   <span className="text-xs text-slate-400 truncate">
-                    Linked · {planName}
+                    {t('Linked')} · {planName}
                   </span>
                 )}
               </div>
@@ -955,7 +967,7 @@ export const GymPlanView: React.FC<Props> = ({
                     className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
                   >
                     <Save className="w-3.5 h-3.5" />
-                    {updatingTemplate ? 'Updating...' : 'Update Plan Template'}
+                    {updatingTemplate ? t('Updating...') : t('Update Plan Template')}
                   </button>
                 )}
                 <button
@@ -965,7 +977,7 @@ export const GymPlanView: React.FC<Props> = ({
                       open: true,
                       editingPlan: null,
                       seedFromDay: {
-                        name: focus || `${DAY_FULL[selectedDay]} Session`,
+                        name: focus || t('{day} Session', { day: t(DAY_FULL[selectedDay]) }),
                         isRestDay,
                         exercises,
                         cardio,
@@ -977,7 +989,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Save as New Plan
+                  {t('Save as New Plan')}
                 </button>
               </div>
             </div>
@@ -985,7 +997,7 @@ export const GymPlanView: React.FC<Props> = ({
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#1e293b]">
               <div>
                 <p className="text-xs font-medium text-slate-400">
-                  Week {selectedWeek} · {DAY_FULL[selectedDay]}
+                  {t('Week {n}', { n: selectedWeek })} · {t(DAY_FULL[selectedDay])}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <input
@@ -994,7 +1006,7 @@ export const GymPlanView: React.FC<Props> = ({
                     maxLength={SCHEMA_LIMITS.FOCUS_MAX}
                     value={focus}
                     onChange={(e) => setFocus(e.target.value)}
-                    placeholder="Session focus (e.g., Upper Body Push)"
+                    placeholder={t('Session focus (e.g., Upper Body Push)')}
                     className="px-3 py-1.5 text-base font-semibold text-white bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400 min-w-[240px]"
                   />
                   <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer select-none">
@@ -1004,7 +1016,7 @@ export const GymPlanView: React.FC<Props> = ({
                       onChange={(e) => setIsRestDay(e.target.checked)}
                       className="rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
                     />
-                    Rest / Recovery Day
+                    {t('Rest / Recovery Day')}
                   </label>
                 </div>
               </div>
@@ -1025,7 +1037,7 @@ export const GymPlanView: React.FC<Props> = ({
                     }`}
                   >
                     <Check className="w-3.5 h-3.5" />
-                    {completed ? 'Session Completed (+50 XP)' : 'Mark Complete (+50 XP)'}
+                    {completed ? t('Session Completed (+50 XP)') : t('Mark Complete (+50 XP)')}
                   </button>
                 )}
 
@@ -1035,7 +1047,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  {saving ? 'Saving...' : 'Save Day Log'}
+                  {saving ? t('Saving...') : t('Save Day Log')}
                 </button>
               </div>
             </div>
@@ -1050,10 +1062,14 @@ export const GymPlanView: React.FC<Props> = ({
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-white">Exercise Prescription</h2>
+                <h2 className="text-sm font-semibold text-white">{t('Exercise Prescription')}</h2>
                 <p className="text-xs text-slate-400 tabular-nums">
-                  Session volume: {Math.round(sessionVolume).toLocaleString()} {wUnit} ·{' '}
-                  {exercises.length} / {SCHEMA_LIMITS.EXERCISES_MAX} exercises
+                  {t('Session volume: {vol} {unit} · {n} / {max} exercises', {
+                    vol: Math.round(sessionVolume).toLocaleString(),
+                    unit: wUnit,
+                    n: exercises.length,
+                    max: SCHEMA_LIMITS.EXERCISES_MAX,
+                  })}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -1063,7 +1079,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Timer className="w-3.5 h-3.5 text-emerald-400" />
-                  Rest Timer
+                  {t('Rest Timer')}
                 </button>
                 <button
                   type="button"
@@ -1079,7 +1095,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Database className="w-3.5 h-3.5" />
-                  Browse Exercise DB
+                  {t('Browse Exercise DB')}
                 </button>
                 <button
                   type="button"
@@ -1088,7 +1104,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Custom Row
+                  {t('Custom Row')}
                 </button>
               </div>
             </div>
@@ -1096,7 +1112,7 @@ export const GymPlanView: React.FC<Props> = ({
             {exercises.length === 0 ? (
               <div className="py-10 px-4 text-center border border-dashed border-[#2d3c54] rounded-lg">
                 <p className="text-sm text-slate-300">
-                  No exercises added for {DAY_FULL[selectedDay]}.
+                  {t('No exercises added for {day}.', { day: t(DAY_FULL[selectedDay]) })}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                   <button
@@ -1112,7 +1128,7 @@ export const GymPlanView: React.FC<Props> = ({
                     className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
                   >
                     <Database className="w-3.5 h-3.5" />
-                    Browse Exercise Database
+                    {t('Browse Exercise Database')}
                   </button>
                   <button
                     type="button"
@@ -1120,7 +1136,7 @@ export const GymPlanView: React.FC<Props> = ({
                     className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add Custom Exercise
+                    {t('Add Custom Exercise')}
                   </button>
                 </div>
               </div>
@@ -1131,14 +1147,14 @@ export const GymPlanView: React.FC<Props> = ({
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-[#0e141d] border-b border-[#263347] text-xs font-medium text-slate-400">
-                        <th className="py-2.5 px-3">Exercise</th>
-                        <th className="py-2.5 px-2 text-right w-16">Sets</th>
-                        <th className="py-2.5 px-2 text-right w-22">Reps</th>
-                        <th className="py-2.5 px-2 text-right w-24">Target ({wUnit})</th>
-                        <th className="py-2.5 px-2 text-right w-24">Actual ({wUnit})</th>
-                        <th className="py-2.5 px-2 text-right w-16">RPE</th>
-                        <th className="py-2.5 px-2 text-right w-32">Rest (s)</th>
-                        <th className="py-2.5 px-2 text-center w-14">Done</th>
+                        <th className="py-2.5 px-3">{t('Exercise')}</th>
+                        <th className="py-2.5 px-2 text-right w-16">{t('Sets')}</th>
+                        <th className="py-2.5 px-2 text-right w-22">{t('Reps')}</th>
+                        <th className="py-2.5 px-2 text-right w-24">{t('Target ({unit})', { unit: wUnit })}</th>
+                        <th className="py-2.5 px-2 text-right w-24">{t('Actual ({unit})', { unit: wUnit })}</th>
+                        <th className="py-2.5 px-2 text-right w-16">{t('RPE')}</th>
+                        <th className="py-2.5 px-2 text-right w-32">{t('Rest (s)')}</th>
+                        <th className="py-2.5 px-2 text-center w-14">{t('Done')}</th>
                         <th className="py-2.5 px-2 text-right w-10"></th>
                       </tr>
                     </thead>
@@ -1151,7 +1167,7 @@ export const GymPlanView: React.FC<Props> = ({
                               <div className="flex items-center gap-2.5">
                                 <ExerciseThumb
                                   src={ex.imageUrl}
-                                  alt={ex.name || 'Exercise'}
+                                  alt={ex.name || t('Exercise')}
                                   onClick={() => {
                                     if (ex.imageUrl) {
                                       setPreviewExerciseIdx(idx);
@@ -1174,14 +1190,14 @@ export const GymPlanView: React.FC<Props> = ({
                                     onChange={(e) =>
                                       handleUpdateExercise(idx, 'name', e.target.value)
                                     }
-                                    placeholder="e.g., Barbell Squat"
+                                    placeholder={t('e.g., Barbell Squat')}
                                     className="w-full px-2.5 py-1.5 text-sm font-medium text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
                                   />
                                   <div className="flex items-center gap-2 text-[11px] text-slate-400 px-0.5">
                                     <span>
                                       {ex.muscleGroup
-                                        ? formatMuscleLabel(ex.muscleGroup)
-                                        : 'Custom exercise'}
+                                        ? t(formatMuscleLabel(ex.muscleGroup))
+                                        : t('Custom exercise')}
                                     </span>
                                     <span aria-hidden="true">·</span>
                                     <button
@@ -1197,7 +1213,7 @@ export const GymPlanView: React.FC<Props> = ({
                                       className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 font-medium"
                                     >
                                       <Search className="w-3 h-3" />
-                                      {ex.imageUrl ? 'Swap' : 'Match photo'}
+                                      {ex.imageUrl ? t('Swap') : t('Match photo')}
                                     </button>
                                   </div>
                                   <input
@@ -1207,7 +1223,7 @@ export const GymPlanView: React.FC<Props> = ({
                                     onChange={(e) =>
                                       handleUpdateExercise(idx, 'notes', e.target.value)
                                     }
-                                    placeholder="Cue / last log note..."
+                                    placeholder={t('Cue / last log note...')}
                                     className="w-full px-2 py-1 text-[11px] text-slate-300 bg-[#0e141d]/70 border border-[#263347] rounded focus:outline-none focus:border-emerald-400"
                                   />
                                 </div>
@@ -1290,7 +1306,7 @@ export const GymPlanView: React.FC<Props> = ({
                                   step={15}
                                   min={0}
                                   max={600}
-                                  aria-label={`Rest seconds for ${ex.name || 'exercise'}`}
+                                  aria-label={t('Rest seconds for {name}', { name: ex.name || t('exercise') })}
                                   value={restSec}
                                   onChange={(e) =>
                                     handleUpdateExercise(
@@ -1304,8 +1320,11 @@ export const GymPlanView: React.FC<Props> = ({
                                 <button
                                   type="button"
                                   onClick={() => startRestTimer(ex.name, restSec)}
-                                  title={`Start ${restSec}s rest timer`}
-                                  aria-label={`Start ${restSec} second rest timer for ${ex.name || 'exercise'}`}
+                                  title={t('Start {sec}s rest timer', { sec: restSec })}
+                                  aria-label={t('Start {sec} second rest timer for {name}', {
+                                    sec: restSec,
+                                    name: ex.name || t('exercise'),
+                                  })}
                                   className="p-1.5 text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-md transition-colors"
                                 >
                                   <Timer className="w-4 h-4" />
@@ -1319,7 +1338,7 @@ export const GymPlanView: React.FC<Props> = ({
                                 onChange={(e) =>
                                   handleUpdateExercise(idx, 'completed', e.target.checked)
                                 }
-                                aria-label={`Mark ${ex.name || 'exercise'} complete`}
+                                aria-label={t('Mark {name} complete', { name: ex.name || t('exercise') })}
                                 className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
                               />
                             </td>
@@ -1327,7 +1346,7 @@ export const GymPlanView: React.FC<Props> = ({
                               <button
                                 type="button"
                                 onClick={() => handleRemoveExercise(idx)}
-                                aria-label="Remove exercise"
+                                aria-label={t('Remove exercise')}
                                 className="p-1.5 text-slate-400 hover:text-rose-400 rounded-md transition-colors"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -1352,7 +1371,7 @@ export const GymPlanView: React.FC<Props> = ({
                         <div className="flex items-start gap-3">
                           <ExerciseThumb
                             src={ex.imageUrl}
-                            alt={ex.name || 'Exercise'}
+                            alt={ex.name || t('Exercise')}
                             onClick={() => {
                               if (ex.imageUrl) {
                                 setPreviewExerciseIdx(idx);
@@ -1375,14 +1394,14 @@ export const GymPlanView: React.FC<Props> = ({
                               onChange={(e) =>
                                 handleUpdateExercise(idx, 'name', e.target.value)
                               }
-                              placeholder="Exercise name"
+                              placeholder={t('Exercise name')}
                               className="w-full min-h-[38px] px-2.5 py-1.5 text-sm font-semibold text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                             />
                             <div className="flex items-center gap-2 text-xs text-slate-400">
                               <span>
                                 {ex.muscleGroup
-                                  ? formatMuscleLabel(ex.muscleGroup)
-                                  : 'Custom'}
+                                  ? t(formatMuscleLabel(ex.muscleGroup))
+                                  : t('Custom')}
                               </span>
                               <span aria-hidden="true">·</span>
                               <button
@@ -1397,14 +1416,14 @@ export const GymPlanView: React.FC<Props> = ({
                                 }
                                 className="text-amber-400 font-medium"
                               >
-                                {ex.imageUrl ? 'Swap image' : 'Match from DB'}
+                                {ex.imageUrl ? t('Swap image') : t('Match from DB')}
                               </button>
                             </div>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleRemoveExercise(idx)}
-                            aria-label="Remove exercise"
+                            aria-label={t('Remove exercise')}
                             className="w-10 h-10 inline-flex items-center justify-center text-slate-400 hover:text-rose-400 rounded-lg shrink-0"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1418,14 +1437,14 @@ export const GymPlanView: React.FC<Props> = ({
                           onChange={(e) =>
                             handleUpdateExercise(idx, 'notes', e.target.value)
                           }
-                          placeholder="Progression cue / last load note..."
+                          placeholder={t('Progression cue / last load note...')}
                           className="w-full px-2.5 py-1.5 text-xs text-slate-300 bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                         />
 
                         <div className="grid grid-cols-3 gap-2">
                           <div>
                             <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              Sets
+                              {t('Sets')}
                             </label>
                             <input
                               type="number"
@@ -1440,7 +1459,7 @@ export const GymPlanView: React.FC<Props> = ({
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              Reps
+                              {t('Reps')}
                             </label>
                             <input
                               type="text"
@@ -1454,7 +1473,7 @@ export const GymPlanView: React.FC<Props> = ({
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              Rest (sec)
+                              {t('Rest (sec)')}
                             </label>
                             <input
                               type="number"
@@ -1474,7 +1493,7 @@ export const GymPlanView: React.FC<Props> = ({
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              Target ({wUnit})
+                              {t('Target ({unit})', { unit: wUnit })}
                             </label>
                             <input
                               type="number"
@@ -1494,7 +1513,7 @@ export const GymPlanView: React.FC<Props> = ({
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              Actual ({wUnit})
+                              {t('Actual ({unit})', { unit: wUnit })}
                             </label>
                             <input
                               type="number"
@@ -1514,7 +1533,7 @@ export const GymPlanView: React.FC<Props> = ({
                           </div>
                           <div>
                             <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              RPE
+                              {t('RPE')}
                             </label>
                             <input
                               type="number"
@@ -1537,7 +1556,7 @@ export const GymPlanView: React.FC<Props> = ({
                             className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors tabular-nums"
                           >
                             <Timer className="w-4 h-4" />
-                            Start {restSec}s Rest
+                            {t('Start {sec}s Rest', { sec: restSec })}
                           </button>
 
                           <button
@@ -1552,7 +1571,7 @@ export const GymPlanView: React.FC<Props> = ({
                             }`}
                           >
                             <Check className="w-4 h-4" />
-                            {ex.completed ? 'Done' : 'Mark Done'}
+                            {ex.completed ? t('Done') : t('Mark Done')}
                           </button>
                         </div>
                       </div>
@@ -1572,9 +1591,9 @@ export const GymPlanView: React.FC<Props> = ({
                 <Footprints className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-white">Cardio · Walk or Run (+35 XP)</h2>
+                <h2 className="text-sm font-semibold text-white">{t('Cardio · Walk or Run (+35 XP)')}</h2>
                 <p className="text-xs text-slate-400">
-                  Log outdoor or treadmill walk/run distance, duration, and pace
+                  {t('Log outdoor or treadmill walk/run distance, duration, and pace')}
                 </p>
               </div>
             </div>
@@ -1582,9 +1601,9 @@ export const GymPlanView: React.FC<Props> = ({
             <div className="inline-flex items-center p-1 bg-[#131a24] border border-[#2d3c54] rounded-lg self-start sm:self-auto">
               {(
                 [
-                  { id: 'none', label: 'None' },
-                  { id: 'walk', label: 'Walk' },
-                  { id: 'run', label: 'Run' },
+                  { id: 'none', label: t('None') },
+                  { id: 'walk', label: t('Walk') },
+                  { id: 'run', label: t('Run') },
                 ] as { id: CardioType; label: string }[]
               ).map((opt) => (
                 <button
@@ -1612,7 +1631,7 @@ export const GymPlanView: React.FC<Props> = ({
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Distance ({dUnit})
+                  {t('Distance ({unit})', { unit: dUnit })}
                 </label>
                 <input
                   type="number"
@@ -1629,7 +1648,7 @@ export const GymPlanView: React.FC<Props> = ({
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Duration (min)
+                  {t('Duration (min)')}
                 </label>
                 <input
                   type="number"
@@ -1649,7 +1668,7 @@ export const GymPlanView: React.FC<Props> = ({
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Calories Burned
+                  {t('Calories Burned')}
                 </label>
                 <input
                   type="number"
@@ -1668,7 +1687,7 @@ export const GymPlanView: React.FC<Props> = ({
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {cardio.activityType === 'walk' ? 'Incline / Speed' : 'Pace / Split'}
+                  {cardio.activityType === 'walk' ? t('Incline / Speed') : t('Pace / Split')}
                 </label>
                 <input
                   type="text"
@@ -1678,7 +1697,9 @@ export const GymPlanView: React.FC<Props> = ({
                     setCardio((prev) => ({ ...prev, paceOrIncline: e.target.value }))
                   }
                   placeholder={
-                    cardio.activityType === 'walk' ? 'e.g., 6% incline · 5.8 km/h' : 'e.g., 5:20 /km'
+                    cardio.activityType === 'walk'
+                      ? t('e.g., 6% incline · 5.8 km/h')
+                      : t('e.g., 5:20 /km')
                   }
                   className="w-full px-3 py-2 text-sm text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                 />
@@ -1694,7 +1715,7 @@ export const GymPlanView: React.FC<Props> = ({
                     }
                     className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
                   />
-                  Cardio Done
+                  {t('Cardio Done')}
                 </label>
               </div>
             </div>
@@ -1703,14 +1724,14 @@ export const GymPlanView: React.FC<Props> = ({
 
         <div>
           <label className="block text-xs font-medium text-slate-300 mb-1.5">
-            Session Notes &amp; Conditioning
+            {t('Session Notes & Conditioning')}
           </label>
           <textarea
             rows={2}
             maxLength={SCHEMA_LIMITS.NOTES_MAX}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Record tempo cues, soreness, or progression notes..."
+            placeholder={t('Record tempo cues, soreness, or progression notes...')}
             className="w-full px-3 py-2 text-sm text-white bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
           />
         </div>
@@ -1724,7 +1745,12 @@ export const GymPlanView: React.FC<Props> = ({
         uid={uid}
         onAdded={(name, count) => {
           setSaveFeedback(
-            `Added ${count} ${count === 1 ? 'plan' : 'plans'} from "${name}". Open a day and pick one from the list.`
+            t(
+              count === 1
+                ? 'Added {n} plan from "{name}". Open a day and pick one from the list.'
+                : 'Added {n} plans from "{name}". Open a day and pick one from the list.',
+              { n: count, name }
+            )
           );
           setSubTab('plans');
         }}
@@ -1740,7 +1766,7 @@ export const GymPlanView: React.FC<Props> = ({
         unitSystem={profile.unitSystem}
         editingPlan={planModalState.editingPlan}
         seedFromDay={planModalState.seedFromDay}
-        onSaved={(savedName) => setSaveFeedback(`Saved training plan "${savedName}"`)}
+        onSaved={(savedName) => setSaveFeedback(t('Saved training plan "{name}"', { name: savedName }))}
       />
 
       {/* Exercise Form Photo Preview Modal */}
@@ -1748,7 +1774,7 @@ export const GymPlanView: React.FC<Props> = ({
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={`Form photos for ${previewExercise.name}`}
+          aria-label={t('Form photos for {name}', { name: previewExercise.name })}
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-[1px] flex items-center justify-center p-4"
         >
           <div className="bg-[#131a24] w-full max-w-2xl rounded-2xl border-2 border-[#33445e] shadow-2xl overflow-hidden">
@@ -1756,17 +1782,17 @@ export const GymPlanView: React.FC<Props> = ({
               <div className="min-w-0">
                 <p className="text-xs font-medium text-emerald-400">
                   {previewExercise.muscleGroup
-                    ? formatMuscleLabel(previewExercise.muscleGroup)
-                    : 'Exercise Form Guide'}
+                    ? t(formatMuscleLabel(previewExercise.muscleGroup))
+                    : t('Exercise Form Guide')}
                 </p>
                 <h3 className="text-base font-bold text-white truncate">
-                  {previewExercise.name || 'Exercise Preview'}
+                  {previewExercise.name || t('Exercise Preview')}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setPreviewExerciseIdx(null)}
-                aria-label="Close exercise preview"
+                aria-label={t('Close exercise preview')}
                 className="w-10 h-10 inline-flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-lg"
               >
                 <X className="w-5 h-5" />
@@ -1787,10 +1813,10 @@ export const GymPlanView: React.FC<Props> = ({
                     >
                       <PreviewPhoto
                         src={imgUrl}
-                        alt={`${previewExercise.name} position ${idx + 1}`}
+                        alt={t('{name} position {n}', { name: previewExercise.name, n: idx + 1 })}
                       />
                       <div className="px-3 py-2 text-xs font-medium text-slate-300 bg-[#131a24] border-t border-[#263347]">
-                        {idx === 0 ? 'Start Position' : 'End / Peak Position'}
+                        {idx === 0 ? t('Start Position') : t('End / Peak Position')}
                       </div>
                     </div>
                   ))}
@@ -1814,7 +1840,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[42px] px-4 py-2 inline-flex items-center gap-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors"
                 >
                   <Search className="w-3.5 h-3.5" />
-                  Swap Photo from Database
+                  {t('Swap Photo from Database')}
                 </button>
 
                 <button
@@ -1829,7 +1855,7 @@ export const GymPlanView: React.FC<Props> = ({
                   className="min-h-[42px] px-4 py-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors tabular-nums"
                 >
                   <Timer className="w-4 h-4" />
-                  Start {previewExercise.restSeconds ?? 90}s Rest
+                  {t('Start {sec}s Rest', { sec: previewExercise.restSeconds ?? 90 })}
                 </button>
               </div>
             </div>

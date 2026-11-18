@@ -10,6 +10,7 @@ import {
   MEAL_COUNT_OPTIONS,
   Sex,
 } from '../lib/dietGenerator';
+import { useT } from '../lib/i18n';
 import { importMealLogs, updateUserProfileSettings } from '../lib/firestoreService';
 
 interface Props {
@@ -33,6 +34,7 @@ export const DietGeneratorModal: React.FC<Props> = ({
   week,
   mealLogs,
 }) => {
+  const t = useT();
   const [sex, setSex] = useState<Sex>('male');
   const [age, setAge] = useState(30);
   const [heightCm, setHeightCm] = useState(170);
@@ -64,7 +66,7 @@ export const DietGeneratorModal: React.FC<Props> = ({
 
   const handleGenerate = async () => {
     if (!valid) {
-      setError('Check age, height and weight.');
+      setError(t('Check age, height and weight.'));
       return;
     }
     setBusy(true);
@@ -88,7 +90,7 @@ export const DietGeneratorModal: React.FC<Props> = ({
       }
       onClose();
     } catch {
-      setError('Could not create the plan. Check your connection and try again.');
+      setError(t('Could not create the plan. Check your connection and try again.'));
     } finally {
       setBusy(false);
     }
@@ -98,19 +100,19 @@ export const DietGeneratorModal: React.FC<Props> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Basic diet plan"
+      aria-label={t('Basic diet plan')}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 sm:p-4"
     >
       <div className="w-full sm:max-w-lg bg-[#131a24] border-2 border-[#33445e] rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#253247] bg-[#0f151e]">
           <div className="flex items-center gap-2">
             <Wand2 className="w-4 h-4 text-amber-400" />
-            <h2 className="text-sm font-semibold text-white">Basic diet plan</h2>
+            <h2 className="text-sm font-semibold text-white">{t('Basic diet plan')}</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="w-9 h-9 inline-flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
           >
             <X className="w-4 h-4" />
@@ -119,50 +121,51 @@ export const DietGeneratorModal: React.FC<Props> = ({
 
         <div className="p-4 overflow-y-auto space-y-4">
           <p className="text-xs text-slate-400">
-            Simple everyday foods (eggs, rice, beans, chicken, fruit, yogurt) sized to your
-            metabolism and goal. Every item can be replaced afterwards.
+            {t(
+              'Simple everyday foods (eggs, rice, beans, chicken, fruit, yogurt) sized to your metabolism and goal. Every item can be replaced afterwards.'
+            )}
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Sex</label>
+              <label className={labelCls}>{t('Sex')}</label>
               <select value={sex} onChange={(e) => setSex(e.target.value as Sex)} className={inputCls}>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
+                <option value="male">{t('Male')}</option>
+                <option value="female">{t('Female')}</option>
               </select>
             </div>
             <div>
-              <label className={labelCls}>Age</label>
+              <label className={labelCls}>{t('Age')}</label>
               <input type="number" value={age} onChange={(e) => setAge(Number(e.target.value))} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Height (cm)</label>
+              <label className={labelCls}>{t('Height (cm)')}</label>
               <input type="number" value={heightCm} onChange={(e) => setHeightCm(Number(e.target.value))} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Current weight (kg)</label>
+              <label className={labelCls}>{t('Current weight (kg)')}</label>
               <input type="number" value={weightKg} onChange={(e) => setWeightKg(Number(e.target.value))} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Goal weight (kg)</label>
+              <label className={labelCls}>{t('Goal weight (kg)')}</label>
               <input type="number" value={targetKg} onChange={(e) => setTargetKg(Number(e.target.value))} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Goal</label>
+              <label className={labelCls}>{t('Goal')}</label>
               <select
                 value={goal}
                 onChange={(e) => setGoalOverride(e.target.value as DietGoal)}
                 className={inputCls}
               >
-                <option value="lose">Lose weight</option>
-                <option value="maintain">Maintain</option>
-                <option value="gain">Gain weight</option>
+                <option value="lose">{t('Lose weight')}</option>
+                <option value="maintain">{t('Maintain')}</option>
+                <option value="gain">{t('Gain weight')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className={labelCls}>Activity level</label>
+            <label className={labelCls}>{t('Activity level')}</label>
             <select
               value={activity}
               onChange={(e) => setActivity(e.target.value as ActivityLevel)}
@@ -170,14 +173,14 @@ export const DietGeneratorModal: React.FC<Props> = ({
             >
               {ACTIVITY_OPTIONS.map((a) => (
                 <option key={a.key} value={a.key}>
-                  {a.label}
+                  {t(a.label)}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className={labelCls}>Meals per day</label>
+            <label className={labelCls}>{t('Meals per day')}</label>
             <div className="flex gap-2">
               {MEAL_COUNT_OPTIONS.map((n) => (
                 <button
@@ -199,11 +202,15 @@ export const DietGeneratorModal: React.FC<Props> = ({
           {valid && (
             <div className="bg-[#0e141d] border border-[#2d3c54] rounded-lg p-3 text-xs text-slate-300 space-y-1 font-mono tabular-nums">
               <p>
-                BMR {targets.bmr} kcal · maintenance {targets.tdee} kcal
+                {t('BMR {bmr} kcal · maintenance {tdee} kcal', { bmr: targets.bmr, tdee: targets.tdee })}
               </p>
               <p className="text-white font-semibold">
-                Daily target {targets.calories} kcal · {targets.proteinG}P · {targets.carbsG}C ·{' '}
-                {targets.fatG}F
+                {t('Daily target {kcal} kcal · {p}P · {c}C · {f}F', {
+                  kcal: targets.calories,
+                  p: targets.proteinG,
+                  c: targets.carbsG,
+                  f: targets.fatG,
+                })}
               </p>
             </div>
           )}
@@ -215,17 +222,21 @@ export const DietGeneratorModal: React.FC<Props> = ({
               onChange={(e) => setUpdateTargets(e.target.checked)}
               className="mt-0.5"
             />
-            Also save these as my daily calorie/macro targets and goal weight
+            {t('Also save these as my daily calorie/macro targets and goal weight')}
           </label>
 
           {weekMealCount > 0 && (
             <p className="text-xs text-amber-300">
-              Week {week} already has {weekMealCount} planned items. Creating the plan replaces them.
+              {t('Week {week} already has {n} planned items. Creating the plan replaces them.', {
+                week,
+                n: weekMealCount,
+              })}
             </p>
           )}
           <p className="text-[11px] text-slate-500">
-            General estimate, not medical advice. If you have a health condition, check with a
-            doctor or dietitian.
+            {t(
+              'General estimate, not medical advice. If you have a health condition, check with a doctor or dietitian.'
+            )}
           </p>
           {error && <p className="text-xs text-rose-300">{error}</p>}
         </div>
@@ -238,7 +249,7 @@ export const DietGeneratorModal: React.FC<Props> = ({
             className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 rounded-lg"
           >
             <Wand2 className="w-3.5 h-3.5" />
-            {busy ? 'Creating...' : `Create Week ${week} plan`}
+            {busy ? t('Creating...') : t('Create Week {week} plan', { week })}
           </button>
         </div>
       </div>

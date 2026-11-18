@@ -28,6 +28,7 @@ import {
 } from '../lib/sanitize';
 import { saveWorkoutPlan } from '../lib/firestoreService';
 import { ExercisePickerModal, formatMuscleLabel } from './ExercisePickerModal';
+import { useT } from '../lib/i18n';
 
 interface Props {
   open: boolean;
@@ -53,6 +54,7 @@ const PlanThumb: React.FC<{ src?: string; alt: string; onClick: () => void }> = 
 }) => {
   const [failed, setFailed] = useState(false);
 
+  const t = useT();
   useEffect(() => {
     setFailed(false);
   }, [src]);
@@ -61,8 +63,8 @@ const PlanThumb: React.FC<{ src?: string; alt: string; onClick: () => void }> = 
     <button
       type="button"
       onClick={onClick}
-      title="Match photo from exercise database"
-      aria-label={`Find photo for ${alt}`}
+      title={t('Match photo from exercise database')}
+      aria-label={t('Find photo for {name}', { name: alt })}
       className="w-10 h-10 rounded-lg border border-[#2d3c54] bg-[#0e141d] overflow-hidden shrink-0 flex items-center justify-center hover:border-emerald-400 transition-colors"
     >
       {src && !failed ? (
@@ -90,6 +92,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
   seedFromDay,
   onSaved,
 }) => {
+  const t = useT();
   const [name, setName] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [defaultDays, setDefaultDays] = useState<number[]>([]);
@@ -231,7 +234,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Enter a plan name (for example, Upper 1 or Tempo Run).');
+      setError(t('Enter a plan name (for example, Upper 1 or Tempo Run).'));
       return;
     }
     setSaving(true);
@@ -254,7 +257,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
       onSaved(name.trim());
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save training plan.');
+      setError(err instanceof Error ? err.message : t('Failed to save training plan.'));
     } finally {
       setSaving(false);
     }
@@ -266,16 +269,16 @@ export const WorkoutPlanModal: React.FC<Props> = ({
         <div className="flex items-center justify-between px-5 py-4 bg-[#0f151e] border-b border-[#253247]">
           <div>
             <h2 className="text-base font-semibold text-white">
-              {editingPlan ? 'Edit Training Plan' : 'Create Reusable Training Plan'}
+              {editingPlan ? t('Edit Training Plan') : t('Create Reusable Training Plan')}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Save a workout template you can pick and adapt for any day of the week
+              {t('Save a workout template you can pick and adapt for any day of the week')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close plan editor"
+            aria-label={t('Close plan editor')}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
           >
             <X className="w-4 h-4" />
@@ -286,7 +289,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Plan Name
+                {t('Plan Name')}
               </label>
               <input
                 type="text"
@@ -294,20 +297,20 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                 maxLength={SCHEMA_LIMITS.PLAN_NAME_MAX}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Upper 1 (Push Machines)"
+                placeholder={t('e.g., Upper 1 (Push Machines)')}
                 className="w-full min-h-[40px] px-3 py-2 text-sm font-medium text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Usual Time (optional)
+                {t('Usual Time (optional)')}
               </label>
               <input
                 type="text"
                 maxLength={SCHEMA_LIMITS.PLAN_TIME_MAX}
                 value={scheduledTime}
                 onChange={(e) => setScheduledTime(e.target.value)}
-                placeholder="e.g., 05:00"
+                placeholder={t('e.g., 05:00')}
                 className="w-full min-h-[40px] px-3 py-2 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400 tabular-nums"
               />
             </div>
@@ -316,7 +319,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="block text-xs font-medium text-slate-300 mb-1.5">
-                Typical Weekdays
+                {t('Typical Weekdays')}
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {DAY_SHORT.map((day, idx) => {
@@ -332,7 +335,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                           : 'bg-[#0e141d] text-slate-300 border-[#2d3c54] hover:border-[#4b6285]'
                       }`}
                     >
-                      {day}
+                      {t(day)}
                     </button>
                   );
                 })}
@@ -346,7 +349,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                 onChange={(e) => setIsRestDay(e.target.checked)}
                 className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
               />
-              Rest / Recovery Template
+              {t('Rest / Recovery Template')}
             </label>
           </div>
 
@@ -354,7 +357,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-white">
-                  Exercises ({exercises.length} / {SCHEMA_LIMITS.EXERCISES_MAX})
+                  {t('Exercises ({n} / {max})', { n: exercises.length, max: SCHEMA_LIMITS.EXERCISES_MAX })}
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -371,7 +374,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                     className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
                   >
                     <Database className="w-3.5 h-3.5" />
-                    Browse Exercise DB
+                    {t('Browse Exercise DB')}
                   </button>
                   <button
                     type="button"
@@ -380,14 +383,14 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                     className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] disabled:opacity-50 rounded-lg"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add Exercise
+                    {t('Add Exercise')}
                   </button>
                 </div>
               </div>
 
               {exercises.length === 0 ? (
                 <div className="py-6 px-4 text-center border border-dashed border-[#2d3c54] rounded-xl text-xs text-slate-400">
-                  No exercises yet. Browse the Exercise Database or add custom exercises.
+                  {t('No exercises yet. Browse the Exercise Database or add custom exercises.')}
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -399,7 +402,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                       <div className="flex items-center gap-2.5">
                         <PlanThumb
                           src={ex.imageUrl}
-                          alt={ex.name || 'Exercise'}
+                          alt={ex.name || t('Exercise')}
                           onClick={() =>
                             setPickerState({
                               open: true,
@@ -416,12 +419,12 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                             maxLength={80}
                             value={ex.name}
                             onChange={(e) => updateExercise(idx, 'name', e.target.value)}
-                            placeholder="Exercise name"
+                            placeholder={t('Exercise name')}
                             className="w-full px-2.5 py-1.5 text-xs font-semibold text-white placeholder:text-slate-500 bg-[#131a24] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
                           />
                           <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
                             <span>
-                              {ex.muscleGroup ? formatMuscleLabel(ex.muscleGroup) : 'Custom'}
+                              {ex.muscleGroup ? t(formatMuscleLabel(ex.muscleGroup)) : t('Custom')}
                             </span>
                             <span aria-hidden="true">·</span>
                             <button
@@ -437,7 +440,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                               className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-medium"
                             >
                               <Search className="w-3 h-3" />
-                              {ex.imageUrl ? 'Swap' : 'Match photo'}
+                              {ex.imageUrl ? t('Swap') : t('Match photo')}
                             </button>
                           </div>
                         </div>
@@ -446,7 +449,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                           onClick={() =>
                             setExercises((prev) => prev.filter((_, i) => i !== idx))
                           }
-                          aria-label="Remove exercise"
+                          aria-label={t('Remove exercise')}
                           className="p-2 text-slate-400 hover:text-rose-400 rounded-lg"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -456,7 +459,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                         <div>
                           <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                            Sets
+                            {t('Sets')}
                           </label>
                           <input
                             type="number"
@@ -471,7 +474,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                         </div>
                         <div>
                           <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                            Reps
+                            {t('Reps')}
                           </label>
                           <input
                             type="text"
@@ -483,7 +486,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                         </div>
                         <div>
                           <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                            Target ({wUnit})
+                            {t('Target ({unit})', { unit: wUnit })}
                           </label>
                           <input
                             type="number"
@@ -499,7 +502,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                         </div>
                         <div>
                           <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                            RPE
+                            {t('RPE')}
                           </label>
                           <input
                             type="number"
@@ -515,7 +518,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                         </div>
                         <div>
                           <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                            Rest (s)
+                            {t('Rest (s)')}
                           </label>
                           <input
                             type="number"
@@ -536,7 +539,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                         maxLength={SCHEMA_LIMITS.EXERCISE_NOTES_MAX}
                         value={ex.notes ?? ''}
                         onChange={(e) => updateExercise(idx, 'notes', e.target.value)}
-                        placeholder="Optional progression cue or observation"
+                        placeholder={t('Optional progression cue or observation')}
                         className="w-full px-2.5 py-1 text-[11px] text-slate-200 placeholder:text-slate-500 bg-[#131a24] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
                       />
                     </div>
@@ -551,14 +554,14 @@ export const WorkoutPlanModal: React.FC<Props> = ({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-white">
                 <Footprints className="w-4 h-4 text-emerald-400" />
-                Default Walk / Run Cardio
+                {t('Default Walk / Run Cardio')}
               </div>
               <div className="inline-flex items-center p-0.5 bg-[#131a24] border border-[#2d3c54] rounded-lg">
                 {(
                   [
-                    { id: 'none', label: 'None' },
-                    { id: 'walk', label: 'Walk' },
-                    { id: 'run', label: 'Run' },
+                    { id: 'none', label: t('None') },
+                    { id: 'walk', label: t('Walk') },
+                    { id: 'run', label: t('Run') },
                   ] as { id: CardioType; label: string }[]
                 ).map((opt) => (
                   <button
@@ -583,7 +586,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div>
                   <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                    Distance ({dUnit})
+                    {t('Distance ({unit})', { unit: dUnit })}
                   </label>
                   <input
                     type="number"
@@ -599,7 +602,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                    Minutes
+                    {t('Minutes')}
                   </label>
                   <input
                     type="number"
@@ -617,7 +620,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                    Est. kcal
+                    {t('Est. kcal')}
                   </label>
                   <input
                     type="number"
@@ -635,7 +638,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-[10px] font-medium text-slate-400 mb-0.5">
-                    Pace / Incline
+                    {t('Pace / Incline')}
                   </label>
                   <input
                     type="text"
@@ -644,7 +647,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                     onChange={(e) =>
                       setCardio((prev) => ({ ...prev, paceOrIncline: e.target.value }))
                     }
-                    placeholder="e.g., 5:20 /km"
+                    placeholder={t('e.g., 5:20 /km')}
                     className="w-full px-2 py-1.5 text-xs text-white placeholder:text-slate-500 bg-[#131a24] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
                   />
                 </div>
@@ -654,14 +657,14 @@ export const WorkoutPlanModal: React.FC<Props> = ({
 
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">
-              Plan Notes
+              {t('Plan Notes')}
             </label>
             <textarea
               rows={2}
               maxLength={SCHEMA_LIMITS.NOTES_MAX}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Warmup protocol, pacing reminders, progression rules..."
+              placeholder={t('Warmup protocol, pacing reminders, progression rules...')}
               className="w-full px-3 py-2 text-xs text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
             />
           </div>
@@ -678,7 +681,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
               onClick={onClose}
               className="min-h-[42px] px-4 py-2 text-xs font-medium text-slate-200 hover:bg-[#1a2332] rounded-lg"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="submit"
@@ -686,7 +689,7 @@ export const WorkoutPlanModal: React.FC<Props> = ({
               className="min-h-[42px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
             >
               <Save className="w-3.5 h-3.5" />
-              {saving ? 'Saving...' : editingPlan ? 'Update Plan' : 'Save Plan'}
+              {saving ? t('Saving...') : editingPlan ? t('Update Plan') : t('Save Plan')}
             </button>
           </div>
         </form>
