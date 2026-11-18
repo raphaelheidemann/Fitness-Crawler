@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useT } from '../lib/i18n';
 import {
   Area,
   AreaChart,
@@ -49,6 +50,7 @@ export const ProgressChartsView: React.FC<Props> = ({
   hydrationLogs,
   measurements,
 }) => {
+  const t = useT();
   const [range, setRange] = useState<RangeFilter>('all');
   const [showBodyFat, setShowBodyFat] = useState(true);
   const [activeMetrics, setActiveMetrics] = useState<Record<CircumferenceKey, boolean>>({
@@ -217,18 +219,18 @@ export const ProgressChartsView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-xs text-slate-400">
-            Interactive multi-week telemetry across weight, measurements, macros, and gym volume
+            {t('Interactive multi-week telemetry across weight, measurements, macros, and gym volume')}
           </p>
-          <h1 className="text-xl font-bold text-white mt-1">Progress Analytics</h1>
+          <h1 className="text-xl font-bold text-white mt-1">{t('Progress Analytics')}</h1>
         </div>
 
         <div className="flex items-center gap-1 p-1 bg-[#0e141d] border border-[#2d3c54] rounded-lg self-start sm:self-auto">
           {(
             [
-              { id: '4w', label: '4 Weeks' },
-              { id: '8w', label: '8 Weeks' },
-              { id: '12w', label: '12 Weeks' },
-              { id: 'all', label: 'All Weeks' },
+              { id: '4w', label: t('4 Weeks') },
+              { id: '8w', label: t('8 Weeks') },
+              { id: '12w', label: t('12 Weeks') },
+              { id: 'all', label: t('All Weeks') },
             ] as const
           ).map((item) => (
             <button
@@ -253,10 +255,10 @@ export const ProgressChartsView: React.FC<Props> = ({
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
               <h2 className="text-base font-semibold text-white">
-                Weight & Body Fat Trend
+                {t('Weight & Body Fat Trend')}
               </h2>
               <p className="text-xs text-slate-400">
-                Target weight: {profile.targetWeight} {wUnit}
+                {t('Target weight: {n} {unit}', { n: profile.targetWeight, unit: wUnit })}
               </p>
             </div>
             <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-200 cursor-pointer">
@@ -266,13 +268,13 @@ export const ProgressChartsView: React.FC<Props> = ({
                 onChange={(e) => setShowBodyFat(e.target.checked)}
                 className="rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
               />
-              Show Body Fat %
+              {t('Show Body Fat %')}
             </label>
           </div>
 
           {measurementSeries.length === 0 ? (
             <div className="h-72 flex items-center justify-center border border-dashed border-[#2d3c54] rounded-lg text-xs text-slate-400">
-              No measurement check-ins in this range.
+              {t('No measurement check-ins in this range.')}
             </div>
           ) : (
             <div className="h-72 w-full">
@@ -323,7 +325,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                     yAxisId="weight"
                     type="monotone"
                     dataKey="weight"
-                    name={`Weight (${wUnit})`}
+                    name={t('Weight ({unit})', { unit: wUnit })}
                     stroke="#10b981"
                     strokeWidth={2.5}
                     fill="url(#progressWeightGrad)"
@@ -333,7 +335,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                       yAxisId="bf"
                       type="monotone"
                       dataKey="bodyFatPct"
-                      name="Body Fat (%)"
+                      name={t('Body Fat (%)')}
                       stroke="#38bdf8"
                       strokeWidth={2}
                       connectNulls
@@ -351,9 +353,9 @@ export const ProgressChartsView: React.FC<Props> = ({
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
               <h2 className="text-base font-semibold text-white">
-                Circumference Progression ({lUnit})
+                {t('Circumference Progression ({unit})', { unit: lUnit })}
               </h2>
-              <p className="text-xs text-slate-400">Toggle body sites to compare trends</p>
+              <p className="text-xs text-slate-400">{t('Toggle body sites to compare trends')}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {CIRCUMFERENCE_SERIES.map((s) => (
@@ -367,7 +369,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                       : 'bg-[#0e141d] text-slate-300 border-[#2d3c54] hover:bg-[#1a2332]'
                   }`}
                 >
-                  {s.label}
+                  {t(s.label)}
                 </button>
               ))}
             </div>
@@ -375,7 +377,7 @@ export const ProgressChartsView: React.FC<Props> = ({
 
           {measurementSeries.length === 0 ? (
             <div className="h-72 flex items-center justify-center border border-dashed border-[#2d3c54] rounded-lg text-xs text-slate-400">
-              No circumference measurements in this range.
+              {t('No circumference measurements in this range.')}
             </div>
           ) : (
             <div className="h-72 w-full">
@@ -404,7 +406,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                       key={s.key}
                       type="monotone"
                       dataKey={s.key}
-                      name={`${s.label} (${lUnit})`}
+                      name={`${t(s.label)} (${lUnit})`}
                       stroke={s.color}
                       strokeWidth={2}
                       connectNulls
@@ -421,16 +423,16 @@ export const ProgressChartsView: React.FC<Props> = ({
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-white">
-              Weekly Avg Calorie & Macro Intake
+              {t('Weekly Avg Calorie & Macro Intake')}
             </h2>
             <p className="text-xs text-slate-400">
-              Consumed daily averages per week vs {profile.dailyCalorieTarget.toLocaleString()} kcal target
+              {t('Consumed daily averages per week vs {n} kcal target', { n: profile.dailyCalorieTarget.toLocaleString() })}
             </p>
           </div>
 
           {weeklyNutritionSeries.length === 0 ? (
             <div className="h-72 flex items-center justify-center border border-dashed border-[#2d3c54] rounded-lg text-xs text-slate-400">
-              Mark meals as consumed in your Diet Plan to plot weekly nutrition trends.
+              {t('Mark meals as consumed in your Diet Plan to plot weekly nutrition trends.')}
             </div>
           ) : (
             <div className="h-72 w-full">
@@ -459,7 +461,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                   <Bar
                     yAxisId="kcal"
                     dataKey="avgCalories"
-                    name="Avg Calories"
+                    name={t('Avg Calories')}
                     fill="#475569"
                     radius={[4, 4, 0, 0]}
                   />
@@ -467,7 +469,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                     yAxisId="grams"
                     type="monotone"
                     dataKey="avgProtein"
-                    name="Protein (g)"
+                    name={t('Protein (g)')}
                     stroke="#10b981"
                     strokeWidth={2.5}
                     dot={{ r: 3.5 }}
@@ -476,7 +478,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                     yAxisId="grams"
                     type="monotone"
                     dataKey="avgCarbs"
-                    name="Carbs (g)"
+                    name={t('Carbs (g)')}
                     stroke="#38bdf8"
                     strokeWidth={2}
                     dot={{ r: 3 }}
@@ -491,16 +493,16 @@ export const ProgressChartsView: React.FC<Props> = ({
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-white">
-              Weekly Training Volume & Sessions
+              {t('Weekly Training Volume & Sessions')}
             </h2>
             <p className="text-xs text-slate-400">
-              Total weekly tonnage ({wUnit}) and completed sessions
+              {t('Total weekly tonnage ({unit}) and completed sessions', { unit: wUnit })}
             </p>
           </div>
 
           {weeklyVolumeSeries.length === 0 ? (
             <div className="h-72 flex items-center justify-center border border-dashed border-[#2d3c54] rounded-lg text-xs text-slate-400">
-              Plan workouts in Gym Plan to track weekly lifting volume.
+              {t('Plan workouts in Gym Plan to track weekly lifting volume.')}
             </div>
           ) : (
             <div className="h-72 w-full">
@@ -523,14 +525,14 @@ export const ProgressChartsView: React.FC<Props> = ({
                   <Bar
                     yAxisId="vol"
                     dataKey="volume"
-                    name={`Volume (${wUnit})`}
+                    name={t('Volume ({unit})', { unit: wUnit })}
                     fill="#38bdf8"
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar
                     yAxisId="sess"
                     dataKey="completed"
-                    name="Completed Sessions"
+                    name={t('Completed Sessions')}
                     fill="#10b981"
                     radius={[4, 4, 0, 0]}
                   />
@@ -544,16 +546,16 @@ export const ProgressChartsView: React.FC<Props> = ({
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-white">
-              Weekly Walk & Run Cardio
+              {t('Weekly Walk & Run Cardio')}
             </h2>
             <p className="text-xs text-slate-400">
-              Total weekly distance ({dUnit}) split by Walk vs Run and total minutes
+              {t('Total weekly distance ({unit}) split by Walk vs Run and total minutes', { unit: dUnit })}
             </p>
           </div>
 
           {weeklyCardioSeries.length === 0 ? (
             <div className="h-72 flex items-center justify-center border border-dashed border-[#2d3c54] rounded-lg text-xs text-slate-400">
-              Log a Walk or Run in Gym Plan to track weekly cardio distance.
+              {t('Log a Walk or Run in Gym Plan to track weekly cardio distance.')}
             </div>
           ) : (
             <div className="h-72 w-full">
@@ -577,7 +579,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                     yAxisId="dist"
                     dataKey="walkDistance"
                     stackId="cardio"
-                    name={`Walk (${dUnit})`}
+                    name={t('Walk ({unit})', { unit: dUnit })}
                     fill="#38bdf8"
                     radius={[0, 0, 0, 0]}
                   />
@@ -585,7 +587,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                     yAxisId="dist"
                     dataKey="runDistance"
                     stackId="cardio"
-                    name={`Run (${dUnit})`}
+                    name={t('Run ({unit})', { unit: dUnit })}
                     fill="#10b981"
                     radius={[4, 4, 0, 0]}
                   />
@@ -593,7 +595,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                     yAxisId="min"
                     type="monotone"
                     dataKey="minutes"
-                    name="Cardio Minutes"
+                    name={t('Cardio Minutes')}
                     stroke="#f59e0b"
                     strokeWidth={2}
                     dot={{ r: 3.5 }}
@@ -608,16 +610,16 @@ export const ProgressChartsView: React.FC<Props> = ({
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-white">
-              Weekly Avg Daily Hydration
+              {t('Weekly Avg Daily Hydration')}
             </h2>
             <p className="text-xs text-slate-400">
-              Average liters consumed per logged day vs {(profile.dailyWaterGoalMl ?? 3000) / 1000} L goal
+              {t('Average liters consumed per logged day vs {n} L goal', { n: (profile.dailyWaterGoalMl ?? 3000) / 1000 })}
             </p>
           </div>
 
           {weeklyHydrationSeries.length === 0 ? (
             <div className="h-72 flex items-center justify-center border border-dashed border-[#2d3c54] rounded-lg text-xs text-slate-400">
-              Log daily water intake in Overview or Diet Plan to chart hydration consistency.
+              {t('Log daily water intake in Overview or Diet Plan to chart hydration consistency.')}
             </div>
           ) : (
             <div className="h-72 w-full">
@@ -634,7 +636,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                       color: '#f1f5f9',
                       fontSize: '12px',
                     }}
-                    formatter={(value: unknown) => [`${value} L`, 'Avg Hydration']}
+                    formatter={(value: unknown) => [`${value} L`, t('Avg Hydration')]}
                   />
                   <ReferenceLine
                     y={(profile.dailyWaterGoalMl ?? 3000) / 1000}
@@ -643,7 +645,7 @@ export const ProgressChartsView: React.FC<Props> = ({
                   />
                   <Bar
                     dataKey="avgLiters"
-                    name="Avg Daily Water (L)"
+                    name={t('Avg Daily Water (L)')}
                     fill="#38bdf8"
                     radius={[4, 4, 0, 0]}
                   />
