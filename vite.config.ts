@@ -15,7 +15,6 @@ export default defineConfig(() => {
         includeAssets: [
           'favicon.ico',
           'apple-touch-icon.png',
-          'icon.svg',
           'pwa-192x192.png',
           'pwa-512x512.png',
           'pwa-maskable-512x512.png',
@@ -27,7 +26,7 @@ export default defineConfig(() => {
           description:
             '8-bit Metroidvania gym, diet, hydration, and daily habit tracker inspired by the Hunting Grounds.',
           theme_color: '#090d12',
-          background_color: '#090d12',
+          background_color: '#0c1524',
           display: 'standalone',
           start_url: '/',
           scope: '/',
