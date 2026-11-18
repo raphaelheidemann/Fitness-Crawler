@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { auth, db, handleFirestoreError, OperationType } from './firebase';
+import { Food } from './lib/foodDb';
 import {
   CrawlerRewardEvent,
   CrawlerState,
@@ -101,6 +102,7 @@ function WorkspaceShell() {
   const [habitsLoaded, setHabitsLoaded] = useState(false);
   const [habitLogsLoaded, setHabitLogsLoaded] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [customFoods, setCustomFoods] = useState<Food[]>([]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
 
   const [crawlerDoc, setCrawlerDoc] = useState<CrawlerState | null>(null);
@@ -159,6 +161,7 @@ function WorkspaceShell() {
         setHabitsLoaded(false);
         setHabitLogsLoaded(false);
         setRecipes([]);
+        setCustomFoods([]);
         setMeasurements([]);
         setCrawlerDoc(null);
         setCrawlerLoaded(false);
@@ -226,6 +229,19 @@ function WorkspaceShell() {
       },
       (error) => {
         handleFirestoreError(error, OperationType.LIST, recipesPath);
+      }
+    );
+
+    const foodsPath = `users/${uid}/foods`;
+    const unsubFoods = onSnapshot(
+      query(collection(db, 'users', uid, 'foods'), where('ownerId', '==', uid)),
+      (snap) => {
+        setCustomFoods(
+          snap.docs.map((d) => ({ ...(d.data() as Omit<Food, 'id'>), id: d.id, custom: true }))
+        );
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, foodsPath);
       }
     );
 
@@ -323,6 +339,7 @@ function WorkspaceShell() {
       unsubWorkoutPlans();
       unsubMeals();
       unsubRecipes();
+      unsubFoods();
       unsubMeas();
       unsubHydration();
       unsubHabits();
@@ -1081,6 +1098,7 @@ function WorkspaceShell() {
               mealLogs={mealLogs}
               hydrationLogs={hydrationLogs}
               recipes={recipes}
+              customFoods={customFoods}
               onNavigateToRecipes={() => setActiveNav('recipes')}
               onOpenQuickFood={handleOpenQuickFood}
               onOpenCsvImport={(wk, day) => handleOpenCsvImport('diet', wk, day)}

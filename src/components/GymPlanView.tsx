@@ -50,6 +50,7 @@ import {
 import { ExercisePickerModal, formatMuscleLabel } from './ExercisePickerModal';
 import { RestTimerBar, playRestCompleteChime } from './RestTimerBar';
 import { WorkoutPlanModal } from './WorkoutPlanModal';
+import { WorkoutTemplatesModal } from './WorkoutTemplatesModal';
 
 interface ExerciseThumbProps {
   src?: string;
@@ -134,6 +135,7 @@ export const GymPlanView: React.FC<Props> = ({
   const [subTab, setSubTab] = useState<'schedule' | 'plans'>('schedule');
   const [selectedWeek, setSelectedWeek] = useState<number>(profile.currentWeek);
   const [selectedDay, setSelectedDay] = useState<number>(0);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   const wUnit = weightUnit(profile.unitSystem);
   const dUnit = distanceUnit(profile.unitSystem);
@@ -653,18 +655,28 @@ export const GymPlanView: React.FC<Props> = ({
           </button>
         </div>
 
-        {subTab === 'plans' && (
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           <button
             type="button"
-            onClick={() =>
-              setPlanModalState({ open: true, editingPlan: null, seedFromDay: null })
-            }
-            className="min-h-[40px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors self-start sm:self-auto"
+            onClick={() => setTemplatesOpen(true)}
+            className="min-h-[40px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors"
           >
-            <Plus className="w-3.5 h-3.5" />
-            Create New Plan
+            <Layers className="w-3.5 h-3.5" />
+            Ready-made Workouts
           </button>
-        )}
+          {subTab === 'plans' && (
+            <button
+              type="button"
+              onClick={() =>
+                setPlanModalState({ open: true, editingPlan: null, seedFromDay: null })
+              }
+              className="min-h-[40px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Create New Plan
+            </button>
+          )}
+        </div>
       </div>
 
       {subTab === 'plans' ? (
@@ -1705,6 +1717,18 @@ export const GymPlanView: React.FC<Props> = ({
       </form>
         </>
       )}
+
+      <WorkoutTemplatesModal
+        open={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+        uid={uid}
+        onAdded={(name, count) => {
+          setSaveFeedback(
+            `Added ${count} ${count === 1 ? 'plan' : 'plans'} from "${name}". Open a day and pick one from the list.`
+          );
+          setSubTab('plans');
+        }}
+      />
 
       {/* Create / Edit Reusable Training Plan Modal */}
       <WorkoutPlanModal

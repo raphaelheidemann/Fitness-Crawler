@@ -26,6 +26,7 @@ import {
   saveRecipe,
   toggleRecipeFavorite,
 } from '../lib/firestoreService';
+import { buildStarterRecipes } from '../lib/starterRecipes';
 
 interface Props {
   uid: string;
@@ -86,6 +87,23 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
   const [instructionsText, setInstructionsText] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+
+  const missingStarters = useMemo(() => {
+    const have = new Set(recipes.map((r) => r.id));
+    return buildStarterRecipes().filter((r) => !have.has(r.id));
+  }, [recipes]);
+
+  const handleAddStarters = async () => {
+    setSeeding(true);
+    try {
+      for (const rec of missingStarters) {
+        await saveRecipe(uid, rec, false);
+      }
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -213,14 +231,27 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
           <h1 className="text-xl font-bold text-white mt-1">Recipe Tracker & Meal Prep</h1>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap self-start lg:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          New Recipe
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+          {missingStarters.length > 0 && (
+            <button
+              type="button"
+              onClick={() => void handleAddStarters()}
+              disabled={seeding}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-60 rounded-lg transition-colors whitespace-nowrap"
+            >
+              <Utensils className="w-4 h-4" />
+              {seeding ? 'Adding...' : `Add ${missingStarters.length} starter recipes`}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            New Recipe
+          </button>
+        </div>
       </div>
 
       {/* Filter Bar */}
