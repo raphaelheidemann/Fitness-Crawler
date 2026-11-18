@@ -56,6 +56,9 @@ const PRESET_IMAGES = [
 
 export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
   const t = useT();
+  const catLabel = (c: string) => t(c.charAt(0).toUpperCase() + c.slice(1));
+  const slotText = (slot: string) =>
+    slot.startsWith('meal_') ? t('Meal {n}', { n: slot.slice(5) }) : t('On-the-Spot / Extra Food');
   const [filter, setFilter] = useState<'all' | 'favorites' | RecipeCategory>('all');
   const [search, setSearch] = useState('');
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
@@ -211,7 +214,11 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
         consumed: false,
       });
       setSchedFeedback(
-        `Added to Week ${schedWeek} · ${DAY_FULL[schedDay]} ${schedSlot}`
+        t('Added to Week {week} · {day} {slot}', {
+          week: schedWeek,
+          day: t(DAY_FULL[schedDay]),
+          slot: slotText(schedSlot),
+        })
       );
       setTimeout(() => {
         setScheduleRecipe(null);
@@ -228,9 +235,9 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <p className="text-xs text-slate-400">
-            {recipes.length} saved recipes · Schedule directly into your weekly Diet Plan
+            {t('{n} saved recipes · Schedule directly into your weekly Diet Plan', { n: recipes.length })}
           </p>
-          <h1 className="text-xl font-bold text-white mt-1">Recipe Tracker & Meal Prep</h1>
+          <h1 className="text-xl font-bold text-white mt-1">{t('Recipe Tracker & Meal Prep')}</h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
@@ -251,7 +258,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
-            New Recipe
+            {t('New Recipe')}
           </button>
         </div>
       </div>
@@ -261,12 +268,12 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
         <div className="flex items-center gap-1 p-1 bg-[#131a24] border border-[#263347] rounded-lg overflow-x-auto">
           {(
             [
-              { id: 'all', label: 'All' },
-              { id: 'favorites', label: 'Favorites' },
-              { id: 'breakfast', label: 'Breakfast' },
-              { id: 'lunch', label: 'Lunch' },
-              { id: 'dinner', label: 'Dinner' },
-              { id: 'snack', label: 'Snack' },
+              { id: 'all', label: t('All') },
+              { id: 'favorites', label: t('Favorites') },
+              { id: 'breakfast', label: t('Breakfast') },
+              { id: 'lunch', label: t('Lunch') },
+              { id: 'dinner', label: t('Dinner') },
+              { id: 'snack', label: t('Snack') },
             ] as const
           ).map((tab) => (
             <button
@@ -290,7 +297,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search recipes or ingredients..."
+            placeholder={t('Search recipes or ingredients...')}
             className="w-full pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
           />
         </div>
@@ -299,16 +306,16 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
       {/* Recipe Grid */}
       {filtered.length === 0 ? (
         <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-12 text-center">
-          <p className="text-sm font-medium text-slate-200">No recipes match your filter</p>
+          <p className="text-sm font-medium text-slate-200">{t('No recipes match your filter')}</p>
           <p className="text-xs text-slate-400 mt-1 mb-4">
-            Create a custom macro-tracked recipe to reuse across your weekly diet plans.
+            {t('Create a custom macro-tracked recipe to reuse across your weekly diet plans.')}
           </p>
           <button
             type="button"
             onClick={openCreateModal}
             className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
           >
-            Create First Recipe
+            {t('Create First Recipe')}
           </button>
         </div>
       ) : (
@@ -343,7 +350,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                       onClick={() =>
                         void toggleRecipeFavorite(uid, rec.id, !rec.isFavorite)
                       }
-                      aria-label={rec.isFavorite ? 'Remove favorite' : 'Favorite recipe'}
+                      aria-label={rec.isFavorite ? t('Remove favorite') : t('Favorite recipe')}
                       className="absolute top-3 right-3 p-2 rounded-lg bg-[#090d12]/85 text-slate-200 hover:text-amber-400 border border-[#33445e] transition-colors"
                     >
                       <Star
@@ -356,7 +363,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
 
                   <div className="p-5">
                     <div className="flex items-center gap-2 text-xs text-slate-400 capitalize">
-                      <span>{rec.category}</span>
+                      <span>{catLabel(rec.category)}</span>
                       <span aria-hidden="true">·</span>
                       <span className="inline-flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -364,7 +371,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                       </span>
                       <span aria-hidden="true">·</span>
                       <span>
-                        {rec.servings} {rec.servings === 1 ? 'serving' : 'servings'}
+                        {rec.servings} {rec.servings === 1 ? t('serving') : t('servings')}
                       </span>
                     </div>
 
@@ -374,19 +381,19 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
 
                     <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-[#253247] font-mono tabular-nums">
                       <div>
-                        <p className="text-[11px] font-sans text-slate-400">Calories</p>
+                        <p className="text-[11px] font-sans text-slate-400">{t('Calories')}</p>
                         <p className="text-sm font-semibold text-white">{rec.calories}</p>
                       </div>
                       <div>
-                        <p className="text-[11px] font-sans text-slate-400">Protein</p>
+                        <p className="text-[11px] font-sans text-slate-400">{t('Protein')}</p>
                         <p className="text-sm font-semibold text-emerald-400">{rec.proteinG}g</p>
                       </div>
                       <div>
-                        <p className="text-[11px] font-sans text-slate-400">Carbs</p>
+                        <p className="text-[11px] font-sans text-slate-400">{t('Carbs')}</p>
                         <p className="text-sm font-semibold text-sky-300">{rec.carbsG}g</p>
                       </div>
                       <div>
-                        <p className="text-[11px] font-sans text-slate-400">Fat</p>
+                        <p className="text-[11px] font-sans text-slate-400">{t('Fat')}</p>
                         <p className="text-sm font-semibold text-amber-300">{rec.fatG}g</p>
                       </div>
                     </div>
@@ -400,12 +407,12 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                       onClick={() => setDetailRecipe(rec)}
                       className="px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-[#1a2332] rounded-md transition-colors whitespace-nowrap"
                     >
-                      Prep Steps
+                      {t('Prep Steps')}
                     </button>
                     <button
                       type="button"
                       onClick={() => openEditModal(rec)}
-                      aria-label={`Edit ${rec.title}`}
+                      aria-label={t('Edit {name}', { name: rec.title })}
                       className="p-1.5 text-slate-400 hover:text-white hover:bg-[#1a2332] rounded-md transition-colors"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -413,7 +420,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                     <button
                       type="button"
                       onClick={() => void deleteRecipe(uid, rec.id)}
-                      aria-label={`Delete ${rec.title}`}
+                      aria-label={t('Delete {name}', { name: rec.title })}
                       className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-[#1a2332] rounded-md transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -437,7 +444,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                     className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap"
                   >
                     <CalendarPlus className="w-3.5 h-3.5" />
-                    Add to Plan
+                    {t('Add to Plan')}
                   </button>
                 </div>
               </article>
@@ -453,15 +460,15 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
             <div className="flex items-center justify-between px-6 py-4 bg-[#0f151e] border-b border-[#253247]">
               <div>
                 <p className="text-xs text-slate-400 capitalize">
-                  {detailRecipe.category} · {detailRecipe.prepMinutes} min · {detailRecipe.servings}{' '}
-                  {detailRecipe.servings === 1 ? 'serving' : 'servings'}
+                  {catLabel(detailRecipe.category)} · {detailRecipe.prepMinutes} min · {detailRecipe.servings}{' '}
+                  {detailRecipe.servings === 1 ? t('serving') : t('servings')}
                 </p>
                 <h2 className="text-lg font-semibold text-white">{detailRecipe.title}</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setDetailRecipe(null)}
-                aria-label="Close recipe details"
+                aria-label={t('Close recipe details')}
                 className="p-2 text-slate-400 hover:text-white rounded-lg"
               >
                 <X className="w-4 h-4" />
@@ -471,28 +478,28 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="grid grid-cols-4 gap-4 p-4 bg-[#0e141d] border border-[#263347] rounded-lg font-mono tabular-nums">
                 <div>
-                  <p className="text-xs font-sans text-slate-400">Calories / svg</p>
+                  <p className="text-xs font-sans text-slate-400">{t('Calories / serving')}</p>
                   <p className="text-base font-bold text-white">{detailRecipe.calories}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-sans text-slate-400">Protein</p>
+                  <p className="text-xs font-sans text-slate-400">{t('Protein')}</p>
                   <p className="text-base font-bold text-emerald-400">{detailRecipe.proteinG}g</p>
                 </div>
                 <div>
-                  <p className="text-xs font-sans text-slate-400">Carbs</p>
+                  <p className="text-xs font-sans text-slate-400">{t('Carbs')}</p>
                   <p className="text-base font-bold text-sky-300">{detailRecipe.carbsG}g</p>
                 </div>
                 <div>
-                  <p className="text-xs font-sans text-slate-400">Fat</p>
+                  <p className="text-xs font-sans text-slate-400">{t('Fat')}</p>
                   <p className="text-base font-bold text-amber-300">{detailRecipe.fatG}g</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-3">Ingredients</h3>
+                  <h3 className="text-sm font-semibold text-white mb-3">{t('Ingredients')}</h3>
                   {detailRecipe.ingredients.length === 0 ? (
-                    <p className="text-xs text-slate-400">No ingredients listed.</p>
+                    <p className="text-xs text-slate-400">{t('No ingredients listed.')}</p>
                   ) : (
                     <ul className="space-y-2 text-sm text-slate-200">
                       {detailRecipe.ingredients.map((ing, i) => (
@@ -506,9 +513,9 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-3">Preparation</h3>
+                  <h3 className="text-sm font-semibold text-white mb-3">{t('Preparation')}</h3>
                   {detailRecipe.instructions.length === 0 ? (
-                    <p className="text-xs text-slate-400">No instructions listed.</p>
+                    <p className="text-xs text-slate-400">{t('No instructions listed.')}</p>
                   ) : (
                     <ol className="space-y-3 text-sm text-slate-200">
                       {detailRecipe.instructions.map((step, i) => (
@@ -533,11 +540,11 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
           <div className="w-full max-w-md bg-[#131a24] border-2 border-[#33445e] rounded-xl shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 bg-[#0f151e] border-b border-[#253247]">
-              <h2 className="text-base font-semibold text-white">Schedule Recipe</h2>
+              <h2 className="text-base font-semibold text-white">{t('Schedule Recipe')}</h2>
               <button
                 type="button"
                 onClick={() => setScheduleRecipe(null)}
-                aria-label="Close schedule modal"
+                aria-label={t('Close schedule modal')}
                 className="p-2 text-slate-400 hover:text-white rounded-lg"
               >
                 <X className="w-4 h-4" />
@@ -549,7 +556,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Week</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Week')}</label>
                   <input
                     type="number"
                     min={1}
@@ -560,7 +567,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Day</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Day')}</label>
                   <select
                     value={schedDay}
                     onChange={(e) => setSchedDay(Number(e.target.value))}
@@ -568,13 +575,13 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   >
                     {DAY_FULL.map((d, i) => (
                       <option key={d} value={i} className="bg-[#0e141d] text-slate-100">
-                        {d}
+                        {t(d)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Meal Slot</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Meal Slot')}</label>
                   <select
                     value={schedSlot}
                     onChange={(e) => setSchedSlot(e.target.value as MealSlot)}
@@ -582,13 +589,13 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   >
                     {dailySlots.map((s) => (
                       <option key={s.key} value={s.key} className="bg-[#0e141d] text-slate-100">
-                        {s.label}
+                        {s.label.startsWith('Meal ') ? t('Meal {n}', { n: s.label.slice(5) }) : t(s.label)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Servings</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Servings')}</label>
                   <input
                     type="number"
                     step="0.25"
@@ -602,10 +609,12 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
               </div>
 
               <div className="p-3 bg-[#0e141d] border border-[#263347] rounded-lg text-xs font-mono tabular-nums text-slate-200">
-                Logged macros: {Math.round(scheduleRecipe.calories * schedServings)} kcal ·{' '}
-                {Math.round(scheduleRecipe.proteinG * schedServings)}g P ·{' '}
-                {Math.round(scheduleRecipe.carbsG * schedServings)}g C ·{' '}
-                {Math.round(scheduleRecipe.fatG * schedServings)}g F
+                {t('Logged macros: {kcal} kcal · {p}g P · {c}g C · {f}g F', {
+                  kcal: Math.round(scheduleRecipe.calories * schedServings),
+                  p: Math.round(scheduleRecipe.proteinG * schedServings),
+                  c: Math.round(scheduleRecipe.carbsG * schedServings),
+                  f: Math.round(scheduleRecipe.fatG * schedServings),
+                })}
               </div>
 
               {schedFeedback && (
@@ -618,14 +627,14 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   onClick={() => setScheduleRecipe(null)}
                   className="px-4 py-2 text-xs font-medium text-slate-200 hover:bg-[#1a2332] rounded-lg"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
                   className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
                 >
-                  {saving ? 'Adding...' : 'Add to Diet Plan'}
+                  {saving ? t('Adding...') : t('Add to Diet Plan')}
                 </button>
               </div>
             </form>
@@ -639,12 +648,12 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
           <div className="w-full max-w-2xl bg-[#131a24] border-2 border-[#33445e] rounded-xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 bg-[#0f151e] border-b border-[#253247]">
               <h2 className="text-base font-semibold text-white">
-                {editingId ? 'Edit Recipe' : 'Create New Recipe'}
+                {editingId ? t('Edit Recipe') : t('Create New Recipe')}
               </h2>
               <button
                 type="button"
                 onClick={() => setEditorOpen(false)}
-                aria-label="Close recipe editor"
+                aria-label={t('Close recipe editor')}
                 className="p-2 text-slate-400 hover:text-white rounded-lg"
               >
                 <X className="w-4 h-4" />
@@ -655,7 +664,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Recipe Title
+                    {t('Recipe Title')}
                   </label>
                   <input
                     type="text"
@@ -663,12 +672,12 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                     maxLength={SCHEMA_LIMITS.TITLE_MAX}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Turkey Quinoa Power Bowl"
+                    placeholder={t('e.g., Turkey Quinoa Power Bowl')}
                     className="w-full px-3 py-2 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Category</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Category')}</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as RecipeCategory)}
@@ -676,7 +685,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   >
                     {RECIPE_CATEGORIES.map((s) => (
                       <option key={s.key} value={s.key} className="bg-[#0e141d] text-slate-100">
-                        {s.label}
+                        {t(s.label)}
                       </option>
                     ))}
                   </select>
@@ -685,7 +694,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
 
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Prep (min)</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Prep (min)')}</label>
                   <input
                     type="number"
                     min={0}
@@ -696,7 +705,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Servings</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Servings')}</label>
                   <input
                     type="number"
                     min={1}
@@ -707,7 +716,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Calories</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Calories')}</label>
                   <input
                     type="number"
                     min={0}
@@ -718,7 +727,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Protein (g)</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Protein (g)')}</label>
                   <input
                     type="number"
                     step="0.5"
@@ -730,7 +739,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Carbs (g)</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Carbs (g)')}</label>
                   <input
                     type="number"
                     step="0.5"
@@ -742,7 +751,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Fat (g)</label>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">{t('Fat (g)')}</label>
                   <input
                     type="number"
                     step="0.5"
@@ -757,7 +766,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Recipe Photo (optional URL or choose preset)
+                  {t('Recipe Photo (optional URL or choose preset)')}
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {PRESET_IMAGES.map((img) => (
@@ -771,7 +780,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                           : 'bg-[#0e141d] text-slate-300 border-[#2d3c54] hover:bg-[#1a2332]'
                       }`}
                     >
-                      {img.label}
+                      {t(img.label)}
                     </button>
                   ))}
                   {imageUrl && (
@@ -780,7 +789,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                       onClick={() => setImageUrl('')}
                       className="px-2.5 py-1 text-xs text-slate-400 hover:text-white"
                     >
-                      Clear
+                      {t('Clear')}
                     </button>
                   )}
                 </div>
@@ -797,25 +806,25 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Ingredients (one per line)
+                    {t('Ingredients (one per line)')}
                   </label>
                   <textarea
                     rows={5}
                     value={ingredientsText}
                     onChange={(e) => setIngredientsText(e.target.value)}
-                    placeholder={'200g chicken breast\n150g cooked rice\n100g steamed broccoli'}
+                    placeholder={t('200g chicken breast\n150g cooked rice\n100g steamed broccoli')}
                     className="w-full px-3 py-2 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Instructions (one step per line)
+                    {t('Instructions (one step per line)')}
                   </label>
                   <textarea
                     rows={5}
                     value={instructionsText}
                     onChange={(e) => setInstructionsText(e.target.value)}
-                    placeholder={'Season chicken and grill 6 min per side.\nServe over rice with broccoli.'}
+                    placeholder={t('Season chicken and grill 6 min per side.\nServe over rice with broccoli.')}
                     className="w-full px-3 py-2 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                   />
                 </div>
@@ -829,7 +838,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                     onChange={(e) => setIsFavorite(e.target.checked)}
                     className="rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
                   />
-                  Mark as favorite
+                  {t('Mark as favorite')}
                 </label>
 
                 <div className="flex items-center gap-2">
@@ -838,14 +847,14 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                     onClick={() => setEditorOpen(false)}
                     className="px-4 py-2 text-xs font-medium text-slate-200 hover:bg-[#1a2332] rounded-lg"
                   >
-                    Cancel
+                    {t('Cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
                     className="px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
                   >
-                    {saving ? 'Saving...' : 'Save Recipe'}
+                    {saving ? t('Saving...') : t('Save Recipe')}
                   </button>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { useT } from '../lib/i18n';
 import {
   AlertCircle,
   Check,
@@ -66,6 +67,7 @@ export const CsvImportModal: React.FC<Props> = ({
   existingMeals,
   onImported,
 }) => {
+  const t = useT();
   const [mode, setMode] = useState<CsvImportTarget>(initialMode);
   const [csvText, setCsvText] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
@@ -150,7 +152,7 @@ export const CsvImportModal: React.FC<Props> = ({
       setCopiedKind(kind);
       window.setTimeout(() => setCopiedKind(null), 2200);
     } catch {
-      setError('Clipboard access was blocked. Use "Download .csv" or "Fill Sample CSV" instead.');
+      setError(t('Clipboard access was blocked. Use "Download .csv" or "Fill Sample CSV" instead.'));
     }
   };
 
@@ -173,7 +175,7 @@ export const CsvImportModal: React.FC<Props> = ({
             trainingParsed.plans,
             existingPlans.map((p) => p.id)
           );
-          parts.push(`${planCount} reusable ${planCount === 1 ? 'plan' : 'plans'}`);
+          parts.push(t(planCount === 1 ? '{n} reusable plan' : '{n} reusable plans', { n: planCount }));
         }
         if (assignToWeek && trainingParsed.days.length > 0) {
           const dayCount = await importTrainingDays(
@@ -182,10 +184,13 @@ export const CsvImportModal: React.FC<Props> = ({
             existingWorkouts.map((w) => w.id)
           );
           parts.push(
-            `${dayCount} scheduled ${dayCount === 1 ? 'day' : 'days'} (${trainingParsed.totalExercises} exercises)`
+            t(dayCount === 1 ? '{n} scheduled day ({ex} exercises)' : '{n} scheduled days ({ex} exercises)', {
+              n: dayCount,
+              ex: trainingParsed.totalExercises,
+            })
           );
         }
-        onImported(`Imported ${parts.join(' and ')}`);
+        onImported(t('Imported {what}', { what: parts.join(t(' and ')) }));
       } else {
         const count = await importMealLogs(
           uid,
@@ -196,13 +201,15 @@ export const CsvImportModal: React.FC<Props> = ({
         let slotNote = '';
         if (dietParsed.maxSlotNumber > mealsPerDay && dietParsed.maxSlotNumber <= 10) {
           await updateMealsPerDay(uid, dietParsed.maxSlotNumber);
-          slotNote = ` · expanded daily slots to ${dietParsed.maxSlotNumber}`;
+          slotNote = ` · ${t('expanded daily slots to {n}', { n: dietParsed.maxSlotNumber })}`;
         }
-        onImported(`Imported ${count} meal ${count === 1 ? 'item' : 'items'}${slotNote}`);
+        onImported(
+          `${t(count === 1 ? 'Imported {n} meal item' : 'Imported {n} meal items', { n: count })}${slotNote}`
+        );
       }
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to import CSV rows.');
+      setError(err instanceof Error ? err.message : t('Failed to import CSV rows.'));
     } finally {
       setImporting(false);
     }
@@ -213,15 +220,15 @@ export const CsvImportModal: React.FC<Props> = ({
       <div className="w-full sm:max-w-3xl bg-[#131a24] border-2 border-[#33445e] rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 bg-[#0f151e] border-b border-[#253247]">
           <div>
-            <h2 className="text-base font-semibold text-white">CSV Templates &amp; Import</h2>
+            <h2 className="text-base font-semibold text-white">{t('CSV Templates & Import')}</h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Extract a template for your own AI agent, then upload or paste the filled CSV back here
+              {t('Extract a template for your own AI agent, then upload or paste the filled CSV back here')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close CSV import modal"
+            aria-label={t('Close CSV import modal')}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
           >
             <X className="w-4 h-4" />
@@ -247,7 +254,7 @@ export const CsvImportModal: React.FC<Props> = ({
                     : 'text-slate-300 hover:text-white hover:bg-[#1a2332]'
                 }`}
               >
-                Training CSV
+                {t('Training CSV')}
               </button>
               <button
                 type="button"
@@ -264,7 +271,7 @@ export const CsvImportModal: React.FC<Props> = ({
                     : 'text-slate-300 hover:text-white hover:bg-[#1a2332]'
                 }`}
               >
-                Diet CSV
+                {t('Diet CSV')}
               </button>
             </div>
 
@@ -274,7 +281,7 @@ export const CsvImportModal: React.FC<Props> = ({
               className="min-h-[38px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap self-start sm:self-auto"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Preview Sample CSV
+              {t('Preview Sample CSV')}
             </button>
           </div>
 
@@ -282,11 +289,10 @@ export const CsvImportModal: React.FC<Props> = ({
           <div className="p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-xl space-y-3">
             <div>
               <p className="text-xs font-semibold text-emerald-200">
-                1. Extract {mode === 'training' ? 'Training' : 'Diet'} Template
+                {mode === 'training' ? t('1. Extract Training Template') : t('1. Extract Diet Template')}
               </p>
               <p className="text-[11px] text-emerald-100/80 mt-0.5 leading-relaxed">
-                Send the CSV template or ready-to-paste prompt to your preferred AI agent (ChatGPT,
-                Claude, Gemini, etc.) to build your schedule, then import the result in Step 2.
+                {t('Send the CSV template or ready-to-paste prompt to your preferred AI agent (ChatGPT, Claude, Gemini, etc.) to build your schedule, then import the result in Step 2.')}
               </p>
             </div>
 
@@ -297,7 +303,7 @@ export const CsvImportModal: React.FC<Props> = ({
                 className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap"
               >
                 <Download className="w-3.5 h-3.5" />
-                Download {mode === 'training' ? 'Training' : 'Diet'} .csv
+                {mode === 'training' ? t('Download Training .csv') : t('Download Diet .csv')}
               </button>
 
               <button
@@ -308,12 +314,12 @@ export const CsvImportModal: React.FC<Props> = ({
                 {copiedKind === 'prompt' ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    Copied AI Prompt + Template
+                    {t('Copied AI Prompt + Template')}
                   </>
                 ) : (
                   <>
                     <ClipboardCopy className="w-3.5 h-3.5" />
-                    Copy AI Prompt + Template
+                    {t('Copy AI Prompt + Template')}
                   </>
                 )}
               </button>
@@ -326,12 +332,12 @@ export const CsvImportModal: React.FC<Props> = ({
                 {copiedKind === 'csv' ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    Copied CSV
+                    {t('Copied CSV')}
                   </>
                 ) : (
                   <>
                     <ClipboardCopy className="w-3.5 h-3.5" />
-                    Copy Raw CSV
+                    {t('Copy Raw CSV')}
                   </>
                 )}
               </button>
@@ -343,12 +349,12 @@ export const CsvImportModal: React.FC<Props> = ({
             <div className="flex flex-wrap items-center justify-between gap-2 p-3.5 bg-[#0e141d] border border-dashed border-[#33445e] rounded-xl">
               <div className="text-xs text-slate-300 min-w-0 flex-1">
                 <span className="font-semibold text-white">
-                  {fileName ? `2. Loaded: ${fileName}` : '2. Upload filled CSV file'}
+                  {fileName ? t('2. Loaded: {name}', { name: fileName }) : t('2. Upload filled CSV file')}
                 </span>
                 <span className="block text-[11px] text-slate-400 mt-0.5">
                   {mode === 'training'
-                    ? 'Supports comma (,) or semicolon (;), extracts reusable Training Plans, and assigns Mon–Sun.'
-                    : 'Supports comma (,) or semicolon (;), and imports meals straight into your daily slots.'}
+                    ? t('Supports comma (,) or semicolon (;), extracts reusable Training Plans, and assigns Mon–Sun.')
+                    : t('Supports comma (,) or semicolon (;), and imports meals straight into your daily slots.')}
                 </span>
               </div>
               <input
@@ -364,13 +370,13 @@ export const CsvImportModal: React.FC<Props> = ({
                 className="min-h-[42px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
               >
                 <Upload className="w-3.5 h-3.5" />
-                Upload .csv
+                {t('Upload .csv')}
               </button>
             </div>
 
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Or paste the CSV output directly below
+                {t('Or paste the CSV output directly below')}
               </label>
               <textarea
                 rows={5}
@@ -400,11 +406,11 @@ export const CsvImportModal: React.FC<Props> = ({
                   className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
                 />
                 <span>
-                  Create / update{' '}
+                  {t('Create / update')}{' '}
                   <strong className="font-semibold text-white">
-                    {trainingParsed.plans.length || 'reusable'} Training Plans
+                    {trainingParsed.plans.length || t('reusable')} {t('Training Plans')}
                   </strong>{' '}
-                  so you can pick &amp; edit them on any day
+                  {t('so you can pick & edit them on any day')}
                 </span>
               </label>
               <label className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer select-none">
@@ -415,9 +421,11 @@ export const CsvImportModal: React.FC<Props> = ({
                   className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
                 />
                 <span>
-                  Assign this schedule to{' '}
-                  <strong className="font-semibold text-white">Week {defaultWeek} (Mon–Sun)</strong> so you
-                  can start training right away
+                  {t('Assign this schedule to')}{' '}
+                  <strong className="font-semibold text-white">
+                    {t('Week {n} (Mon–Sun)', { n: defaultWeek })}
+                  </strong>{' '}
+                  {t('so you can start training right away')}
                 </span>
               </label>
             </div>
@@ -429,7 +437,7 @@ export const CsvImportModal: React.FC<Props> = ({
                 onChange={(e) => setReplaceDietDays(e.target.checked)}
                 className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
               />
-              Replace existing meals on the imported week &amp; day slots instead of appending
+              {t('Replace existing meals on the imported week & day slots instead of appending')}
             </label>
           )}
 
@@ -443,7 +451,7 @@ export const CsvImportModal: React.FC<Props> = ({
             <div className="p-3 bg-amber-950/40 border border-amber-500/40 rounded-lg space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-200">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                CSV Warnings ({warnings.length})
+                {t('CSV Warnings ({n})', { n: warnings.length })}
               </div>
               <ul className="text-[11px] text-amber-100/90 space-y-0.5 max-h-24 overflow-y-auto">
                 {warnings.map((w, i) => (
@@ -461,9 +469,9 @@ export const CsvImportModal: React.FC<Props> = ({
                   <div className="flex items-center justify-between text-xs">
                     <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-200">
                       <Layers className="w-3.5 h-3.5 text-emerald-400" />
-                      Reusable Training Plans Detected ({trainingParsed.plans.length})
+                      {t('Reusable Training Plans Detected ({n})', { n: trainingParsed.plans.length })}
                     </span>
-                    <span className="text-emerald-300 tabular-nums">Selectable on any day</span>
+                    <span className="text-emerald-300 tabular-nums">{t('Selectable on any day')}</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {trainingParsed.plans.map((p) => (
@@ -473,11 +481,11 @@ export const CsvImportModal: React.FC<Props> = ({
                       >
                         <p className="font-semibold text-white truncate">{p.name}</p>
                         <p className="text-[11px] text-slate-400 mt-0.5 tabular-nums">
-                          {p.defaultDays.map((d) => DAY_SHORT[d]).join(', ')}
+                          {p.defaultDays.map((d) => t(DAY_SHORT[d])).join(', ')}
                           {p.scheduledTime ? ` · ${p.scheduledTime}` : ''}
-                          {` · ${p.exercises.length} exercises`}
+                          {` · ${t('{n} exercises', { n: p.exercises.length })}`}
                           {p.cardio.activityType !== 'none'
-                            ? ` · ${p.cardio.activityType === 'walk' ? 'Walk' : 'Run'}`
+                            ? ` · ${p.cardio.activityType === 'walk' ? t('Walk') : t('Run')}`
                             : ''}
                         </p>
                       </div>
@@ -491,14 +499,17 @@ export const CsvImportModal: React.FC<Props> = ({
                   <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-300">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     {mode === 'training'
-                      ? `Schedule Ready: ${trainingParsed.days.length} days · ${trainingParsed.totalExercises} exercises`
-                      : `Ready: ${dietParsed.meals.length} meal items${
+                      ? t('Schedule Ready: {d} days · {e} exercises', {
+                          d: trainingParsed.days.length,
+                          e: trainingParsed.totalExercises,
+                        })
+                      : `${t('Ready: {n} meal items', { n: dietParsed.meals.length })}${
                           dietParsed.maxSlotNumber > mealsPerDay
-                            ? ` · expands slots to ${dietParsed.maxSlotNumber}/day`
+                            ? ` · ${t('expands slots to {n}/day', { n: dietParsed.maxSlotNumber })}`
                             : ''
                         }`}
                   </span>
-                  <span className="text-slate-400">Preview</span>
+                  <span className="text-slate-400">{t('Preview')}</span>
                 </div>
 
                 <div className="max-h-56 overflow-auto">
@@ -506,29 +517,29 @@ export const CsvImportModal: React.FC<Props> = ({
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="border-b border-[#253247] text-slate-400 bg-[#0e141d]">
-                          <th className="py-2 px-3">Week / Day</th>
-                          <th className="py-2 px-3">Session / Plan</th>
-                          <th className="py-2 px-3 text-right">Exercises</th>
-                          <th className="py-2 px-3">Cardio</th>
+                          <th className="py-2 px-3">{t('Week / Day')}</th>
+                          <th className="py-2 px-3">{t('Session / Plan')}</th>
+                          <th className="py-2 px-3 text-right">{t('Exercises')}</th>
+                          <th className="py-2 px-3">{t('Cardio')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#1e293b] tabular-nums">
                         {trainingParsed.days.map((d) => (
                           <tr key={`${d.weekNumber}_${d.dayIndex}`}>
                             <td className="py-2 px-3 font-medium text-white whitespace-nowrap">
-                              W{d.weekNumber} · {DAY_SHORT[d.dayIndex]}
+                              W{d.weekNumber} · {t(DAY_SHORT[d.dayIndex])}
                             </td>
                             <td className="py-2 px-3 text-slate-300">
-                              {d.focus}
+                              {t(d.focus)}
                               {d.scheduledTime ? ` · ${d.scheduledTime}` : ''}
                             </td>
                             <td className="py-2 px-3 text-right font-mono text-white">
-                              {d.isRestDay ? 'Rest' : `${d.exercises.length} (${wUnit})`}
+                              {d.isRestDay ? t('Rest') : `${d.exercises.length} (${wUnit})`}
                             </td>
                             <td className="py-2 px-3 text-slate-400">
                               {d.cardio.activityType === 'none'
                                 ? '—'
-                                : `${d.cardio.activityType === 'walk' ? 'Walk' : 'Run'}${
+                                : `${d.cardio.activityType === 'walk' ? t('Walk') : t('Run')}${
                                     d.cardio.durationMinutes > 0
                                       ? ` ${d.cardio.durationMinutes} min`
                                       : ''
@@ -542,20 +553,25 @@ export const CsvImportModal: React.FC<Props> = ({
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="border-b border-[#253247] text-slate-400 bg-[#0e141d]">
-                          <th className="py-2 px-3">Week / Day</th>
-                          <th className="py-2 px-3">Slot</th>
-                          <th className="py-2 px-3">Food / Meal</th>
-                          <th className="py-2 px-3 text-right">Macros</th>
+                          <th className="py-2 px-3">{t('Week / Day')}</th>
+                          <th className="py-2 px-3">{t('Slot')}</th>
+                          <th className="py-2 px-3">{t('Food / Meal')}</th>
+                          <th className="py-2 px-3 text-right">{t('Macros')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#1e293b] tabular-nums">
                         {dietParsed.meals.slice(0, 35).map((m, idx) => (
                           <tr key={idx}>
                             <td className="py-2 px-3 font-medium text-white whitespace-nowrap">
-                              W{m.weekNumber} · {DAY_SHORT[m.dayIndex]}
+                              W{m.weekNumber} · {t(DAY_SHORT[m.dayIndex])}
                             </td>
                             <td className="py-2 px-3 text-slate-400 whitespace-nowrap">
-                              {getMealSlotLabel(m.slot)}
+                              {(() => {
+                                const label = getMealSlotLabel(m.slot);
+                                return label.startsWith('Meal ')
+                                  ? t('Meal {n}', { n: label.slice(5) })
+                                  : t(label);
+                              })()}
                             </td>
                             <td className="py-2 px-3 text-slate-100 truncate max-w-[220px]">
                               {m.title}
@@ -580,7 +596,7 @@ export const CsvImportModal: React.FC<Props> = ({
             onClick={onClose}
             className="min-h-[44px] px-4 py-2 text-xs font-medium text-slate-200 hover:bg-[#1a2332] rounded-lg"
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="button"
@@ -590,14 +606,14 @@ export const CsvImportModal: React.FC<Props> = ({
           >
             <Upload className="w-3.5 h-3.5" />
             {importing
-              ? 'Importing...'
+              ? t('Importing...')
               : mode === 'training'
               ? saveAsPlans && assignToWeek
-                ? `Import ${trainingParsed.plans.length} Plans & ${trainingParsed.days.length} Days`
+                ? t('Import {p} Plans & {d} Days', { p: trainingParsed.plans.length, d: trainingParsed.days.length })
                 : saveAsPlans
-                ? `Create ${trainingParsed.plans.length} Plans`
-                : `Schedule ${trainingParsed.days.length} Days`
-              : `Import ${dietParsed.meals.length} Meals`}
+                ? t('Create {n} Plans', { n: trainingParsed.plans.length })
+                : t('Schedule {n} Days', { n: trainingParsed.days.length })
+              : t('Import {n} Meals', { n: dietParsed.meals.length })}
           </button>
         </div>
       </div>

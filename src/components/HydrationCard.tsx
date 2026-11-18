@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useT } from '../lib/i18n';
 import { Check, Droplets, Minus, Pencil, Plus, X } from 'lucide-react';
 import { DAY_SHORT, HydrationLog, UnitSystem } from '../types';
 import { formatWaterAmount } from '../lib/sanitize';
@@ -23,6 +24,7 @@ export const HydrationCard: React.FC<Props> = ({
   hydrationLog,
   compact = false,
 }) => {
+  const t = useT();
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(defaultGoalMl);
   const [saving, setSaving] = useState(false);
@@ -79,12 +81,12 @@ export const HydrationCard: React.FC<Props> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold text-slate-100">
-                Hydration Potion · {DAY_SHORT[dayIndex]} (W{weekNumber})
+                {t('Hydration Potion')} · {t(DAY_SHORT[dayIndex])} (W{weekNumber})
               </h2>
               {goalReached && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
                   <Check className="w-3 h-3" />
-                  Goal hit (+20 XP)
+                  {t('Goal hit (+20 XP)')}
                 </span>
               )}
             </div>
@@ -103,7 +105,7 @@ export const HydrationCard: React.FC<Props> = ({
           className="min-h-[38px] inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-[#1c2636] rounded-lg transition-colors"
         >
           {editingGoal ? <X className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
-          {editingGoal ? 'Cancel' : 'Daily Goal'}
+          {editingGoal ? t('Cancel') : t('Daily Goal')}
         </button>
       </div>
 
@@ -113,7 +115,7 @@ export const HydrationCard: React.FC<Props> = ({
           className="mb-3 p-3 bg-[#0e141d] border border-[#253247] rounded-lg flex flex-wrap items-center justify-between gap-2"
         >
           <label className="text-xs font-medium text-slate-300">
-            Daily Water Target (ml):
+            {t('Daily Water Target (ml):')}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -130,7 +132,7 @@ export const HydrationCard: React.FC<Props> = ({
               disabled={saving}
               className="min-h-[38px] px-3 py-1.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 disabled:opacity-50 rounded-md"
             >
-              Save
+              {t('Save')}
             </button>
           </div>
         </form>

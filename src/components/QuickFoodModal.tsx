@@ -8,6 +8,7 @@ import {
   UserProfile,
 } from '../types';
 import { createMealLog } from '../lib/firestoreService';
+import { useT } from '../lib/i18n';
 
 interface Props {
   open: boolean;
@@ -28,6 +29,7 @@ export const QuickFoodModal: React.FC<Props> = ({
   defaultDay,
   defaultSlot,
 }) => {
+  const t = useT();
   const mealsPerDay = profile.mealsPerDay ?? 6;
   const slots = buildDailyMealSlots(mealsPerDay);
 
@@ -67,7 +69,7 @@ export const QuickFoodModal: React.FC<Props> = ({
     e.preventDefault();
     const finalTitle = title.trim();
     if (!finalTitle) {
-      setError('Please enter a food or meal name.');
+      setError(t('Please enter a food or meal name.'));
       return;
     }
     setSaving(true);
@@ -97,15 +99,15 @@ export const QuickFoodModal: React.FC<Props> = ({
       <div className="w-full sm:max-w-lg bg-[#131a24] border-2 border-[#33445e] rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 bg-[#0f151e] border-b border-[#253247]">
           <div>
-            <h2 className="text-base font-semibold text-white">Log Food Eaten On the Spot</h2>
+            <h2 className="text-base font-semibold text-white">{t('Log Food Eaten On the Spot')}</h2>
             <p className="text-xs text-slate-400">
-              Record extra food, snacks, or shakes eaten during the day.
+              {t('Record extra food, snacks, or shakes eaten during the day.')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close quick food modal"
+            aria-label={t('Close quick food modal')}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
           >
             <X className="w-4 h-4" />
@@ -115,7 +117,7 @@ export const QuickFoodModal: React.FC<Props> = ({
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Week</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">{t('Week')}</label>
               <input
                 type="number"
                 min={1}
@@ -126,7 +128,7 @@ export const QuickFoodModal: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Day</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">{t('Day')}</label>
               <select
                 value={dayIndex}
                 onChange={(e) => setDayIndex(Number(e.target.value))}
@@ -134,13 +136,13 @@ export const QuickFoodModal: React.FC<Props> = ({
               >
                 {DAY_FULL.map((d, i) => (
                   <option key={d} value={i} className="bg-[#0e141d] text-slate-100">
-                    {d}
+                    {t(d)}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Meal Slot</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">{t('Meal Slot')}</label>
               <select
                 value={slot}
                 onChange={(e) => setSlot(e.target.value as MealSlot)}
@@ -148,7 +150,7 @@ export const QuickFoodModal: React.FC<Props> = ({
               >
                 {slots.map((s) => (
                   <option key={s.key} value={s.key} className="bg-[#0e141d] text-slate-100">
-                    {s.label}
+                    {s.label.startsWith('Meal ') ? t('Meal {n}', { n: s.label.slice(5) }) : t(s.label)}
                   </option>
                 ))}
               </select>
@@ -156,21 +158,21 @@ export const QuickFoodModal: React.FC<Props> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Food / Meal Name</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">{t('Food / Meal Name')}</label>
             <input
               type="text"
               required
               maxLength={SCHEMA_LIMITS.TITLE_MAX}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Post-Workout Shake & Banana"
+              placeholder={t('e.g., Post-Workout Shake & Banana')}
               className="w-full px-3 py-2.5 text-sm text-white placeholder:text-slate-500 bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
             />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Calories</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">{t('Calories')}</label>
               <input
                 type="number"
                 min={0}
@@ -182,7 +184,7 @@ export const QuickFoodModal: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Protein (g)</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">{t('Protein (g)')}</label>
               <input
                 type="number"
                 step="0.5"
@@ -195,7 +197,7 @@ export const QuickFoodModal: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Carbs (g)</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">{t('Carbs (g)')}</label>
               <input
                 type="number"
                 step="0.5"
@@ -208,7 +210,7 @@ export const QuickFoodModal: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Fat (g)</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">{t('Fat (g)')}</label>
               <input
                 type="number"
                 step="0.5"
@@ -229,7 +231,7 @@ export const QuickFoodModal: React.FC<Props> = ({
               onChange={(e) => setConsumed(e.target.checked)}
               className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
             />
-            Already eaten (count immediately toward today's consumed macros)
+            {t("Already eaten (count immediately toward today's consumed macros)")}
           </label>
 
           {error && (
@@ -244,14 +246,14 @@ export const QuickFoodModal: React.FC<Props> = ({
               onClick={onClose}
               className="min-h-[44px] px-4 py-2 text-xs font-medium text-slate-200 hover:bg-[#1a2332] rounded-lg"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="min-h-[44px] px-5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
             >
-              {saving ? 'Logging...' : 'Save Food Entry'}
+              {saving ? t('Logging...') : t('Save Food Entry')}
             </button>
           </div>
         </form>

@@ -62,6 +62,8 @@ export const DietPlanView: React.FC<Props> = ({
   onOpenCsvImport,
 }) => {
   const t = useT();
+  const slotLabel = (label: string) =>
+    label.startsWith('Meal ') ? t('Meal {n}', { n: label.slice(5) }) : t(label);
   const [selectedWeek, setSelectedWeek] = useState(profile.currentWeek);
   const [selectedDay, setSelectedDay] = useState(0);
   const [showGrocery, setShowGrocery] = useState(false);
@@ -261,15 +263,19 @@ export const DietPlanView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-            <span>Daily Rations &amp; Macro Log (+25 XP/day)</span>
+            <span>{t('Daily Rations & Macro Log (+25 XP/day)')}</span>
             <span aria-hidden="true">·</span>
             <span className="tabular-nums">
-              Target {profile.dailyCalorieTarget.toLocaleString()} kcal ({profile.proteinTargetG}g P /{' '}
-              {profile.carbsTargetG}g C / {profile.fatTargetG}g F)
+              {t('Target {kcal} kcal ({p}g P / {c}g C / {f}g F)', {
+                kcal: profile.dailyCalorieTarget.toLocaleString(),
+                p: profile.proteinTargetG,
+                c: profile.carbsTargetG,
+                f: profile.fatTargetG,
+              })}
             </span>
           </div>
           <h1 className="text-xl font-bold text-white mt-1">
-            Week {selectedWeek} Diet Plan
+            {t('Week {week} Diet Plan', { week: selectedWeek })}
           </h1>
         </div>
 
@@ -280,20 +286,20 @@ export const DietPlanView: React.FC<Props> = ({
               type="button"
               onClick={() => setSelectedWeek((w) => Math.max(1, w - 1))}
               disabled={selectedWeek <= 1}
-              aria-label="Previous week"
+              aria-label={t('Previous week')}
               className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded-md disabled:opacity-40"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <select
-              aria-label="Select diet week"
+              aria-label={t('Select diet week')}
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(Number(e.target.value))}
               className="bg-transparent px-2 text-xs font-mono font-medium text-slate-100 focus:outline-none tabular-nums"
             >
               {Array.from({ length: 52 }, (_, i) => i + 1).map((wk) => (
                 <option key={wk} value={wk} className="bg-[#0e141d] text-slate-100">
-                  Week {wk}
+                  {t('Week {n}', { n: wk })}
                 </option>
               ))}
             </select>
@@ -301,7 +307,7 @@ export const DietPlanView: React.FC<Props> = ({
               type="button"
               onClick={() => setSelectedWeek((w) => Math.min(52, w + 1))}
               disabled={selectedWeek >= 52}
-              aria-label="Next week"
+              aria-label={t('Next week')}
               className="p-2 text-slate-400 hover:text-white hover:bg-[#1a2434] rounded-md disabled:opacity-40"
             >
               <ChevronRight className="w-4 h-4" />
@@ -311,7 +317,7 @@ export const DietPlanView: React.FC<Props> = ({
           {/* Meals per day selector */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-[#2d3c54] rounded-lg bg-[#0e141d] min-h-[44px]">
             <label htmlFor="meals-per-day" className="text-xs font-medium text-slate-400 whitespace-nowrap">
-              Meals / day
+              {t('Meals / day')}
             </label>
             <select
               id="meals-per-day"
@@ -333,7 +339,7 @@ export const DietPlanView: React.FC<Props> = ({
             className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
-            Log Food Eaten
+            {t('Log Food Eaten')}
           </button>
 
           <button
@@ -355,7 +361,7 @@ export const DietPlanView: React.FC<Props> = ({
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            Grocery ({weeklyIngredients.length})
+            {t('Grocery ({n})', { n: weeklyIngredients.length })}
           </button>
 
           <button
@@ -364,7 +370,7 @@ export const DietPlanView: React.FC<Props> = ({
             className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
           >
             <Upload className="w-3.5 h-3.5" />
-            CSV Templates &amp; Import
+            {t('CSV Templates & Import')}
           </button>
         </div>
       </div>
@@ -392,7 +398,7 @@ export const DietPlanView: React.FC<Props> = ({
                 {short}
               </p>
               <p className="text-[11px] tabular-nums mt-0.5 text-slate-400">
-                {count} items · {kcal} kcal
+                {t('{n} items · {kcal} kcal', { n: count, kcal })}
               </p>
             </button>
           );
@@ -406,9 +412,9 @@ export const DietPlanView: React.FC<Props> = ({
           return (
             <div key={bar.label} className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-4">
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-medium text-slate-300">{bar.label}</span>
+                <span className="font-medium text-slate-300">{t(bar.label)}</span>
                 <span className="text-slate-400 tabular-nums hidden sm:inline">
-                  Planned: {bar.planned.toLocaleString()} {bar.unit}
+                  {t('Planned: {n} {unit}', { n: bar.planned.toLocaleString(), unit: bar.unit })}
                 </span>
               </div>
               <div className="flex items-baseline justify-between mb-2">
@@ -457,7 +463,7 @@ export const DietPlanView: React.FC<Props> = ({
               <div key={key} className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-4 sm:p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1e293b]">
                   <div className="flex items-baseline gap-2.5">
-                    <h2 className="text-sm font-semibold text-white">{label}</h2>
+                    <h2 className="text-sm font-semibold text-white">{slotLabel(label)}</h2>
                     <span className="text-xs font-mono text-slate-400 tabular-nums">
                       {slotCalories} kcal
                     </span>
@@ -470,7 +476,7 @@ export const DietPlanView: React.FC<Props> = ({
                         className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors whitespace-nowrap"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        Log On-the-Spot Food
+                        {t('Log On-the-Spot Food')}
                       </button>
                     ) : (
                       <>
@@ -483,7 +489,7 @@ export const DietPlanView: React.FC<Props> = ({
                           className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors whitespace-nowrap"
                         >
                           <BookOpen className="w-3.5 h-3.5" />
-                          Add Recipe
+                          {t('Add Recipe')}
                         </button>
                         <button
                           type="button"
@@ -499,7 +505,7 @@ export const DietPlanView: React.FC<Props> = ({
                           className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          Quick Food
+                          {t('Quick Food')}
                         </button>
                       </>
                     )}
@@ -509,8 +515,11 @@ export const DietPlanView: React.FC<Props> = ({
                 {slotMeals.length === 0 ? (
                   <p className="text-xs text-slate-400 pt-3">
                     {isOnTheSpot
-                      ? 'Log spontaneous snacks, shakes, or extra meals eaten during the day.'
-                      : `No food scheduled for ${label} on ${DAY_FULL[selectedDay]}.`}
+                      ? t('Log spontaneous snacks, shakes, or extra meals eaten during the day.')
+                      : t('No food scheduled for {slot} on {day}.', {
+                          slot: slotLabel(label),
+                          day: t(DAY_FULL[selectedDay]),
+                        })}
                   </p>
                 ) : (
                   <div className="divide-y divide-[#1e293b] mt-2">
@@ -527,7 +536,7 @@ export const DietPlanView: React.FC<Props> = ({
                               onClick={() =>
                                 void toggleMealConsumed(uid, meal.id, !meal.consumed)
                               }
-                              aria-label={`Mark ${meal.title} as consumed`}
+                              aria-label={t('Mark {name} as consumed', { name: meal.title })}
                               className="min-h-[44px] min-w-[44px] -ml-2 flex items-center justify-center shrink-0"
                             >
                               <span
@@ -563,8 +572,8 @@ export const DietPlanView: React.FC<Props> = ({
                                 {meal.title}
                               </p>
                               <p className="text-xs text-slate-400 tabular-nums">
-                                {meal.servings}x serving
-                                {linkedRecipe ? ' · Recipe' : ' · Logged item'}
+                                {t('{n}x serving', { n: meal.servings })}
+                                {linkedRecipe ? ` · ${t('Recipe')}` : ` · ${t('Logged item')}`}
                               </p>
                             </div>
                           </div>
@@ -593,7 +602,7 @@ export const DietPlanView: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => void deleteMealLog(uid, meal.id)}
-                              aria-label={`Delete ${meal.title}`}
+                              aria-label={t('Delete {name}', { name: meal.title })}
                               className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-rose-400 rounded-md transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -614,16 +623,16 @@ export const DietPlanView: React.FC<Props> = ({
             <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
               <div>
                 <h2 className="text-sm font-semibold text-white">
-                  Week {selectedWeek} Grocery List
+                  {t('Week {week} Grocery List', { week: selectedWeek })}
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Aggregated from scheduled recipes
+                  {t('Aggregated from scheduled recipes')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowGrocery(false)}
-                aria-label="Close grocery list"
+                aria-label={t('Close grocery list')}
                 className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
@@ -632,7 +641,7 @@ export const DietPlanView: React.FC<Props> = ({
 
             {weeklyIngredients.length === 0 ? (
               <p className="text-xs text-slate-400 py-6 text-center">
-                Schedule meals from your Recipe Library to generate your grocery list.
+                {t('Schedule meals from your Recipe Library to generate your grocery list.')}
               </p>
             ) : (
               <ul className="divide-y divide-[#1e293b] mt-2 max-h-[540px] overflow-y-auto">
@@ -658,7 +667,7 @@ export const DietPlanView: React.FC<Props> = ({
                       </label>
                       {count > 1 && (
                         <span className="text-[11px] font-mono text-slate-400 tabular-nums shrink-0">
-                          ×{count} meals
+                          {t('×{n} meals', { n: count })}
                         </span>
                       )}
                     </li>
@@ -677,16 +686,19 @@ export const DietPlanView: React.FC<Props> = ({
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#253247] bg-[#0f151e]">
               <div>
                 <h2 className="text-base font-semibold text-white">
-                  Add Recipe to {DAY_FULL[selectedDay]} ({recipePickerSlot.replace('meal_', 'Meal ')})
+                  {t('Add Recipe to {day} ({slot})', {
+                    day: t(DAY_FULL[selectedDay]),
+                    slot: slotLabel(recipePickerSlot.replace('meal_', 'Meal ')),
+                  })}
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Choose serving size and select a recipe to log its macros.
+                  {t('Choose serving size and select a recipe to log its macros.')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setRecipePickerSlot(null)}
-                aria-label="Close recipe picker"
+                aria-label={t('Close recipe picker')}
                 className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
               >
                 <X className="w-4 h-4" />
@@ -700,13 +712,13 @@ export const DietPlanView: React.FC<Props> = ({
                   type="text"
                   value={recipeSearch}
                   onChange={(e) => setRecipeSearch(e.target.value)}
-                  placeholder="Search recipes or ingredients..."
+                  placeholder={t('Search recipes or ingredients...')}
                   className="w-full pl-9 pr-3 py-2 text-sm text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                 />
               </div>
 
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium text-slate-400">Servings:</span>
+                <span className="text-xs font-medium text-slate-400">{t('Servings:')}</span>
                 {[0.5, 1, 1.5, 2].map((s) => (
                   <button
                     key={s}
@@ -727,7 +739,7 @@ export const DietPlanView: React.FC<Props> = ({
             <div className="p-6 overflow-y-auto divide-y divide-[#1e293b]">
               {filteredRecipes.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-slate-300">No matching recipes found.</p>
+                  <p className="text-sm text-slate-300">{t('No matching recipes found.')}</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -736,7 +748,7 @@ export const DietPlanView: React.FC<Props> = ({
                     }}
                     className="mt-3 px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg"
                   >
-                    Create Recipe in Library
+                    {t('Create Recipe in Library')}
                   </button>
                 </div>
               ) : (
@@ -774,7 +786,7 @@ export const DietPlanView: React.FC<Props> = ({
                       onClick={() => void handleAddFromRecipe(rec)}
                       className="min-h-[40px] px-3.5 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg whitespace-nowrap shrink-0"
                     >
-                      Add ({selectedServings}x)
+                      {t('Add ({n}x)', { n: selectedServings })}
                     </button>
                   </div>
                 ))
@@ -807,12 +819,12 @@ export const DietPlanView: React.FC<Props> = ({
           <div className="w-full sm:max-w-md bg-[#131a24] border-2 border-[#33445e] rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#253247] bg-[#0f151e]">
               <h2 className="text-base font-semibold text-white">
-                Add Quick Food ({customSlot.replace('meal_', 'Meal ')})
+                {t('Add Quick Food ({slot})', { slot: slotLabel(customSlot.replace('meal_', 'Meal ')) })}
               </h2>
               <button
                 type="button"
                 onClick={() => setCustomSlot(null)}
-                aria-label="Close custom meal modal"
+                aria-label={t('Close custom meal modal')}
                 className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg"
               >
                 <X className="w-4 h-4" />
@@ -821,7 +833,7 @@ export const DietPlanView: React.FC<Props> = ({
             <form onSubmit={handleAddCustomMeal} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Food / Meal Name
+                  {t('Food / Meal Name')}
                 </label>
                 <input
                   type="text"
@@ -829,14 +841,14 @@ export const DietPlanView: React.FC<Props> = ({
                   maxLength={SCHEMA_LIMITS.TITLE_MAX}
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
-                  placeholder="e.g., Greek Yogurt & Honey"
+                  placeholder={t('e.g., Greek Yogurt & Honey')}
                   className="w-full px-3 py-2.5 text-sm text-white bg-[#0e141d] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Calories (kcal)
+                    {t('Calories (kcal)')}
                   </label>
                   <input
                     type="number"
@@ -850,7 +862,7 @@ export const DietPlanView: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Protein (g)
+                    {t('Protein (g)')}
                   </label>
                   <input
                     type="number"
@@ -864,7 +876,7 @@ export const DietPlanView: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Carbs (g)
+                    {t('Carbs (g)')}
                   </label>
                   <input
                     type="number"
@@ -878,7 +890,7 @@ export const DietPlanView: React.FC<Props> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Fat (g)
+                    {t('Fat (g)')}
                   </label>
                   <input
                     type="number"
@@ -897,14 +909,14 @@ export const DietPlanView: React.FC<Props> = ({
                   onClick={() => setCustomSlot(null)}
                   className="min-h-[44px] px-4 py-2 text-xs font-medium text-slate-300 hover:bg-[#1a2332] rounded-lg"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
                   className="min-h-[44px] px-4 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 rounded-lg"
                 >
-                  {submitting ? 'Adding...' : 'Add to Day'}
+                  {submitting ? t('Adding...') : t('Add to Day')}
                 </button>
               </div>
             </form>
