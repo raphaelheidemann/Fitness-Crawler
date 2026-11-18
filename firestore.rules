@@ -175,6 +175,23 @@ service cloud.firestore {
       && data.updatedAt is timestamp;
     }
 
+    function isValidFood(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'name', 'calories', 'proteinG', 'carbsG', 'fatG', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'name', 'calories', 'proteinG', 'carbsG', 'fatG', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
+      && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+      && data.calories is number && data.calories >= 0 && data.calories <= 1000
+      && data.proteinG is number && data.proteinG >= 0 && data.proteinG <= 100
+      && data.carbsG is number && data.carbsG >= 0 && data.carbsG <= 100
+      && data.fatG is number && data.fatG >= 0 && data.fatG <= 100
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
     function isValidRecipe(data, userId) {
       return data.keys().hasAll([
         'ownerId', 'title', 'category', 'prepMinutes', 'servings',
@@ -589,6 +606,24 @@ service cloud.firestore {
         allow delete: if isEmailVerified()
           && isValidId(userId)
           && isValidId(recipeId)
+          && isOwner(userId)
+          && hasParentProfile(userId);
+      }
+
+      match /foods/{foodId} {
+        allow get: if isValidId(userId) && isValidId(foodId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(foodId)
+          && isOwner(userId)
+          && isValidFood(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && hasParentProfileAfter(userId);
+        allow delete: if isEmailVerified()
+          && isValidId(userId)
+          && isValidId(foodId)
           && isOwner(userId)
           && hasParentProfile(userId);
       }

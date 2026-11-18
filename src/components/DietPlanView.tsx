@@ -5,11 +5,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Repeat,
   Search,
   ShoppingBag,
   Trash2,
   Upload,
   Utensils,
+  Wand2,
   X,
 } from 'lucide-react';
 import {
@@ -24,6 +26,7 @@ import {
   SCHEMA_LIMITS,
   UserProfile,
 } from '../types';
+import { Food } from '../lib/foodDb';
 import {
   createMealLog,
   deleteMealLog,
@@ -31,6 +34,8 @@ import {
   updateMealsPerDay,
 } from '../lib/firestoreService';
 import { HydrationCard } from './HydrationCard';
+import { DietGeneratorModal } from './DietGeneratorModal';
+import { FoodPickerModal, FoodPickerTarget } from './FoodPickerModal';
 
 interface Props {
   uid: string;
@@ -38,6 +43,7 @@ interface Props {
   mealLogs: MealLog[];
   hydrationLogs: HydrationLog[];
   recipes: Recipe[];
+  customFoods: Food[];
   onNavigateToRecipes: () => void;
   onOpenQuickFood: (week: number, day: number, slot?: MealSlot) => void;
   onOpenCsvImport: (week: number, day: number) => void;
@@ -49,6 +55,7 @@ export const DietPlanView: React.FC<Props> = ({
   mealLogs,
   hydrationLogs,
   recipes,
+  customFoods,
   onNavigateToRecipes,
   onOpenQuickFood,
   onOpenCsvImport,
@@ -56,6 +63,8 @@ export const DietPlanView: React.FC<Props> = ({
   const [selectedWeek, setSelectedWeek] = useState(profile.currentWeek);
   const [selectedDay, setSelectedDay] = useState(0);
   const [showGrocery, setShowGrocery] = useState(false);
+  const [foodTarget, setFoodTarget] = useState<FoodPickerTarget | null>(null);
+  const [generatorOpen, setGeneratorOpen] = useState(false);
   const [checkedGrocery, setCheckedGrocery] = useState<Record<string, boolean>>({});
 
   const mealsPerDay = profile.mealsPerDay ?? 6;
@@ -327,6 +336,15 @@ export const DietPlanView: React.FC<Props> = ({
 
           <button
             type="button"
+            onClick={() => setGeneratorOpen(true)}
+            className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Basic Diet Plan
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowGrocery((v) => !v)}
             className={`min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
               showGrocery
@@ -467,6 +485,14 @@ export const DietPlanView: React.FC<Props> = ({
                         </button>
                         <button
                           type="button"
+                          onClick={() => setFoodTarget({ kind: 'add', slot: key })}
+                          className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+                        >
+                          <Search className="w-3.5 h-3.5" />
+                          Food DB
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setCustomSlot(key)}
                           className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
                         >
@@ -551,6 +577,16 @@ export const DietPlanView: React.FC<Props> = ({
                                 {Math.round(meal.fatG)}g F
                               </p>
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setFoodTarget({ kind: 'replace', meal })}
+                              aria-label={`Replace ${meal.title}`}
+                              title="Replace with another food"
+                              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-emerald-300 rounded-md transition-colors"
+                            >
+                              <Repeat className="w-4 h-4" />
+                            </button>
 
                             <button
                               type="button"
@@ -745,6 +781,23 @@ export const DietPlanView: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      <FoodPickerModal
+        target={foodTarget}
+        onClose={() => setFoodTarget(null)}
+        uid={uid}
+        week={selectedWeek}
+        day={selectedDay}
+        customFoods={customFoods}
+      />
+      <DietGeneratorModal
+        open={generatorOpen}
+        onClose={() => setGeneratorOpen(false)}
+        uid={uid}
+        profile={profile}
+        week={selectedWeek}
+        mealLogs={mealLogs}
+      />
 
       {/* Custom Meal Modal */}
       {customSlot && (

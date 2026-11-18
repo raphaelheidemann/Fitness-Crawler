@@ -1465,3 +1465,37 @@ export async function disbandGuild(params: {
 }
 
 
+
+/** Foods the user typed once and wants to reuse (macros per 100 g). */
+export async function saveCustomFood(
+  uid: string,
+  food: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number }
+): Promise<string> {
+  const id = sanitizeId(`food_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
+  const path = `users/${uid}/foods/${id}`;
+  try {
+    await setDoc(doc(db, 'users', uid, 'foods', id), {
+      ownerId: uid,
+      name: sanitizeString(food.name, SCHEMA_LIMITS.TITLE_MAX, 'Food'),
+      calories: Math.round(clampNumber(food.calories, 0, 1000, 0)),
+      proteinG: Number(clampNumber(food.proteinG, 0, 100, 0).toFixed(1)),
+      carbsG: Number(clampNumber(food.carbsG, 0, 100, 0).toFixed(1)),
+      fatG: Number(clampNumber(food.fatG, 0, 100, 0).toFixed(1)),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    return id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+}
+
+export async function deleteCustomFood(uid: string, foodId: string): Promise<void> {
+  const safeId = sanitizeId(foodId);
+  const path = `users/${uid}/foods/${safeId}`;
+  try {
+    await deleteDoc(doc(db, 'users', uid, 'foods', safeId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
