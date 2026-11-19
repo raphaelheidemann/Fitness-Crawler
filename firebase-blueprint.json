@@ -68,6 +68,16 @@
           "type": "integer",
           "description": "Daily hydration target in milliliters (500-10000)."
         },
+        "sex": {
+          "type": "string",
+          "enum": ["male", "female", "unspecified"],
+          "description": "User biological sex used for BMR estimation."
+        },
+        "crawlerStyle": {
+          "type": "string",
+          "enum": ["masculine", "feminine", "neutral"],
+          "description": "Preferred crawler avatar presentation style."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -171,6 +181,10 @@
               "type": "boolean"
             }
           }
+        },
+        "durationSec": {
+          "type": "integer",
+          "description": "Optional active workout session duration in seconds."
         },
         "createdAt": {
           "type": "string",
@@ -356,6 +370,52 @@
         "ingredients",
         "instructions",
         "isFavorite",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Food": {
+      "title": "Food",
+      "description": "User-saved custom food item with nutritional macros per 100g/100ml.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "calories": {
+          "type": "number"
+        },
+        "proteinG": {
+          "type": "number"
+        },
+        "carbsG": {
+          "type": "number"
+        },
+        "fatG": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "calories",
+        "proteinG",
+        "carbsG",
+        "fatG",
         "createdAt",
         "updatedAt"
       ]
@@ -715,6 +775,11 @@
         "isPublicProfile": {
           "type": "boolean"
         },
+        "look": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Encoded crawler appearance string."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time"
@@ -826,6 +891,11 @@
         },
         "isPublic": {
           "type": "boolean"
+        },
+        "look": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Encoded crawler appearance string."
         },
         "createdAt": {
           "type": "string",
@@ -991,6 +1061,11 @@
         "unlockedGearCount": {
           "type": "integer"
         },
+        "look": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Encoded crawler appearance string."
+        },
         "joinedAt": {
           "type": "string",
           "format": "date-time"
@@ -1055,6 +1130,12 @@
         "$ref": "#/entities/Recipe"
       },
       "description": "User personal and starter recipe collection with macros and prep steps."
+    },
+    "/users/{userId}/foods/{foodId}": {
+      "schema": {
+        "$ref": "#/entities/Food"
+      },
+      "description": "User custom foods with per-100g macro breakdown for diet planning."
     },
     "/users/{userId}/measurements/{measurementId}": {
       "schema": {
