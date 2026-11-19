@@ -4,6 +4,7 @@ import { MealLog, MealSlot } from '../types';
 import { Food, formatFoodTitle, macrosForGrams, pluralUnit, STARTER_FOODS } from '../lib/foodDb';
 import { parseMealText, resolveItem, ResolvedRow, rowGrams } from '../lib/mealText';
 import { useT } from '../lib/i18n';
+import { FoodIcon } from './FoodIcon';
 import { createMealLog } from '../lib/firestoreService';
 
 interface Props {
@@ -189,6 +190,7 @@ export const MealTextModal: React.FC<Props> = ({
               {computed.map(({ r, food, macros }) => (
                 <li key={r.key} className="py-2.5 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
+                    {food && <FoodIcon food={food.id} className="w-8 h-8" />}
                     <select
                       aria-label={t('Food')}
                       value={r.foodId ?? ''}

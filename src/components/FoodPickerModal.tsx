@@ -10,6 +10,7 @@ import {
   STARTER_FOODS,
 } from '../lib/foodDb';
 import { useT } from '../lib/i18n';
+import { FoodIcon } from './FoodIcon';
 import {
   createMealLog,
   deleteCustomFood,
@@ -212,8 +213,10 @@ export const FoodPickerModal: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={() => pick(f)}
-                      className="flex-1 min-w-0 text-left min-h-[44px] py-2 pr-2"
+                      className="flex-1 min-w-0 text-left min-h-[44px] py-2 pr-2 flex items-center gap-2.5"
                     >
+                      <FoodIcon food={f.id} className="w-8 h-8" />
+                      <span className="min-w-0">
                       <span className="block text-sm text-slate-100 truncate">
                         {f.name}
                         {f.custom && (
@@ -222,6 +225,7 @@ export const FoodPickerModal: React.FC<Props> = ({
                       </span>
                       <span className="block text-[11px] text-slate-400 font-mono tabular-nums">
                         {t('100g: {kcal} kcal · {p}P · {c}C · {f}F', { kcal: f.calories, p: f.proteinG, c: f.carbsG, f: f.fatG })}
+                      </span>
                       </span>
                     </button>
                     {f.custom && (
