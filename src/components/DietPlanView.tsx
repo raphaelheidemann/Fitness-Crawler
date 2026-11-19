@@ -4,6 +4,8 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
+  MoreHorizontal,
   Plus,
   Repeat,
   Search,
@@ -39,6 +41,7 @@ import {
 import { HydrationCard } from './HydrationCard';
 import { DietGeneratorModal } from './DietGeneratorModal';
 import { FoodPickerModal, FoodPickerTarget } from './FoodPickerModal';
+import { MealTextModal } from './MealTextModal';
 
 interface Props {
   uid: string;
@@ -70,10 +73,14 @@ export const DietPlanView: React.FC<Props> = ({
   const slotLabel = (label: string) =>
     label.startsWith('Meal ') ? t('Meal {n}', { n: label.slice(5) }) : t(label);
   const [selectedWeek, setSelectedWeek] = useState(profile.currentWeek);
-  const [selectedDay, setSelectedDay] = useState(0);
+  const [selectedDay, setSelectedDay] = useState((new Date().getDay() + 6) % 7); // today, Mon=0
   const [showGrocery, setShowGrocery] = useState(false);
   const [foodTarget, setFoodTarget] = useState<FoodPickerTarget | null>(null);
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [mealTextOpen, setMealTextOpen] = useState(false);
+  const [addMenuSlot, setAddMenuSlot] = useState<MealSlot | null>(null);
+  const todayIdx = (new Date().getDay() + 6) % 7;
   const [checkedGrocery, setCheckedGrocery] = useState<Record<string, boolean>>({});
 
   const mealsPerDay = profile.mealsPerDay ?? 6;
@@ -202,6 +209,50 @@ export const DietPlanView: React.FC<Props> = ({
     }
   };
 
+  const [copying, setCopying] = useState(false);
+  const [copyMsg, setCopyMsg] = useState<string | null>(null);
+
+  /** Copies every meal from another day onto the selected day (nothing is deleted). */
+  const handleCopyDay = async (source: 'yesterday' | 'lastWeek') => {
+    let week = selectedWeek;
+    let day = selectedDay;
+    if (source === 'yesterday') {
+      if (day === 0) {
+        week -= 1;
+        day = 6;
+      } else day -= 1;
+    } else week -= 1;
+    const src = mealLogs.filter((m) => m.weekNumber === week && m.dayIndex === day);
+    if (week < 1 || src.length === 0) {
+      setCopyMsg(t('Nothing to copy from that day.'));
+      return;
+    }
+    setCopying(true);
+    setCopyMsg(null);
+    try {
+      for (const m of src) {
+        await createMealLog(uid, {
+          weekNumber: selectedWeek,
+          dayIndex: selectedDay,
+          slot: m.slot,
+          title: m.title,
+          recipeId: m.recipeId,
+          servings: m.servings,
+          calories: m.calories,
+          proteinG: m.proteinG,
+          carbsG: m.carbsG,
+          fatG: m.fatG,
+          consumed: false,
+        });
+      }
+      setCopyMsg(t('Copied {n} items.', { n: src.length }));
+    } catch {
+      setCopyMsg(t('Something went wrong. Check your connection and try again.'));
+    } finally {
+      setCopying(false);
+    }
+  };
+
   const handleAddCustomMeal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customSlot) return;
@@ -266,7 +317,7 @@ export const DietPlanView: React.FC<Props> = ({
     <div className="space-y-5">
       <DietChefCorner crawler={crawler} fallbackStyle={profile.crawlerStyle} cheer={cheer} />
       {/* Header */}
-      <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+      <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
             <span>{t('Daily Rations & Macro Log (+25 XP/day)')}</span>
@@ -320,65 +371,96 @@ export const DietPlanView: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* Meals per day selector */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-[#2d3c54] rounded-lg bg-[#0e141d] min-h-[44px]">
-            <label htmlFor="meals-per-day" className="text-xs font-medium text-slate-400 whitespace-nowrap">
-              {t('Meals / day')}
-            </label>
-            <select
-              id="meals-per-day"
-              value={mealsPerDay}
-              onChange={(e) => void updateMealsPerDay(uid, Number(e.target.value))}
-              className="text-xs font-mono font-semibold text-white bg-transparent focus:outline-none tabular-nums"
-            >
-              {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                <option key={n} value={n} className="bg-[#0e141d] text-slate-100">
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <button
             type="button"
-            onClick={() => onOpenQuickFood(selectedWeek, selectedDay, 'on_the_spot')}
+            onClick={() => setMealTextOpen(true)}
             className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
-            {t('Log Food Eaten')}
+            {t('Add meal')}
           </button>
 
           <button
             type="button"
-            onClick={() => setGeneratorOpen(true)}
-            className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
-          >
-            <Wand2 className="w-3.5 h-3.5" />
-            {t('Basic Diet Plan')}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowGrocery((v) => !v)}
-            className={`min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
-              showGrocery
-                ? 'bg-amber-400 text-slate-950 border-amber-400 font-semibold'
-                : 'bg-[#1a2332] text-slate-200 border-[#2d3c54] hover:bg-[#233044]'
-            }`}
-          >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            {t('Grocery ({n})', { n: weeklyIngredients.length })}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onOpenCsvImport(selectedWeek, selectedDay)}
+            onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
             className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
           >
-            <Upload className="w-3.5 h-3.5" />
-            {t('CSV Templates & Import')}
+            <MoreHorizontal className="w-3.5 h-3.5" />
+            {t('More')}
           </button>
         </div>
+
+        {moreOpen && (
+          <div className="w-full flex flex-wrap items-center gap-2.5 pt-3 border-t border-[#1e293b]">
+            <button
+              type="button"
+              onClick={() => onOpenQuickFood(selectedWeek, selectedDay, 'on_the_spot')}
+              className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              {t('Log Food Eaten')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setGeneratorOpen(true)}
+              className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
+            >
+              <Wand2 className="w-3.5 h-3.5" />
+              {t('Basic Diet Plan')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowGrocery((v) => !v)}
+              className={`min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap ${
+                showGrocery
+                  ? 'bg-amber-400 text-slate-950 border-amber-400 font-semibold'
+                  : 'bg-[#1a2332] text-slate-200 border-[#2d3c54] hover:bg-[#233044]'
+              }`}
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              {t('Grocery ({n})', { n: weeklyIngredients.length })}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenCsvImport(selectedWeek, selectedDay)}
+              className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              {t('CSV Templates & Import')}
+            </button>
+            {(['yesterday', 'lastWeek'] as const).map((src) => (
+              <button
+                key={src}
+                type="button"
+                disabled={copying}
+                onClick={() => void handleCopyDay(src)}
+                className="min-h-[44px] inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                {src === 'yesterday' ? t('Copy yesterday here') : t('Copy same day last week')}
+              </button>
+            ))}
+            {copyMsg && <span className="text-xs text-amber-300">{copyMsg}</span>}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-[#2d3c54] rounded-lg bg-[#0e141d] min-h-[44px]">
+              <label htmlFor="meals-per-day" className="text-xs font-medium text-slate-400 whitespace-nowrap">
+                {t('Meals / day')}
+              </label>
+              <select
+                id="meals-per-day"
+                value={mealsPerDay}
+                onChange={(e) => void updateMealsPerDay(uid, Number(e.target.value))}
+                className="text-xs font-mono font-semibold text-white bg-transparent focus:outline-none tabular-nums"
+              >
+                {[3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                  <option key={n} value={n} className="bg-[#0e141d] text-slate-100">
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Day Tabs */}
@@ -402,6 +484,9 @@ export const DietPlanView: React.FC<Props> = ({
             >
               <p className={`text-xs font-semibold ${active ? 'text-amber-400' : 'text-white'}`}>
                 {short}
+                {idx === todayIdx && (
+                  <span className="ml-1.5 text-[10px] font-mono text-emerald-300">{t('today')}</span>
+                )}
               </p>
               <p className="text-[11px] tabular-nums mt-0.5 text-slate-400">
                 {t('{n} items · {kcal} kcal', { n: count, kcal })}
@@ -411,33 +496,57 @@ export const DietPlanView: React.FC<Props> = ({
         })}
       </div>
 
-      {/* Macro Summary Strip */}
+      {/* Macro Summary Strip: RPG stat bars, 10 blocks each, shows what is left */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {macroBars.map((bar) => {
-          const pct = Math.min(100, Math.round((bar.consumed / Math.max(1, bar.target)) * 100));
+          const ratio = bar.consumed / Math.max(1, bar.target);
+          const blocks = Math.min(10, Math.floor(ratio * 10));
+          const left = bar.target - bar.consumed;
+          const over = left < 0;
+          const rpg: Record<string, string> = {
+            Calories: 'HP · Rations',
+            Protein: 'STR · Protein',
+            Carbs: 'AGI · Carbs',
+            Fat: 'INT · Fat',
+          };
           return (
             <div key={bar.label} className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-4">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-medium text-slate-300">{t(bar.label)}</span>
-                <span className="text-slate-400 tabular-nums hidden sm:inline">
+              <p className="font-pixel text-[10px] text-amber-400 mb-1.5">{t(rpg[bar.label] ?? bar.label)}</p>
+              <p className="text-base sm:text-lg font-bold text-white font-mono tabular-nums">
+                {bar.consumed.toLocaleString()}
+                <span className="text-xs font-normal text-slate-400 ml-1">
+                  / {bar.target.toLocaleString()} {bar.unit}
+                </span>
+              </p>
+              <div
+                className="flex gap-0.5 my-2"
+                role="progressbar"
+                aria-label={t(bar.label)}
+                aria-valuemin={0}
+                aria-valuemax={bar.target}
+                aria-valuenow={bar.consumed}
+              >
+                {Array.from({ length: 10 }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`h-2.5 flex-1 ${
+                      i < blocks ? (over ? 'bg-rose-400' : bar.barColor) : 'bg-[#0a0f16]'
+                    }`}
+                  />
+                ))}
+              </div>
+              <p
+                className={`text-xs font-mono tabular-nums ${over ? 'text-rose-300' : 'text-slate-300'}`}
+              >
+                {over
+                  ? t('{n} {unit} over', { n: Math.abs(left).toLocaleString(), unit: bar.unit })
+                  : t('{n} {unit} left', { n: left.toLocaleString(), unit: bar.unit })}
+              </p>
+              {bar.planned > bar.consumed && (
+                <p className="text-[11px] text-slate-400 tabular-nums">
                   {t('Planned: {n} {unit}', { n: bar.planned.toLocaleString(), unit: bar.unit })}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between mb-2">
-                <span className="text-base sm:text-lg font-bold text-white font-mono tabular-nums">
-                  {bar.consumed.toLocaleString()}
-                  <span className="text-xs font-normal text-slate-400 ml-1">
-                    / {bar.target.toLocaleString()} {bar.unit}
-                  </span>
-                </span>
-                <span className="text-xs font-mono font-medium text-slate-300 tabular-nums">{pct}%</span>
-              </div>
-              <div className="h-1.5 w-full bg-[#0a0f16] rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${bar.barColor} transition-all duration-200`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
+                </p>
+              )}
             </div>
           );
         })}
@@ -456,6 +565,22 @@ export const DietPlanView: React.FC<Props> = ({
       {/* Main Split: Meal Slots + Optional Weekly Grocery Drawer */}
       <div className={`grid grid-cols-1 ${showGrocery ? 'lg:grid-cols-12' : ''} gap-6`}>
         <div className={`${showGrocery ? 'lg:col-span-8' : ''} space-y-4`}>
+          {weekMeals.length === 0 && (
+            <div className="bg-[#131a24] border-2 border-amber-400/50 rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-white">{t('Start here')}</h2>
+              <p className="text-xs text-slate-300 mt-1">
+                {t('Your week is empty. Let the app build a plan from your goal, or add foods meal by meal below.')}
+              </p>
+              <button
+                type="button"
+                onClick={() => setGeneratorOpen(true)}
+                className="mt-3 min-h-[44px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors"
+              >
+                <Wand2 className="w-3.5 h-3.5" />
+                {t('Basic Diet Plan')}
+              </button>
+            </div>
+          )}
           {dailySlots.map(({ key, label }) => {
             const slotMeals = dayMeals.filter(
               (m) => normalizeSlotToBucket(m.slot, mealsPerDay) === key
@@ -485,35 +610,36 @@ export const DietPlanView: React.FC<Props> = ({
                         {t('Log On-the-Spot Food')}
                       </button>
                     ) : (
-                      <>
+                      <div className="relative">
                         <button
                           type="button"
-                          onClick={() => {
-                            setRecipePickerSlot(key);
-                            setSelectedServings(1);
-                          }}
-                          className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors whitespace-nowrap"
-                        >
-                          <BookOpen className="w-3.5 h-3.5" />
-                          {t('Add Recipe')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFoodTarget({ kind: 'add', slot: key })}
-                          className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
-                        >
-                          <Search className="w-3.5 h-3.5" />
-                          {t('Food DB')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setCustomSlot(key)}
-                          className="min-h-[40px] inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+                          onClick={() => setAddMenuSlot(addMenuSlot === key ? null : key)}
+                          aria-expanded={addMenuSlot === key}
+                          className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors whitespace-nowrap"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          {t('Quick Food')}
+                          {t('Add food')}
                         </button>
-                      </>
+                        {addMenuSlot === key && (
+                          <div className="absolute right-0 z-20 mt-1 w-52 bg-[#0e141d] border border-[#33445e] rounded-lg shadow-xl overflow-hidden">
+                            {[
+                              { icon: BookOpen, label: 'Add Recipe', run: () => { setRecipePickerSlot(key); setSelectedServings(1); } },
+                              { icon: Search, label: 'Food DB', run: () => setFoodTarget({ kind: 'add', slot: key }) },
+                              { icon: Plus, label: 'Quick Food', run: () => setCustomSlot(key) },
+                            ].map(({ icon: Icon, label: l, run }) => (
+                              <button
+                                key={l}
+                                type="button"
+                                onClick={() => { setAddMenuSlot(null); run(); }}
+                                className="w-full min-h-[44px] flex items-center gap-2 px-3 text-left text-xs text-slate-200 hover:bg-[#1a2434]"
+                              >
+                                <Icon className="w-3.5 h-3.5 text-slate-400" />
+                                {t(l)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -803,6 +929,17 @@ export const DietPlanView: React.FC<Props> = ({
         </div>
       )}
 
+      <MealTextModal
+        open={mealTextOpen}
+        onClose={() => setMealTextOpen(false)}
+        uid={uid}
+        week={selectedWeek}
+        day={selectedDay}
+        slots={dailySlots}
+        slotLabel={slotLabel}
+        customFoods={customFoods}
+        mealLogs={mealLogs}
+      />
       <FoodPickerModal
         target={foodTarget}
         onClose={() => setFoodTarget(null)}
