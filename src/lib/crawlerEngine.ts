@@ -1,7 +1,6 @@
 import {
   BannerTheme,
   CrawlerRewardEvent,
-  CrawlerStyle,
   CrawlerState,
   GearSlot,
   Habit,

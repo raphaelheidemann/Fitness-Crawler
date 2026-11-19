@@ -18,8 +18,6 @@ export interface CrawlerLook {
   skin: number;
   build: number;
   height: number;
-  /** true = draw the customizable pixel avatar instead of the tier portrait art */
-  useAvatar: boolean;
 }
 
 export const DEFAULT_LOOK: CrawlerLook = {
@@ -30,12 +28,11 @@ export const DEFAULT_LOOK: CrawlerLook = {
   skin: 1,
   build: 1,
   height: 1,
-  useAvatar: false,
 };
 
 const STYLE_CODE: Record<CrawlerStyle, string> = { masculine: 'm', feminine: 'f', neutral: 'n' };
 
-/** Stored as one short string ("f.2.3.1.2.1.1.0") so it fits a single Firestore field. */
+/** Stored as one short string ("f.2.3.1.2.1.1") so it fits a single Firestore field. */
 export function parseLook(raw: string | undefined, fallbackStyle: CrawlerStyle = 'neutral'): CrawlerLook {
   const base: CrawlerLook = {
     ...DEFAULT_LOOK,
@@ -44,7 +41,7 @@ export function parseLook(raw: string | undefined, fallbackStyle: CrawlerStyle =
   };
   if (!raw) return base;
   const p = raw.split('.');
-  if (p.length < 8) return base;
+  if (p.length < 7) return base;
   const num = (i: number, max: number, def: number) => {
     const v = parseInt(p[i], 10);
     return Number.isInteger(v) && v >= 0 && v < max ? v : def;
@@ -57,7 +54,6 @@ export function parseLook(raw: string | undefined, fallbackStyle: CrawlerStyle =
     skin: num(4, SKIN_TONES.length, 1),
     build: num(5, 3, 1),
     height: num(6, 3, 1),
-    useAvatar: p[7] === '1',
   };
 }
 
@@ -70,7 +66,6 @@ export function encodeLook(l: CrawlerLook): string {
     l.skin,
     l.build,
     l.height,
-    l.useAvatar ? 1 : 0,
   ].join('.');
 }
 

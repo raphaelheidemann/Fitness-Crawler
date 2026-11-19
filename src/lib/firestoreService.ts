@@ -144,6 +144,7 @@ export async function upsertWorkoutDay(
         exercises: cleanExercises,
         cardio: cleanCardio,
         notes: sanitizeString(workout.notes, SCHEMA_LIMITS.NOTES_MAX, ''),
+        ...(workout.durationSec ? { durationSec: clampInt(workout.durationSec, 0, 86400, 0) } : {}),
         updatedAt: serverTimestamp(),
       });
     } else {
@@ -159,6 +160,7 @@ export async function upsertWorkoutDay(
         exercises: cleanExercises,
         cardio: cleanCardio,
         notes: sanitizeString(workout.notes, SCHEMA_LIMITS.NOTES_MAX, ''),
+        ...(workout.durationSec ? { durationSec: clampInt(workout.durationSec, 0, 86400, 0) } : {}),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });

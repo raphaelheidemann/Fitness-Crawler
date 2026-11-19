@@ -1247,4 +1247,11 @@ export const PT: Record<string, string> = {
   'Muscular': 'Musculoso',
   'Tall': 'Alto',
   'Could not create your workspace. Try again.': 'Não foi possível criar seu espaço. Tente de novo.',
+  'Customize your crawler. The sprite that best matches your choices is shown.': 'Personalize seu crawler. Mostramos o sprite que melhor combina com suas escolhas.',
+  'Workout in progress · {day}': 'Treino em andamento · {day}',
+  'Start Workout': 'Iniciar treino',
+  'Finish Workout': 'Finalizar treino',
+  'Go to workout': 'Ir para o treino',
+  'Workout finished in {time}': 'Treino finalizado em {time}',
+  'Duration: {time}': 'Duração: {time}',
 };

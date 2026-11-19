@@ -104,7 +104,7 @@ service cloud.firestore {
       ])
       && data.keys().hasOnly([
         'ownerId', 'weekNumber', 'dayIndex', 'focus', 'planId', 'planName',
-        'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'createdAt', 'updatedAt'
+        'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'durationSec', 'createdAt', 'updatedAt'
       ])
       && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
       && data.weekNumber is int && data.weekNumber >= 1 && data.weekNumber <= 52
@@ -118,6 +118,7 @@ service cloud.firestore {
       && (data.exercises.size() == 0 || data.exercises[0] is map)
       && data.notes is string && data.notes.size() <= 500
       && (!('cardio' in data) || isValidCardioMap(data.cardio))
+      && (!('durationSec' in data) || (data.durationSec is int && data.durationSec >= 0 && data.durationSec <= 86400))
       && data.createdAt is timestamp
       && data.updatedAt is timestamp;
     }
@@ -513,6 +514,7 @@ service cloud.firestore {
             || incoming().diff(existing()).affectedKeys().hasOnly(['focus', 'isRestDay', 'completed', 'exercises', 'notes', 'updatedAt'])
             || incoming().diff(existing()).affectedKeys().hasOnly(['focus', 'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'updatedAt'])
             || incoming().diff(existing()).affectedKeys().hasOnly(['focus', 'planId', 'planName', 'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['focus', 'planId', 'planName', 'isRestDay', 'completed', 'exercises', 'notes', 'cardio', 'durationSec', 'updatedAt'])
           );
         allow delete: if isEmailVerified()
           && isValidId(userId)
