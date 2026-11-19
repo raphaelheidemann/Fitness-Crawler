@@ -1,7 +1,6 @@
 import {
   BannerTheme,
   CrawlerRewardEvent,
-  CrawlerStyle,
   CrawlerState,
   GearSlot,
   Habit,
@@ -27,17 +26,6 @@ export const CRAWLER_SPRITES: Record<1 | 2 | 3 | 4, string> = {
   3: '/src/assets/images/crawler_tier_3_hunter_1795014604794.jpg',
   4: '/src/assets/images/crawler_tier_4_warden_1795014580315.jpg',
 };
-
-// Only one art set exists today. To add feminine/neutral art, put the images in
-// src/assets/images and point those two entries at them.
-export const CRAWLER_SPRITES_BY_STYLE: Record<CrawlerStyle, Record<1 | 2 | 3 | 4, string>> = {
-  masculine: CRAWLER_SPRITES,
-  feminine: CRAWLER_SPRITES,
-  neutral: CRAWLER_SPRITES,
-};
-
-export const crawlerSprite = (tier: number, style: CrawlerStyle = 'neutral'): string | undefined =>
-  (CRAWLER_SPRITES_BY_STYLE[style] as Record<number, string>)[tier];
 
 export const CRAWLER_CLASS_PRESETS = [
   'Primal Brawler',

@@ -87,19 +87,9 @@ export const AppearanceEditor: React.FC<Props> = ({ look, onChange }) => {
       <div>
         <h3 className="text-sm font-semibold text-white">{t('Appearance')}</h3>
         <p className="text-xs text-slate-400 mt-0.5">
-          {t('Customize your crawler. Turn on the custom pixel avatar to see these changes.')}
+          {t('Customize your crawler. The sprite that best matches your choices is shown.')}
         </p>
       </div>
-
-      <label className="flex items-center gap-3 text-xs text-slate-200 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={look.useAvatar}
-          onChange={(e) => set({ useAvatar: e.target.checked })}
-          className="h-4 w-4 rounded border-[#33445e] bg-[#0d121a] text-amber-400 focus:ring-amber-400"
-        />
-        {t('Use custom pixel avatar (instead of portrait art)')}
-      </label>
 
       <div>
         <p className="text-xs font-medium text-slate-300 mb-1.5">{t('Crawler character')}</p>
