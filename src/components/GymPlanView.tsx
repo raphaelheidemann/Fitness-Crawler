@@ -54,6 +54,7 @@ import { RpePicker } from './RpePicker';
 import { RestTimerBar, playRestCompleteChime } from './RestTimerBar';
 import { WorkoutPlanModal } from './WorkoutPlanModal';
 import { WorkoutTemplatesModal } from './WorkoutTemplatesModal';
+import { WorkoutTextModal } from './WorkoutTextModal';
 import { useT } from '../lib/i18n';
 
 interface DayDraft {
@@ -183,6 +184,7 @@ export const GymPlanView: React.FC<Props> = ({
   const [selectedWeek, setSelectedWeek] = useState<number>(profile.currentWeek);
   const [selectedDay, setSelectedDay] = useState<number>((new Date().getDay() + 6) % 7); // today, Mon=0
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [textModal, setTextModal] = useState<'export' | 'import' | null>(null);
 
   const wUnit = weightUnit(profile.unitSystem);
   const dUnit = distanceUnit(profile.unitSystem);
@@ -882,6 +884,14 @@ export const GymPlanView: React.FC<Props> = ({
             <Layers className="w-3.5 h-3.5" />
             {t('Ready-made Workouts')}
           </button>
+          <button
+            type="button"
+            onClick={() => setTextModal('import')}
+            className="min-h-[40px] inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            {t('Import from text')}
+          </button>
           {subTab === 'plans' && (
             <button
               type="button"
@@ -1279,6 +1289,16 @@ export const GymPlanView: React.FC<Props> = ({
                       {t('Go to workout')}
                     </button>
                   ))}
+                {!isRestDay && exercises.some((ex) => ex.name.trim()) && (
+                  <button
+                    type="button"
+                    onClick={() => setTextModal('export')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:bg-[#233044] rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    {t('Export as text')}
+                  </button>
+                )}
                 {existingDayDoc && (
                   <button
                     type="button"
@@ -1771,6 +1791,26 @@ export const GymPlanView: React.FC<Props> = ({
                 ? 'Added {n} plan from "{name}". Open a day and pick one from the list.'
                 : 'Added {n} plans from "{name}". Open a day and pick one from the list.',
               { n: count, name }
+            )
+          );
+          setSubTab('plans');
+        }}
+      />
+
+      <WorkoutTextModal
+        mode={textModal}
+        onClose={() => setTextModal(null)}
+        uid={uid}
+        workoutName={focus}
+        exercises={exercises}
+        unit={wUnit}
+        onImported={(count) => {
+          setSaveFeedback(
+            t(
+              count === 1
+                ? 'Imported {n} workout. Open a day and pick it from the list.'
+                : 'Imported {n} workouts. Open a day and pick one from the list.',
+              { n: count }
             )
           );
           setSubTab('plans');
