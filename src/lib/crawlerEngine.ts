@@ -697,6 +697,30 @@ function daysBetweenIso(earlierIso: string, laterIso: string): number {
   return Math.round((dt2.getTime() - dt1.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+/** Crit is decided by the action key, so the same action always pays the same XP (no re-roll by unchecking). */
+export function isCritKey(key: string): boolean {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return h % 100 < 16;
+}
+
+/** Takes back the XP of actions that are no longer done (unchecked habit, meal, workout...). */
+export function revokeRewardedActions(
+  state: CrawlerState,
+  revoked: { key: string; baseXp: number }[]
+): Omit<CrawlerState, 'createdAt' | 'updatedAt'> {
+  const keys = new Set(revoked.map((r) => r.key));
+  const lost = revoked.reduce((n, r) => n + (isCritKey(r.key) ? r.baseXp * 2 : r.baseXp), 0);
+  const xp = Math.max(0, state.xp - lost);
+  const { createdAt: _c, updatedAt: _u, ...rest } = state;
+  return {
+    ...rest,
+    xp,
+    level: getLevelInfo(xp, state.weeklyClears).current.level,
+    rewardedActionKeys: state.rewardedActionKeys.filter((k) => !keys.has(k)),
+  };
+}
+
 export function applyCrawlerProgressionUpdate(params: {
   state: CrawlerState;
   actionKey: string;
@@ -733,7 +757,7 @@ export function applyCrawlerProgressionUpdate(params: {
   let xpDelta = 0;
   let isCrit = false;
   if (!alreadyRewarded && baseXp > 0) {
-    isCrit = allowCrit && Math.random() < 0.16;
+    isCrit = allowCrit && isCritKey(actionKey);
     xpDelta = isCrit ? Math.round(baseXp * 2) : baseXp;
     rewardedSet.add(actionKey);
   }

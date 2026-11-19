@@ -50,6 +50,7 @@ import {
 import { initializeUserWorkspace } from './lib/seedData';
 import {
   applyCrawlerProgressionUpdate,
+  revokeRewardedActions,
   BOSS_MANTIS_IMG,
   buildDefaultCrawlerState,
   computeWeeklyChallengeProgress,
@@ -140,6 +141,8 @@ function WorkspaceShell() {
   const [rewardToast, setRewardToast] = useState<CrawlerRewardEvent | null>(null);
 
   const knownActionKeysRef = useRef<Set<string> | null>(null);
+  /** action keys seen as done at some point this session (only these can be taken back) */
+  const seenActionKeysRef = useRef<Set<string>>(new Set());
   const bootstrappingCrawlerRef = useRef(false);
   const lastSocialSyncSigRef = useRef<string | null>(null);
 
@@ -170,6 +173,7 @@ function WorkspaceShell() {
       setUser(firebaseUser);
       setAuthReady(true);
       knownActionKeysRef.current = null;
+      seenActionKeysRef.current = new Set();
       bootstrappingCrawlerRef.current = false;
       lastSocialSyncSigRef.current = null;
       if (!firebaseUser) {
@@ -440,9 +444,13 @@ function WorkspaceShell() {
 
     const activeHabitIds = new Set(habits.map((h) => h.id));
     const currentSignals = new Map<string, { xp: number; reason: string; sfx: 'xp' | 'habit' }>();
+    // every action whose source still exists (even when not done): can be taken back on uncheck
+    const candidates = new Map<string, number>();
 
     let totalCompletedWorkouts = 0;
     workouts.forEach((w) => {
+      candidates.set(`wo_${w.id}`, 50);
+      candidates.set(`cardio_${w.id}`, 35);
       if (!w.isRestDay && w.completed) {
         totalCompletedWorkouts += 1;
         currentSignals.set(`wo_${w.id}`, {
@@ -463,8 +471,9 @@ function WorkspaceShell() {
     const mealCountsByDay = new Map<string, number>();
     const mealDaysByWeek = new Map<number, Set<number>>();
     mealLogs.forEach((m) => {
-      if (!m.consumed) return;
       const dayKey = `w${m.weekNumber}_d${m.dayIndex}`;
+      candidates.set(`meal_${dayKey}`, 25);
+      if (!m.consumed) return;
       mealCountsByDay.set(dayKey, (mealCountsByDay.get(dayKey) ?? 0) + 1);
       const set = mealDaysByWeek.get(m.weekNumber) ?? new Set<number>();
       set.add(m.dayIndex);
@@ -483,6 +492,7 @@ function WorkspaceShell() {
 
     const hydrationHitDays = new Set<string>();
     hydrationLogs.forEach((h) => {
+      candidates.set(`hyd_w${h.weekNumber}_d${h.dayIndex}`, 20);
       if (h.amountMl >= Math.max(500, h.goalMl * 0.85)) {
         const dayKey = `w${h.weekNumber}_d${h.dayIndex}`;
         hydrationHitDays.add(dayKey);
@@ -497,6 +507,8 @@ function WorkspaceShell() {
     habitLogs.forEach((log) => {
       const dateStr = log.date || log.id;
       const validCompleted = log.completedHabitIds.filter((id) => activeHabitIds.has(id));
+      activeHabitIds.forEach((hid) => candidates.set(`hab_${dateStr}_${hid}`, 10));
+      candidates.set(`habsweep_${dateStr}`, 25);
       validCompleted.forEach((hid) => {
         const hab = habits.find((h) => h.id === hid);
         currentSignals.set(`hab_${dateStr}_${hid}`, {
@@ -583,11 +595,32 @@ function WorkspaceShell() {
       knownActionKeysRef.current!.add(key);
     });
 
+    // Actions seen as done earlier this session that are no longer done: take the XP back
+    currentSignals.forEach((_sig, key) => seenActionKeysRef.current.add(key));
+    const revoked: { key: string; baseXp: number }[] = [];
+    candidates.forEach((baseXp, key) => {
+      if (rewardedSet.has(key) && seenActionKeysRef.current.has(key) && !currentSignals.has(key)) {
+        revoked.push({ key, baseXp });
+      }
+    });
+
     const bossNeedsClear =
       weeklySummary.isBossSlain &&
       !crawlerDoc.clearedWeekKeys.includes(`w${profile.currentWeek}`);
 
-    if (newlyTriggered.length === 0 && !bossNeedsClear) {
+    if (newlyTriggered.length === 0 && !bossNeedsClear && revoked.length === 0) {
+      return;
+    }
+
+    if (revoked.length > 0 && newlyTriggered.length === 0 && !bossNeedsClear) {
+      revoked.forEach(({ key }) => {
+        knownActionKeysRef.current!.delete(key);
+        seenActionKeysRef.current.delete(key);
+      });
+      const revokedState = revokeRewardedActions(crawlerDoc, revoked);
+      void saveCrawlerState(user.uid, { ...crawlerDoc, ...revokedState }, true, profile.displayName).then(() =>
+        syncSocialCrawlerProfile(user.uid, { ...crawlerDoc, ...revokedState }, profile.displayName)
+      );
       return;
     }
 
