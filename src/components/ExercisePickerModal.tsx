@@ -9,7 +9,8 @@ import {
   Timer,
   X,
 } from 'lucide-react';
-import { useT } from '../lib/i18n';
+import { useI18n, useT } from '../lib/i18n';
+import { exerciseNamePt } from '../lib/exerciseNamesPt';
 import { ExerciseCatalogItem } from '../types';
 
 interface ExerciseCatalogResponse {
@@ -104,6 +105,8 @@ export const ExercisePickerModal: React.FC<Props> = ({
   onSelectExercise,
 }) => {
   const t = useT();
+  const { lang } = useI18n();
+  const nm = (name: string) => (lang === 'pt' ? exerciseNamePt(name) : name);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [muscles, setMuscles] = useState<string[]>([]);
@@ -156,12 +159,13 @@ export const ExercisePickerModal: React.FC<Props> = ({
       if (!q) return true;
       return (
         ex.name.toLowerCase().includes(q) ||
+        nm(ex.name).toLowerCase().includes(q) ||
         ex.muscleGroup.toLowerCase().includes(q) ||
         ex.equipment.toLowerCase().includes(q) ||
         ex.category.toLowerCase().includes(q)
       );
     });
-  }, [allExercises, selectedMuscle, query]);
+  }, [allExercises, selectedMuscle, query, lang]);
 
   const visibleExercises = useMemo(
     () => filteredExercises.slice(0, visibleLimit),
@@ -171,7 +175,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const handleChoose = (ex: ExerciseCatalogItem) => {
-    onSelectExercise(ex, defaultRest);
+    onSelectExercise({ ...ex, name: nm(ex.name) }, defaultRest);
     if (mode === 'add') {
       setAddedIds((prev) => ({ ...prev, [ex.id]: true }));
     } else {
@@ -232,7 +236,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                   {t(formatMuscleLabel(detailItem.muscleGroup))} ·{' '}
                   {t(formatMuscleLabel(detailItem.equipment))} · {t(formatMuscleLabel(detailItem.level))}
                 </p>
-                <h3 className="text-xl font-bold text-white mt-1">{detailItem.name}</h3>
+                <h3 className="text-xl font-bold text-white mt-1">{nm(detailItem.name)}</h3>
                 {detailItem.secondaryMuscles.length > 0 && (
                   <p className="text-xs text-slate-400 mt-1">
                     {t('Secondary')}: {detailItem.secondaryMuscles.map((m) => t(formatMuscleLabel(m))).join(', ')}
@@ -268,7 +272,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                   >
                     <CatalogImage
                       src={imgUrl}
-                      alt={t('{name} position {n}', { name: detailItem.name, n: idx + 1 })}
+                      alt={t('{name} position {n}', { name: nm(detailItem.name), n: idx + 1 })}
                       className="w-full aspect-[4/3]"
                     />
                     <div className="px-3 py-2 text-xs font-medium text-slate-300 border-t border-[#253247] bg-[#0f151e]">
@@ -435,7 +439,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                           >
                             <CatalogImage
                               src={ex.images[0]}
-                              alt={ex.name}
+                              alt={nm(ex.name)}
                               className="w-full aspect-[4/3] group-hover:scale-[1.02] transition-transform duration-200"
                             />
                             <span className="absolute bottom-2 right-2 px-2 py-1 text-[11px] font-medium bg-[#090d12]/85 text-white border border-[#33445e] rounded-md inline-flex items-center gap-1">
@@ -447,7 +451,7 @@ export const ExercisePickerModal: React.FC<Props> = ({
                           <div className="p-3.5 flex-1 flex flex-col justify-between gap-3">
                             <div>
                               <h3 className="text-sm font-semibold text-white leading-snug">
-                                {ex.name}
+                                {nm(ex.name)}
                               </h3>
                               <p className="text-xs text-slate-400 mt-1">
                                 {t(formatMuscleLabel(ex.muscleGroup))}

@@ -56,6 +56,22 @@ import { WorkoutPlanModal } from './WorkoutPlanModal';
 import { WorkoutTemplatesModal } from './WorkoutTemplatesModal';
 import { useT } from '../lib/i18n';
 
+interface DayDraft {
+  focus: string;
+  notes: string;
+  isRestDay: boolean;
+  exercises: ExerciseItem[];
+  cardio: CardioLog;
+}
+
+function fmtElapsed(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
 interface ExerciseThumbProps {
   src?: string;
   alt: string;
@@ -165,7 +181,7 @@ export const GymPlanView: React.FC<Props> = ({
   const t = useT();
   const [subTab, setSubTab] = useState<'schedule' | 'plans'>('schedule');
   const [selectedWeek, setSelectedWeek] = useState<number>(profile.currentWeek);
-  const [selectedDay, setSelectedDay] = useState<number>(0);
+  const [selectedDay, setSelectedDay] = useState<number>((new Date().getDay() + 6) % 7); // today, Mon=0
   const [templatesOpen, setTemplatesOpen] = useState(false);
 
   const wUnit = weightUnit(profile.unitSystem);
@@ -283,29 +299,115 @@ export const GymPlanView: React.FC<Props> = ({
     setTimerRunning(true);
   };
 
+  // Unsaved edits live in localStorage so a locked phone, app switch or reload keeps the workout.
+  const dayKey = `${uid}_${selectedWeek}_${selectedDay}`;
+  const draftKey = `fc_gym_draft_${dayKey}`;
+  const [hydratedKey, setHydratedKey] = useState('');
+  const baselineRef = useRef('');
+  const draftBaseRef = useRef(0);
+
   useEffect(() => {
-    if (existingDayDoc) {
-      setFocus(existingDayDoc.focus);
-      setPlanId(existingDayDoc.planId ?? '');
-      setPlanName(existingDayDoc.planName ?? '');
-      setIsRestDay(existingDayDoc.isRestDay);
-      setCompleted(existingDayDoc.completed);
-      setNotes(existingDayDoc.notes);
-      setExercises(existingDayDoc.exercises.map((ex) => ({ ...ex })));
-      setCardio(sanitizeCardio(existingDayDoc.cardio));
-    } else {
-      setFocus(selectedDay === 2 || selectedDay === 6 ? 'Active Recovery' : 'Training Session');
-      setPlanId('');
-      setPlanName('');
-      setIsRestDay(selectedDay === 2 || selectedDay === 6);
-      setCompleted(false);
-      setNotes('');
-      setExercises([]);
-      setCardio(defaultCardio());
+    const restDefault = selectedDay === 2 || selectedDay === 6;
+    const docState: DayDraft = existingDayDoc
+      ? {
+          focus: existingDayDoc.focus,
+          notes: existingDayDoc.notes,
+          isRestDay: existingDayDoc.isRestDay,
+          exercises: existingDayDoc.exercises.map((ex) => ({ ...ex })),
+          cardio: sanitizeCardio(existingDayDoc.cardio),
+        }
+      : {
+          focus: restDefault ? 'Active Recovery' : 'Training Session',
+          notes: '',
+          isRestDay: restDefault,
+          exercises: [],
+          cardio: defaultCardio(),
+        };
+    const base =
+      (existingDayDoc?.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.() ?? 0;
+    baselineRef.current = JSON.stringify(docState);
+    draftBaseRef.current = base;
+
+    let shown = docState;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const d = JSON.parse(raw) as { base: number; state: DayDraft };
+        // a draft only counts while the saved day is unchanged since it was started
+        if (d.base === base) shown = d.state;
+        else localStorage.removeItem(draftKey);
+      }
+    } catch {
+      // storage blocked: fall back to the saved day
     }
+
+    setFocus(shown.focus);
+    setNotes(shown.notes);
+    setIsRestDay(shown.isRestDay);
+    setExercises(shown.exercises);
+    setCardio(shown.cardio);
+    setPlanId(existingDayDoc?.planId ?? '');
+    setPlanName(existingDayDoc?.planName ?? '');
+    setCompleted(existingDayDoc?.completed ?? false);
     setSaveFeedback(null);
     setPreviewExerciseIdx(null);
+    setHydratedKey(dayKey);
   }, [existingDayDoc, selectedDay, selectedWeek]);
+
+  useEffect(() => {
+    if (hydratedKey !== dayKey) return; // state still belongs to another day
+    const snap = JSON.stringify({ focus, notes, isRestDay, exercises, cardio });
+    try {
+      if (snap === baselineRef.current) {
+        localStorage.removeItem(draftKey);
+      } else {
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify({
+            base: draftBaseRef.current,
+            state: { focus, notes, isRestDay, exercises, cardio },
+          })
+        );
+      }
+    } catch {
+      // storage full or blocked: nothing to do
+    }
+  }, [hydratedKey, dayKey, draftKey, focus, notes, isRestDay, exercises, cardio]);
+
+  // Workout timer: survives locking the phone because it is a start timestamp, not a counter.
+  const sessionKey = `fc_gym_session_${uid}`;
+  const [session, setSession] = useState<{ week: number; day: number; startedAt: number } | null>(
+    () => {
+      try {
+        const raw = localStorage.getItem(sessionKey);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+  );
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!session) return;
+    const tick = () => setNow(Date.now());
+    const id = window.setInterval(tick, 1000);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, [session]);
+
+  const updateSession = (next: typeof session) => {
+    setSession(next);
+    try {
+      if (next) localStorage.setItem(sessionKey, JSON.stringify(next));
+      else localStorage.removeItem(sessionKey);
+    } catch {
+      // timer still works for this visit
+    }
+  };
 
   // Most recent earlier session's finished sets, keyed by exercise name
   const previousByName = useMemo(() => {
@@ -566,29 +668,48 @@ export const GymPlanView: React.FC<Props> = ({
     setSaveFeedback(t('Duplicated plan "{name}"', { name: plan.name }));
   };
 
+  const persistDay = (over: { completed?: boolean; durationSec?: number } = {}) =>
+    upsertWorkoutDay(
+      uid,
+      {
+        id: existingDayDoc?.id ?? `w${selectedWeek}_d${selectedDay}`,
+        weekNumber: selectedWeek,
+        dayIndex: selectedDay,
+        focus: focus || 'Training Session',
+        planId,
+        planName,
+        isRestDay,
+        completed,
+        exercises: isRestDay ? [] : exercises,
+        cardio: sanitizeCardio(cardio),
+        notes,
+        ...over,
+      },
+      Boolean(existingDayDoc)
+    );
+
   const handleSaveDay = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setSaveFeedback(null);
     try {
-      await upsertWorkoutDay(
-        uid,
-        {
-          id: existingDayDoc?.id ?? `w${selectedWeek}_d${selectedDay}`,
-          weekNumber: selectedWeek,
-          dayIndex: selectedDay,
-          focus: focus || 'Training Session',
-          planId,
-          planName,
-          isRestDay,
-          completed,
-          exercises: isRestDay ? [] : exercises,
-          cardio: sanitizeCardio(cardio),
-          notes,
-        },
-        Boolean(existingDayDoc)
-      );
+      await persistDay();
       setSaveFeedback(t('Day plan saved'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFinishWorkout = async () => {
+    if (!session) return;
+    setSaving(true);
+    setSaveFeedback(null);
+    try {
+      const durationSec = Math.max(1, Math.round((Date.now() - session.startedAt) / 1000));
+      await persistDay({ completed: true, durationSec });
+      setCompleted(true);
+      updateSession(null);
+      setSaveFeedback(t('Workout finished in {time}', { time: fmtElapsed(durationSec) }));
     } finally {
       setSaving(false);
     }
@@ -1012,6 +1133,21 @@ export const GymPlanView: React.FC<Props> = ({
             onSubmit={handleSaveDay}
             className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-4 sm:p-6 space-y-6"
           >
+            {session && (
+              <div
+                role="status"
+                className="sticky top-2 z-20 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/50 bg-[#0b2a22] px-4 py-2.5 shadow-lg"
+              >
+                <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-200">
+                  <Timer className="w-4 h-4" />
+                  {t('Workout in progress · {day}', { day: t(DAY_FULL[session.day]) })}
+                </span>
+                <span className="font-mono text-lg font-bold tabular-nums text-white">
+                  {fmtElapsed((now - session.startedAt) / 1000)}
+                </span>
+              </div>
+            )}
+
             {/* Assign Plan Bar */}
             <div className="p-3.5 bg-[#0e141d] border border-[#263347] rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2.5 min-w-0">
@@ -1084,6 +1220,9 @@ export const GymPlanView: React.FC<Props> = ({
               <div>
                 <p className="text-xs font-medium text-slate-400">
                   {t('Week {n}', { n: selectedWeek })} · {t(DAY_FULL[selectedDay])}
+                  {existingDayDoc?.durationSec
+                    ? ` · ${t('Duration: {time}', { time: fmtElapsed(existingDayDoc.durationSec) })}`
+                    : ''}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <input
@@ -1108,6 +1247,38 @@ export const GymPlanView: React.FC<Props> = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                {!isRestDay &&
+                  (!session ? (
+                    <button
+                      type="button"
+                      onClick={() => updateSession({ week: selectedWeek, day: selectedDay, startedAt: Date.now() })}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                      {t('Start Workout')}
+                    </button>
+                  ) : session.week === selectedWeek && session.day === selectedDay ? (
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => void handleFinishWorkout()}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      {t('Finish Workout')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedWeek(session.week);
+                        setSelectedDay(session.day);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      {t('Go to workout')}
+                    </button>
+                  ))}
                 {existingDayDoc && (
                   <button
                     type="button"

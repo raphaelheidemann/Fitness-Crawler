@@ -111,6 +111,7 @@ export interface WorkoutDay {
   exercises: ExerciseItem[];
   cardio?: CardioLog;
   notes: string;
+  durationSec?: number; // gym session length from Start/Finish workout
   createdAt?: unknown;
   updatedAt?: unknown;
 }
