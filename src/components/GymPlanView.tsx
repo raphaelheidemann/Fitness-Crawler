@@ -395,6 +395,18 @@ export const GymPlanView: React.FC<Props> = ({
       }
     }
   );
+
+  // Date/time printed in the text export: session start when known, else last save.
+  const exportDate = useMemo(() => {
+    if (session && session.week === selectedWeek && session.day === selectedDay) {
+      return { date: new Date(session.startedAt), withTime: true };
+    }
+    const saved = (existingDayDoc?.updatedAt as { toMillis?: () => number } | undefined)?.toMillis?.();
+    if (saved && existingDayDoc?.durationSec) {
+      return { date: new Date(saved - existingDayDoc.durationSec * 1000), withTime: true };
+    }
+    return { date: saved ? new Date(saved) : new Date(), withTime: false };
+  }, [session, selectedWeek, selectedDay, existingDayDoc]);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -1859,6 +1871,9 @@ export const GymPlanView: React.FC<Props> = ({
         workoutName={focus}
         exercises={exercises}
         unit={wUnit}
+        durationSec={existingDayDoc?.durationSec}
+        performedAt={exportDate.date}
+        withTime={exportDate.withTime}
         onImported={(count) => {
           setSaveFeedback(
             t(

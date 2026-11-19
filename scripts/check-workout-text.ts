@@ -37,3 +37,23 @@ assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 1), ['a', 'c', 'b']);
 assert.deepEqual(moveItem(['a', 'b', 'c'], 0, -1), ['a', 'b', 'c']);
 assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 3), ['a', 'b', 'c']);
 console.log('arrayMove OK');
+
+// session log (Hevy-like)
+import { buildSessionText } from '../src/lib/workoutText';
+const sess = buildSessionText({
+  name: 'Domingo inferiores',
+  unit: 'kg',
+  date: new Date(2026, 10, 15, 8, 33),
+  withTime: true,
+  exercises: [
+    { ...ex('Agachamento (Barra)', 3, '6', 80), setLog: [
+      { reps: 6, load: 60, rpe: 7, done: true }, { reps: 6, load: 80, rpe: 8.5, done: true }, { reps: 6, load: 80, rpe: 0, done: false }] },
+    { ...ex('Elevação de Joelhos nas Barras Paralelas', 3, '15', 0), setLog: [{ reps: 15, load: 0, rpe: 7, done: true }] },
+    { ...ex('Não feito', 3, '10', 10), setLog: [{ reps: 10, load: 10, rpe: 0, done: false }] },
+  ],
+});
+assert.equal(
+  sess,
+  'Domingo inferiores\ndomingo, 15 de nov. de 2026 às 08:33\n\nAgachamento (Barra)\nSérie 1: 60 kg x 6 @ 7 rpe\nSérie 2: 80 kg x 6 @ 8.5 rpe\n\nElevação de Joelhos nas Barras Paralelas\nSérie 1: 15 repetições @ 7 rpe'
+);
+console.log('session text OK');
