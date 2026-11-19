@@ -416,7 +416,7 @@ export const GuildView: React.FC<Props> = ({
   };
 
   const myName = crawler.crawlerName || displayName;
-  const myClass = t(crawler.crawlerClass || 'Primal Brawler');
+  const myClass = t(crawler.crawlerClass || 'Ironclad Vanguard');
   const myLevel = getLevelInfo(crawler.xp, crawler.weeklyClears).current;
   const isLeader = myGuild?.ownerId === uid;
 
@@ -426,7 +426,7 @@ export const GuildView: React.FC<Props> = ({
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <p className="text-xs text-slate-400">
-            {t('Floor 3 Social Hub · Guilds & Crawler Rankings')}
+            {t('Dungeon Social Hub · Guilds & Crawler Rankings')}
           </p>
           <h1 className="text-xl sm:text-2xl font-bold text-white mt-1">
             {t('Guilds & Leaderboard')}
@@ -907,7 +907,7 @@ export const GuildView: React.FC<Props> = ({
                       required
                       minLength={2}
                       maxLength={SCHEMA_LIMITS.GUILD_NAME_MAX}
-                      placeholder={t('e.g. Princess Posse')}
+                      placeholder={t('e.g. Iron Dawn Vanguard')}
                       value={guildNameInput}
                       onChange={(e) => setGuildNameInput(e.target.value)}
                       className="w-full min-h-[42px] px-3 py-2 text-sm bg-[#0d121a] border border-[#2d3c54] rounded-md text-white placeholder:text-slate-500"
@@ -920,7 +920,7 @@ export const GuildView: React.FC<Props> = ({
                     <input
                       type="text"
                       maxLength={SCHEMA_LIMITS.GUILD_MOTTO_MAX}
-                      placeholder={t('e.g. No skipped leg days on Floor 3')}
+                      placeholder={t('e.g. No skipped leg days in the dungeon')}
                       value={guildMottoInput}
                       onChange={(e) => setGuildMottoInput(e.target.value)}
                       className="w-full min-h-[42px] px-3 py-2 text-sm bg-[#0d121a] border border-[#2d3c54] rounded-md text-white placeholder:text-slate-500"
@@ -978,7 +978,7 @@ export const GuildView: React.FC<Props> = ({
                   <div>
                     <h2 className="text-base font-semibold text-white">{t('Join with Invite Code')}</h2>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {t('Got a code from a friend (like')} <span className="font-mono text-slate-300">PRIN-7K9M</span>{t(')? Enter it below.')}
+                      {t('Got a code from a friend (like')} <span className="font-mono text-slate-300">CRWL-7K9M</span>{t(')? Enter it below.')}
                     </p>
                   </div>
 
@@ -1038,7 +1038,7 @@ export const GuildView: React.FC<Props> = ({
                               </span>
                             </div>
                             <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                              {g.motto || t('Ready to clear Floor 3.')}
+                              {g.motto || t('Ready to conquer the Hunting Grounds.')}
                             </p>
                           </div>
 
@@ -1076,7 +1076,7 @@ export const GuildView: React.FC<Props> = ({
           <div className="px-5 py-4 border-b border-[#253247] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-white">
-                {t('Floor 3 Crawler Leaderboard')}
+                {t('Global Crawler Leaderboard')}
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 {t('Tap any Crawler to inspect their character profile, gear, and achievements.')}

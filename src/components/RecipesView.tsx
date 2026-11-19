@@ -26,7 +26,7 @@ import {
   saveRecipe,
   toggleRecipeFavorite,
 } from '../lib/firestoreService';
-import { buildStarterRecipes } from '../lib/starterRecipes';
+import { buildStarterRecipes, STARTER_RECIPE_IMAGES } from '../lib/starterRecipes';
 import { useT } from '../lib/i18n';
 
 interface Props {
@@ -35,22 +35,52 @@ interface Props {
   recipes: Recipe[];
 }
 
+const LEGACY_RECIPE_ASSETS = import.meta.glob('/src/assets/images/recipe_*.jpg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
+function resolveRecipeImage(rec: Recipe): string {
+  const starterImg = STARTER_RECIPE_IMAGES[rec.id];
+  if (
+    starterImg &&
+    (!rec.imageUrl ||
+      rec.imageUrl.includes('commons.wikimedia.org') ||
+      rec.imageUrl.startsWith('/src/assets/recipes/'))
+  ) {
+    return starterImg;
+  }
+  if (rec.imageUrl && LEGACY_RECIPE_ASSETS[rec.imageUrl]) {
+    return LEGACY_RECIPE_ASSETS[rec.imageUrl];
+  }
+  return rec.imageUrl;
+}
+
 const PRESET_IMAGES = [
   {
     label: 'Salmon Bowl',
-    url: '/src/assets/images/recipe_salmon_bowl_1794921378325.jpg',
+    url:
+      LEGACY_RECIPE_ASSETS['/src/assets/images/recipe_salmon_bowl_1794921378325.jpg'] ??
+      '/src/assets/images/recipe_salmon_bowl_1794921378325.jpg',
   },
   {
     label: 'Chicken Pesto',
-    url: '/src/assets/images/recipe_chicken_pesto_1794921378076.jpg',
+    url:
+      LEGACY_RECIPE_ASSETS['/src/assets/images/recipe_chicken_pesto_1794921378076.jpg'] ??
+      '/src/assets/images/recipe_chicken_pesto_1794921378076.jpg',
   },
   {
     label: 'Protein Oats',
-    url: '/src/assets/images/recipe_protein_oats_1794921378850.jpg',
+    url:
+      LEGACY_RECIPE_ASSETS['/src/assets/images/recipe_protein_oats_1794921378850.jpg'] ??
+      '/src/assets/images/recipe_protein_oats_1794921378850.jpg',
   },
   {
     label: 'Steak Stir-Fry',
-    url: '/src/assets/images/recipe_beef_stirfry_1794921378792.jpg',
+    url:
+      LEGACY_RECIPE_ASSETS['/src/assets/images/recipe_beef_stirfry_1794921378792.jpg'] ??
+      '/src/assets/images/recipe_beef_stirfry_1794921378792.jpg',
   },
 ];
 
@@ -321,7 +351,8 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filtered.map((rec) => {
-            const showImage = Boolean(rec.imageUrl) && !failedImages[rec.id];
+            const displayUrl = resolveRecipeImage(rec);
+            const showImage = Boolean(displayUrl) && !failedImages[rec.id];
             return (
               <article
                 key={rec.id}
@@ -331,7 +362,7 @@ export const RecipesView: React.FC<Props> = ({ uid, profile, recipes }) => {
                   <div className="aspect-4/3 bg-[#0e141d] border-b border-[#253247] relative overflow-hidden">
                     {showImage ? (
                       <img
-                        src={rec.imageUrl}
+                        src={displayUrl}
                         alt={rec.title}
                         referrerPolicy="no-referrer"
                         onError={() =>

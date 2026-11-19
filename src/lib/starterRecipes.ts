@@ -355,27 +355,18 @@ const DEFS: RecipeDef[] = [
   },
 ];
 
-const IMAGES: Record<string, string> = {
-  rec_starter_panqueca: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pancakes_(1).jpg?width=800',
-  rec_starter_panqueca_banana: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pancakes_(1).jpg?width=800',
-  rec_starter_mingau_aveia: 'https://commons.wikimedia.org/wiki/Special:FilePath/Oatmeal_(1).jpg?width=800',
-  rec_starter_ovos_mexidos: 'https://commons.wikimedia.org/wiki/Special:FilePath/Scrambled_eggs-01.jpg?width=800',
-  rec_starter_bolo_cenoura: 'https://commons.wikimedia.org/wiki/Special:FilePath/Carrot_cake.jpg?width=800',
-  rec_starter_vitamina: 'https://commons.wikimedia.org/wiki/Special:FilePath/Banana_Smoothie.jpg?width=800',
-  rec_starter_iogurte_granola: 'https://commons.wikimedia.org/wiki/Special:FilePath/Yogurt_fruit_bowl.jpg?width=800',
-  rec_starter_tapioca_queijo: 'https://commons.wikimedia.org/wiki/Special:FilePath/Tapioca.jpg?width=800',
-  rec_starter_crepioca_banana: 'https://commons.wikimedia.org/wiki/Special:FilePath/Tapioca.jpg?width=800',
-  rec_starter_arroz_feijao_frango: 'https://commons.wikimedia.org/wiki/Special:FilePath/Prato_com_arroz_e_feij%C3%A3o,_frango_grelhado,_batata_frita,_salada_e_ovo_frito_como_adicionais.jpg?width=800',
-  rec_starter_carne_moida_macarrao: 'https://commons.wikimedia.org/wiki/Special:FilePath/Spaghetti_Bolognese.jpg?width=800',
-  rec_starter_pure_frango: 'https://commons.wikimedia.org/wiki/Special:FilePath/Grilled_chicken_with_mashed_potato_and_spinach.jpg?width=800',
-  rec_starter_omelete: 'https://commons.wikimedia.org/wiki/Special:FilePath/Egg_omelette.JPG?width=800',
-  rec_starter_atum_salada: 'https://commons.wikimedia.org/wiki/Special:FilePath/Tuna_Salad.jpg?width=800',
-  rec_starter_brownie_fit: 'https://commons.wikimedia.org/wiki/Special:FilePath/Brownie_(1).jpg?width=800',
-  rec_starter_panqueca_proteica: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pancakes_(1).jpg?width=800',
-  rec_starter_mousse_whey: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chocolate_pudding_in_glasses.jpg?width=800',
-  rec_starter_mug_cake_whey: 'https://commons.wikimedia.org/wiki/Special:FilePath/Tassenkuchen_.jpg?width=800',
-  rec_starter_shake_proteico: 'https://commons.wikimedia.org/wiki/Special:FilePath/Banana_Smoothie.jpg?width=800',
-};
+const RECIPE_IMAGE_FILES = import.meta.glob('/src/assets/recipes/*.jpg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
+export const STARTER_RECIPE_IMAGES: Record<string, string> = Object.fromEntries(
+  Object.entries(RECIPE_IMAGE_FILES).flatMap(([path, url]) => {
+    const match = /\/([^/]+)\.jpg$/.exec(path);
+    return match ? [[match[1], url]] : [];
+  })
+);
 
 export function buildStarterRecipes(): Omit<Recipe, 'ownerId' | 'createdAt' | 'updatedAt'>[] {
   return DEFS.map((def) => {
@@ -402,7 +393,7 @@ export function buildStarterRecipes(): Omit<Recipe, 'ownerId' | 'createdAt' | 'u
       proteinG: Number((total.proteinG / def.servings).toFixed(1)),
       carbsG: Number((total.carbsG / def.servings).toFixed(1)),
       fatG: Number((total.fatG / def.servings).toFixed(1)),
-      imageUrl: IMAGES[def.id] ?? '',
+      imageUrl: STARTER_RECIPE_IMAGES[def.id] ?? '',
       ingredients: def.items.map(([, , label]) => label),
       instructions: def.steps,
       isFavorite: false,

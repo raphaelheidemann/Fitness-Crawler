@@ -30,8 +30,9 @@ import {
   CRAWLER_GEAR_CATALOG,
   CRAWLER_LEVELS,
   GearItemDef,
+  getGearIconUrl,
   getLevelInfo,
-  LOOT_CHEST_IMG,
+  getLootChestImg,
   playRetroSfx,
   rollLootBoxReward,
 } from '../lib/crawlerEngine';
@@ -81,7 +82,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
   } | null>(null);
 
   const [crawlerName, setCrawlerName] = useState(crawler.crawlerName || 'Crawler');
-  const [crawlerClass, setCrawlerClass] = useState(crawler.crawlerClass || 'Primal Brawler');
+  const [crawlerClass, setCrawlerClass] = useState(crawler.crawlerClass || 'Ironclad Vanguard');
   const [crawlerMotto, setCrawlerMotto] = useState(crawler.crawlerMotto || '');
   const [bannerTheme, setBannerTheme] = useState<BannerTheme>(crawler.bannerTheme ?? 'amber');
   const [isPublicProfile, setIsPublicProfile] = useState(crawler.isPublicProfile ?? false);
@@ -94,7 +95,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
       setActiveTab(initialTab);
       setLastLootDrop(null);
       setCrawlerName(crawler.crawlerName || 'Crawler');
-      setCrawlerClass(crawler.crawlerClass || 'Primal Brawler');
+      setCrawlerClass(crawler.crawlerClass || 'Ironclad Vanguard');
       setCrawlerMotto(crawler.crawlerMotto || '');
       setBannerTheme(crawler.bannerTheme ?? 'amber');
       setIsPublicProfile(crawler.isPublicProfile ?? false);
@@ -129,7 +130,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
     try {
       const cleanName = crawlerName.trim().slice(0, SCHEMA_LIMITS.CRAWLER_NAME_MAX) || 'Crawler';
       const cleanClass =
-        crawlerClass.trim().slice(0, SCHEMA_LIMITS.CRAWLER_CLASS_MAX) || 'Primal Brawler';
+        crawlerClass.trim().slice(0, SCHEMA_LIMITS.CRAWLER_CLASS_MAX) || 'Ironclad Vanguard';
       const cleanMotto = crawlerMotto.trim().slice(0, SCHEMA_LIMITS.CRAWLER_MOTTO_MAX);
       playRetroSfx('xp', crawler.sfxEnabled);
       await onUpdateCrawler({
@@ -215,7 +216,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
         <div className="px-5 py-4 border-b border-[#253247] flex items-center justify-between gap-4 bg-[#0f151e]">
           <div>
             <h2 id="crawler-armory-title" className="font-pixel text-sm sm:text-base text-amber-400">
-              {t('Crawler Armory & Safe Room')}
+              {t('Crawler Armory & Sanctuary')}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               {t('Customize your pixel crawler, open earned Loot Boxes, and track Hunting Grounds achievements.')}
@@ -304,7 +305,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                     {crawlerName.trim() || t('Crawler')}
                   </p>
                   <p className="text-xs text-slate-300 font-medium truncate">
-                    {t('LV {n}', { n: current.level })} · {t(crawlerClass.trim() || 'Primal Brawler')}
+                    {t('LV {n}', { n: current.level })} · {t(crawlerClass.trim() || 'Ironclad Vanguard')}
                     {crawler.guildName ? ` · [${crawler.guildName}]` : ''}
                   </p>
                   {crawlerMotto.trim() ? (
@@ -334,7 +335,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                     maxLength={SCHEMA_LIMITS.CRAWLER_NAME_MAX}
                     value={crawlerName}
                     onChange={(e) => setCrawlerName(e.target.value)}
-                    placeholder={t('e.g. Iron Carl')}
+                    placeholder={t('e.g. Iron Vance')}
                     className="w-full px-3 py-2 text-sm text-white bg-[#0d121a] border border-[#2d3c54] rounded-md focus:outline-none focus:border-amber-400"
                   />
                   <p className="text-[11px] text-slate-500 mt-1">
@@ -356,7 +357,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                     maxLength={SCHEMA_LIMITS.CRAWLER_CLASS_MAX}
                     value={crawlerClass}
                     onChange={(e) => setCrawlerClass(e.target.value)}
-                    placeholder={t('Primal Brawler')}
+                    placeholder={t('Ironclad Vanguard')}
                     className="w-full px-3 py-2 text-sm text-white bg-[#0d121a] border border-[#2d3c54] rounded-md focus:outline-none focus:border-amber-400"
                   />
                   <div className="flex flex-wrap gap-1.5 mt-2">
@@ -391,7 +392,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                   maxLength={SCHEMA_LIMITS.CRAWLER_MOTTO_MAX}
                   value={crawlerMotto}
                   onChange={(e) => setCrawlerMotto(e.target.value)}
-                  placeholder={t('They will not break me. Floor 3 starts at 5 AM.')}
+                  placeholder={t('Steel yourself. One more set.')}
                   className="w-full px-3 py-2 text-sm text-white bg-[#0d121a] border border-[#2d3c54] rounded-md focus:outline-none focus:border-amber-400"
                 />
               </div>
@@ -434,7 +435,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                 />
                 <div className="text-xs">
                   <p className="font-semibold text-slate-200">
-                    {t('Show my Crawler on the Global Floor 3 Leaderboard')}
+                    {t('Show my Crawler on the Global Leaderboard')}
                   </p>
                   <p className="text-slate-400 mt-0.5 leading-relaxed">
                     {t('Only your RPG identity, level, XP, streak, boss clears, and equipped gear are shared. Your workouts, diet logs, weight, and habits always stay 100% private.')}
@@ -551,13 +552,14 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                   {slotGear.map((item) => {
                     const unlocked = crawler.unlockedGearIds.includes(item.id);
                     const equipped = equippedId === item.id;
+                    const iconUrl = getGearIconUrl(item.id);
                     return (
                       <button
                         key={item.id}
                         type="button"
                         disabled={!unlocked}
                         onClick={() => void handleEquipGear(item)}
-                        className={`p-3.5 rounded-lg border text-left flex items-start justify-between gap-3 transition-colors ${
+                        className={`p-3 rounded-lg border text-left flex items-start justify-between gap-3 transition-colors ${
                           equipped
                             ? 'border-amber-400 bg-[#1b2434]'
                             : unlocked
@@ -565,18 +567,32 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                             : 'border-[#1d2736] bg-[#10161f] opacity-65 cursor-not-allowed'
                         }`}
                       >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-100 truncate">
-                              {t(item.name)}
+                        <div className="flex items-start gap-3 min-w-0">
+                          {iconUrl && (
+                            <div className="w-12 h-12 rounded-md border border-[#2a384f] bg-[#0b1017] shrink-0 overflow-hidden flex items-center justify-center">
+                              <img
+                                src={iconUrl}
+                                alt=""
+                                referrerPolicy="no-referrer"
+                                className={`w-full h-full object-contain pixel-art ${
+                                  unlocked ? '' : 'grayscale contrast-75 opacity-45'
+                                }`}
+                              />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-semibold text-slate-100 truncate">
+                                {t(item.name)}
+                              </p>
+                              <span className="text-[10px] font-mono uppercase text-slate-400">
+                                {t(item.rarity)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                              {t(item.description)}
                             </p>
-                            <span className="text-[10px] font-mono uppercase text-slate-400">
-                              {t(item.rarity)}
-                            </span>
                           </div>
-                          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                            {t(item.description)}
-                          </p>
                         </div>
                         <span className="shrink-0 mt-0.5">
                           {equipped ? (
@@ -600,7 +616,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
               <div className="bg-[#0e141d] border-2 border-[#2a384e] rounded-xl p-6 text-center space-y-4">
                 <div className="w-28 h-28 mx-auto rounded-lg bg-[#0d1117] border-2 border-amber-500/40 flex items-center justify-center overflow-hidden">
                   <img
-                    src={LOOT_CHEST_IMG}
+                    src={getLootChestImg(crawler.pendingLootBoxes[0] ?? lastLootDrop?.tier ?? 'bronze')}
                     alt={t('Dungeon Loot Chest')}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-contain pixel-art animate-crawler-idle"
@@ -608,7 +624,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                 </div>
 
                 {lastLootDrop && (
-                  <div className="max-w-md mx-auto p-4 rounded-lg border-2 border-amber-400/70 bg-amber-950/30 space-y-2 text-left">
+                  <div className="max-w-md mx-auto p-4 rounded-lg border-2 border-amber-400/70 bg-amber-950/30 space-y-3 text-left">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-pixel text-xs text-amber-300 uppercase">
                         {t('{tier} Loot Box Opened!', { tier: t(lastLootDrop.tier) })}
@@ -617,8 +633,22 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                         +{lastLootDrop.bonusXp} XP
                       </span>
                     </div>
-                    <p className="text-sm font-bold text-white">{t(lastLootDrop.item.name)}</p>
-                    <p className="text-xs text-slate-300">{t(lastLootDrop.item.description)}</p>
+                    <div className="flex items-start gap-3">
+                      {getGearIconUrl(lastLootDrop.item.id) && (
+                        <div className="w-14 h-14 rounded-md border border-amber-400/50 bg-[#0b1017] shrink-0 overflow-hidden flex items-center justify-center">
+                          <img
+                            src={getGearIconUrl(lastLootDrop.item.id)}
+                            alt={t(lastLootDrop.item.name)}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-contain pixel-art"
+                          />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-white">{t(lastLootDrop.item.name)}</p>
+                        <p className="text-xs text-slate-300 mt-0.5">{t(lastLootDrop.item.description)}</p>
+                      </div>
+                    </div>
                     <button
                       type="button"
                       onClick={() => void handleEquipGear(lastLootDrop.item)}
@@ -672,7 +702,10 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
-                  {t('System AI Achievements ({n}/6 Unlocked)', { n: crawler.unlockedAchievementIds.length })}
+                  {t('Dungeon Achievements ({n}/{total} Unlocked)', {
+                    n: crawler.unlockedAchievementIds.length,
+                    total: CRAWLER_ACHIEVEMENTS.length,
+                  })}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {CRAWLER_ACHIEVEMENTS.map((ach) => {
@@ -704,7 +737,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
 
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
-                  {t('8-Tier Crawler Level Roadmap & Safe-Room Guardrails')}
+                  {t('8-Tier Crawler Level Roadmap & Sanctuary Guardrails')}
                 </h3>
                 <div className="space-y-2">
                   {CRAWLER_LEVELS.map((lvl) => {
@@ -735,7 +768,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                   <Shield className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
                   <p className="text-xs text-slate-300 leading-relaxed">
                     <strong>{t('Anti-Burnout Protection:')}</strong>{' '}
-                    {t('Every 7-day streak earns a Safe-Room Shield (auto-protects missed days), rest days never break streaks, and clearing 85% of your weekly targets slays the Weekly Boss. You never lose unlocked gear or XP.')}
+                    {t('Every 7-day streak earns a Sanctuary Shield (auto-protects missed days), rest days never break streaks, and clearing 85% of your weekly targets slays the Weekly Boss. You never lose unlocked gear or XP.')}
                   </p>
                 </div>
               </div>

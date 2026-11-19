@@ -16,11 +16,10 @@ import { CrawlerSprite } from './CrawlerSprite';
 import { CrawlerState, CrawlerStyle } from '../types';
 import {
   BANNER_THEME_STYLES,
-  BOSS_MANTIS_IMG,
+  CRAWLER_ACHIEVEMENTS,
   CRAWLER_GEAR_CATALOG,
   getLevelInfo,
-  HUNTING_GROUNDS_BG,
-  LOOT_CHEST_IMG,
+  getLootChestImg,
   WeeklyChallengeSummary,
 } from '../lib/crawlerEngine';
 
@@ -66,32 +65,40 @@ export const HuntingGroundsStage: React.FC<Props> = ({
   const auraFrame = AURA_FRAME_CLASSES[crawler.equippedAura] ?? AURA_FRAME_CLASSES.aur_none;
   const bannerStyle = BANNER_THEME_STYLES[crawler.bannerTheme ?? 'amber'];
   const shownName = crawler.crawlerName?.trim() || displayName || t('Crawler');
-  const shownClass = crawler.crawlerClass?.trim() || t('Primal Brawler');
+  const shownClass = crawler.crawlerClass?.trim() || t('Ironclad Vanguard');
+  const showTreelineEyes =
+    weeklySummary.bossFloor === 1 ||
+    weeklySummary.bossFloor === 4 ||
+    weeklySummary.bossFloor === 6;
 
   return (
     <section className={`relative overflow-hidden rounded-lg border-2 ${bannerStyle.border} bg-[#0b1017]`}>
-      {/* 8-Bit Hunting Grounds Forest Backdrop */}
+      {/* 8-Bit Hunting Grounds Biome Backdrop */}
       <div className="absolute inset-0 pointer-events-none select-none">
         <img
-          src={HUNTING_GROUNDS_BG}
+          src={weeklySummary.bossBgImage}
           alt=""
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover object-center opacity-90 pixel-art"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#090d12]/70 via-transparent to-[#090d12]/80" />
 
-        {/* Subtle blinking red eyes lurking in the dark treeline */}
-        <div className="hidden sm:flex items-center gap-1.5 absolute top-[44%] left-[42%] animate-eye-blink">
-          <span className="w-1.5 h-1 bg-rose-500 rounded-[1px]" />
-          <span className="w-1.5 h-1 bg-rose-500 rounded-[1px]" />
-        </div>
-        <div
-          className="hidden md:flex items-center gap-1.5 absolute top-[56%] left-[56%] animate-eye-blink"
-          style={{ animationDelay: '2.1s' }}
-        >
-          <span className="w-1.5 h-1 bg-red-500 rounded-[1px]" />
-          <span className="w-1.5 h-1 bg-red-500 rounded-[1px]" />
-        </div>
+        {/* Subtle blinking red eyes lurking in the dark forest treeline */}
+        {showTreelineEyes && (
+          <>
+            <div className="hidden sm:flex items-center gap-1.5 absolute top-[44%] left-[42%] animate-eye-blink">
+              <span className="w-1.5 h-1.5 bg-rose-500 rounded-[1px]" />
+              <span className="w-1.5 h-1.5 bg-rose-500 rounded-[1px]" />
+            </div>
+            <div
+              className="hidden md:flex items-center gap-1.5 absolute top-[56%] left-[56%] animate-eye-blink"
+              style={{ animationDelay: '2.1s' }}
+            >
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-[1px]" />
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-[1px]" />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Foreground HUD & Face-Off Arena */}
@@ -159,14 +166,15 @@ export const HuntingGroundsStage: React.FC<Props> = ({
               </span>
               <span
                 className="inline-flex items-center gap-1 font-mono tabular-nums text-sky-300"
-                title={t('Safe-Room Shields protect your streak if you miss a day')}
+                title={t('Sanctuary Shields protect your streak if you miss a day')}
               >
                 <Shield className="w-3.5 h-3.5 text-sky-400" />
                 {crawler.streakFreezes} {crawler.streakFreezes === 1 ? t('Shield') : t('Shields')}
               </span>
               <span className="text-slate-400 truncate">
-                {t(weaponDef?.name ?? 'Knuckle Wraps')} · {t(armorDef?.name ?? 'Leather Jacket')} ·{' '}
-                {t(accDef?.name ?? 'Crawler Grit')}
+                {t(weaponDef?.name ?? 'Spiked Knuckle Wraps')} ·{' '}
+                {t(armorDef?.name ?? 'Scuffed Leather Jacket')} ·{' '}
+                {t(accDef?.name ?? 'Crawler’s Grit')}
               </span>
             </div>
             {crawler.recoveryQuestActive && (
@@ -262,8 +270,8 @@ export const HuntingGroundsStage: React.FC<Props> = ({
             <span className="font-pixel text-xs sm:text-sm text-amber-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
               {weeklySummary.isBossSlain ? t('BOSS SLAIN') : t('VS')}
             </span>
-            <span className="text-[11px] font-mono text-slate-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] hidden sm:block">
-              {t('Floor 3')} · {t(current.title)}
+            <span className="text-[11px] font-mono text-slate-200 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] hidden sm:block truncate max-w-full">
+              {t('Floor {n}', { n: weeklySummary.bossFloor })} · {t(weeklySummary.bossSubtitle)}
             </span>
           </div>
 
@@ -277,7 +285,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
               }`}
             >
               <img
-                src={BOSS_MANTIS_IMG}
+                src={weeklySummary.bossImage}
                 alt={t(weeklySummary.bossName)}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain pixel-art animate-crawler-idle"
@@ -327,7 +335,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
             className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-100 bg-[#131b27]/90 hover:bg-[#1f2c3f] border border-[#344662] rounded-md transition-colors whitespace-nowrap"
           >
             <Award className="w-3.5 h-3.5 text-emerald-400" />
-            {crawler.unlockedAchievementIds.length}/6
+            {crawler.unlockedAchievementIds.length}/{CRAWLER_ACHIEVEMENTS.length}
           </button>
 
           {crawler.pendingLootBoxes.length > 0 && (
@@ -337,7 +345,7 @@ export const HuntingGroundsStage: React.FC<Props> = ({
               className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md transition-colors whitespace-nowrap"
             >
               <img
-                src={LOOT_CHEST_IMG}
+                src={getLootChestImg(crawler.pendingLootBoxes[0])}
                 alt=""
                 referrerPolicy="no-referrer"
                 className="w-4 h-4 rounded-[2px] pixel-art object-cover"

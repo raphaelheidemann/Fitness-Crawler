@@ -558,7 +558,7 @@ export const OverviewView: React.FC<Props> = ({
                       </p>
                       <p className="text-xs text-slate-400 font-mono tabular-nums">
                         {day.isRestDay
-                          ? t('Safe Room / Recovery')
+                          ? t('Sanctuary / Recovery')
                           : `${t('{n} exercises', { n: day.exercises.length })} · ${Math.round(
                               computeExerciseVolume(day.exercises)
                             ).toLocaleString()} ${wUnit}`}

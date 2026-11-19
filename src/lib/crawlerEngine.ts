@@ -13,27 +13,73 @@ import {
 } from '../types';
 import { todayIsoDate } from './sanitize';
 
-export const HUNTING_GROUNDS_BG =
-  '/src/assets/images/hunting_grounds_forest_bg_1795014578958.jpg';
-export const BOSS_MANTIS_IMG =
-  '/src/assets/images/boss_razor_mantis_1795014583793.jpg';
-export const LOOT_CHEST_IMG =
-  '/src/assets/images/dungeon_loot_chest_1795014581405.jpg';
+const WORLD_ASSETS = import.meta.glob('/src/assets/world/**/*.jpg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
+const BASE_ASSETS = import.meta.glob('/src/assets/images/*.jpg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
+function worldAsset(subpath: string, fallback: string): string {
+  return WORLD_ASSETS[`/src/assets/world/${subpath}`] ?? fallback;
+}
+
+function baseAsset(filename: string): string {
+  return BASE_ASSETS[`/src/assets/images/${filename}`] ?? `/src/assets/images/${filename}`;
+}
+
+export const HUNTING_GROUNDS_BG = baseAsset('hunting_grounds_forest_bg_1795014578958.jpg');
+export const BOSS_MANTIS_IMG = baseAsset('boss_razor_mantis_1795014583793.jpg');
+export const LOOT_CHEST_IMG = baseAsset('dungeon_loot_chest_1795014581405.jpg');
+
+export const WORLD_BACKGROUNDS = {
+  bg_1: HUNTING_GROUNDS_BG,
+  bg_2: worldAsset('bg_2.jpg', HUNTING_GROUNDS_BG),
+  bg_3: worldAsset('bg_3.jpg', HUNTING_GROUNDS_BG),
+  bg_4: worldAsset('bg_4.jpg', HUNTING_GROUNDS_BG),
+  bg_5: worldAsset('bg_5.jpg', HUNTING_GROUNDS_BG),
+} as const;
+
+export const LOOT_CHEST_IMAGES: Record<LootBoxTier, string> = {
+  bronze: worldAsset('chest_bronze.jpg', LOOT_CHEST_IMG),
+  silver: worldAsset('chest_silver.jpg', LOOT_CHEST_IMG),
+  gold: worldAsset('chest_gold.jpg', LOOT_CHEST_IMG),
+  platinum: worldAsset('chest_platinum.jpg', LOOT_CHEST_IMG),
+};
+
+export function getLootChestImg(tier?: LootBoxTier): string {
+  return tier ? (LOOT_CHEST_IMAGES[tier] ?? LOOT_CHEST_IMG) : LOOT_CHEST_IMG;
+}
+
+export function getGearIconUrl(gearId: string): string | undefined {
+  return WORLD_ASSETS[`/src/assets/world/gear/${gearId}.jpg`];
+}
 
 export const CRAWLER_SPRITES: Record<1 | 2 | 3 | 4, string> = {
-  1: '/src/assets/images/crawler_tier_1_novice_1795014577229.jpg',
-  2: '/src/assets/images/crawler_tier_2_brawler_1795014578134.jpg',
-  3: '/src/assets/images/crawler_tier_3_hunter_1795014604794.jpg',
-  4: '/src/assets/images/crawler_tier_4_warden_1795014580315.jpg',
+  1: baseAsset('crawler_tier_1_novice_1795014577229.jpg'),
+  2: baseAsset('crawler_tier_2_brawler_1795014578134.jpg'),
+  3: baseAsset('crawler_tier_3_hunter_1795014604794.jpg'),
+  4: baseAsset('crawler_tier_4_warden_1795014580315.jpg'),
 };
 
 export const CRAWLER_CLASS_PRESETS = [
-  'Primal Brawler',
-  'Iron Vanguard',
-  'Shadow Stalker',
-  'Mantis Slayer',
-  'Endurance Runner',
-  'Dungeon Alchemist',
+  'Ironclad Vanguard',
+  'Emberhand Brawler',
+  'Trailstride Scout',
+  'Stonewall Sentinel',
+  'Hearthkeeper Cook',
+  'Torchblade Hunter',
+  'Runeforge Warden',
+  'Dawnrunner Nomad',
+  'Anvilborn Bruiser',
+  'Mistwalker Ranger',
+  'Obsidian Champion',
+  'Wellspring Templar',
 ] as const;
 
 export const BANNER_THEME_STYLES: Record<
@@ -62,7 +108,7 @@ export const BANNER_THEME_STYLES: Record<
     swatch: 'bg-emerald-400',
   },
   sky: {
-    label: 'Safe-Room Sky',
+    label: 'Sanctuary Sky',
     border: 'border-sky-500/50',
     accentText: 'text-sky-400',
     badgeBg: 'bg-sky-500/15',
@@ -92,23 +138,23 @@ export const CRAWLER_LEVELS: LevelTierDef[] = [
     title: 'Barefoot Novice',
     xpRequired: 0,
     spriteTier: 1,
-    unlockSummary: 'Classic Leather Jacket, Heart Boxers & Spiked Wraps',
+    unlockSummary: 'Scuffed Leather Jacket & Spiked Knuckle Wraps',
     autoGearIds: ['wpn_spiked_wraps', 'arm_leather_jacket', 'acc_tousled_grit', 'aur_none'],
   },
   {
     level: 2,
-    title: 'Safe-Room Brawler',
+    title: 'Sanctuary Brawler',
     xpRequired: 300,
     spriteTier: 1,
-    unlockSummary: 'Iron-Studded Gauntlets & Torchlight Frame',
+    unlockSummary: 'Iron-Studded Gauntlets & Torchlight Ember',
     autoGearIds: ['wpn_iron_gauntlets', 'aur_torch_ember'],
   },
   {
     level: 3,
-    title: 'Floor-Three Scout',
+    title: 'Ruins Path Scout',
     xpRequired: 750,
     spriteTier: 2,
-    unlockSummary: 'Scout Sprite Evolution & Serrated Hunting Blade',
+    unlockSummary: 'Scout Sprite Evolution & Serrated Hunting Knife',
     autoGearIds: ['wpn_serrated_blade', 'arm_reinforced_coat'],
   },
   {
@@ -116,12 +162,12 @@ export const CRAWLER_LEVELS: LevelTierDef[] = [
     title: 'Mantis Tracker',
     xpRequired: 1400,
     spriteTier: 2,
-    unlockSummary: 'Tattered Shadow Cloak & Crimson Hunter Crest',
+    unlockSummary: 'Torchbearer Bandana & Mantis Hunter Crimson',
     autoGearIds: ['acc_amber_headband', 'aur_mantis_crimson'],
   },
   {
     level: 5,
-    title: 'Bombadier Veteran',
+    title: 'Ember-Gauntlet Veteran',
     xpRequired: 2300,
     spriteTier: 3,
     unlockSummary: 'Hunter Sprite Evolution & Crimson Mantis Scythe',
@@ -132,7 +178,7 @@ export const CRAWLER_LEVELS: LevelTierDef[] = [
     title: 'Hunting Grounds Stalker',
     xpRequired: 3500,
     spriteTier: 3,
-    unlockSummary: 'Emerald Night-Visor & Mist Aura',
+    unlockSummary: 'Night-Stalker Visor & Venom Mist Emerald',
     autoGearIds: ['acc_emerald_visor', 'aur_forest_emerald'],
   },
   {
@@ -140,7 +186,7 @@ export const CRAWLER_LEVELS: LevelTierDef[] = [
     title: 'Boss Room Challenger',
     xpRequired: 5000,
     spriteTier: 4,
-    unlockSummary: 'Apex Warden Sprite Evolution & Blazing Greatsword',
+    unlockSummary: 'Apex Warden Sprite Evolution & Emerald-Flame Greatsword',
     autoGearIds: ['wpn_blazing_greatsword', 'arm_warden_plate'],
   },
   {
@@ -148,7 +194,7 @@ export const CRAWLER_LEVELS: LevelTierDef[] = [
     title: 'Apex Floor Warden',
     xpRequired: 7000,
     spriteTier: 4,
-    unlockSummary: 'Horned Obsidian Crown & Celestial Gold Aura',
+    unlockSummary: 'Horned Obsidian Crown & Legendary Loot Gold',
     autoGearIds: ['acc_horned_crown', 'aur_celestial_gold'],
   },
 ];
@@ -169,7 +215,7 @@ export const CRAWLER_GEAR_CATALOG: GearItemDef[] = [
     name: 'Spiked Knuckle Wraps',
     slot: 'weapon',
     rarity: 'bronze',
-    description: 'Starter brawling wraps stained from Safe Room sparring.',
+    description: 'Starter brawling wraps stained from Sanctuary sparring.',
     badgeColor: 'text-amber-300 border-amber-600/60 bg-amber-950/50',
   },
   {
@@ -206,7 +252,7 @@ export const CRAWLER_GEAR_CATALOG: GearItemDef[] = [
   },
   {
     id: 'wpn_goblin_bomb_glove',
-    name: 'Carl’s Dynamite Caster',
+    name: 'Brass Ember Gauntlet',
     slot: 'weapon',
     rarity: 'gold',
     description: 'Loot Box rare drop: brass ignition sleeve smelling faintly of sulfur.',
@@ -248,10 +294,10 @@ export const CRAWLER_GEAR_CATALOG: GearItemDef[] = [
   },
   {
     id: 'arm_heart_boxers_cape',
-    name: 'Enchanted Heart Banner',
+    name: 'Crimson Crest Cloak',
     slot: 'armor',
     rarity: 'silver',
-    description: 'Loot Box drop: absurdly intimidating crimson heart-print war cloak.',
+    description: 'Loot Box drop: crimson war cloak emblazoned with a golden shield crest.',
     badgeColor: 'text-rose-300 border-rose-500/70 bg-rose-950/60',
   },
 
@@ -285,15 +331,15 @@ export const CRAWLER_GEAR_CATALOG: GearItemDef[] = [
     name: 'Horned Obsidian Crown',
     slot: 'accessory',
     rarity: 'platinum',
-    description: 'Regalia of the Floor 3 Hunting Grounds apex conqueror.',
+    description: 'Regalia of the Hunting Grounds apex conqueror.',
     badgeColor: 'text-yellow-300 border-yellow-400/80 bg-yellow-950/60',
   },
   {
     id: 'acc_donut_tiara',
-    name: 'Royal Familiar Collar',
+    name: 'Jeweled Familiar Collar',
     slot: 'accessory',
     rarity: 'platinum',
-    description: 'Loot Box drop: absurdly flashy enchanted jewel collar. Bosses hate it.',
+    description: 'Loot Box drop: flashy enchanted jewel collar with a crystal pendant. Bosses hate it.',
     badgeColor: 'text-fuchsia-300 border-fuchsia-500/70 bg-fuchsia-950/60',
   },
 
@@ -335,7 +381,7 @@ export const CRAWLER_GEAR_CATALOG: GearItemDef[] = [
     name: 'Legendary Loot Gold',
     slot: 'aura',
     rarity: 'platinum',
-    description: 'Radiant System AI Platinum Box shimmer.',
+    description: 'Radiant Platinum Loot Box shimmer.',
     badgeColor: 'text-yellow-200 border-yellow-400/80 bg-yellow-950/60',
   },
 ];
@@ -353,7 +399,7 @@ export const CRAWLER_ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'ach_first_blood',
     category: 'Onboarding',
-    title: 'NEW ACHIEVEMENT! First Blood in the Safe Room',
+    title: 'First Blood in the Sanctuary',
     description: 'Log your first gym session, walk/run, or daily habit square.',
     xpBonus: 75,
     rewardBox: 'bronze',
@@ -361,7 +407,7 @@ export const CRAWLER_ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'ach_well_fed',
     category: 'Onboarding',
-    title: 'NEW ACHIEVEMENT! Well-Fed Crawler',
+    title: 'Well-Fed Crawler',
     description: 'Complete at least 3 meals and reach your daily hydration target on the same day.',
     xpBonus: 100,
     rewardBox: 'bronze',
@@ -369,23 +415,31 @@ export const CRAWLER_ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'ach_torchbearer',
     category: 'Consistency',
-    title: 'NEW ACHIEVEMENT! 7-Day Torchbearer',
-    description: 'Hold an active 7-day discipline streak (Safe-Room Shields allowed).',
+    title: '7-Day Torchbearer',
+    description: 'Hold an active 7-day discipline streak (Sanctuary Shields allowed).',
     xpBonus: 175,
     rewardBox: 'silver',
   },
   {
     id: 'ach_iron_stomach',
     category: 'Consistency',
-    title: 'NEW ACHIEVEMENT! Iron Stomach',
+    title: 'Iron Stomach',
     description: 'Log meals on 5+ days during a single program week.',
     xpBonus: 175,
     rewardBox: 'silver',
   },
   {
+    id: 'ach_fortnight_will',
+    category: 'Consistency',
+    title: 'Fortnight of Will',
+    description: 'Hold an active 14-day discipline streak without breaking momentum.',
+    xpBonus: 250,
+    rewardBox: 'gold',
+  },
+  {
     id: 'ach_mantis_slayer',
     category: 'Mastery',
-    title: 'NEW ACHIEVEMENT! Mantis Slayer',
+    title: 'Mantis Slayer',
     description: 'Clear 4 Weekly Hunting Grounds Boss challenges.',
     xpBonus: 350,
     rewardBox: 'gold',
@@ -393,21 +447,98 @@ export const CRAWLER_ACHIEVEMENTS: AchievementDef[] = [
   {
     id: 'ach_sovereign',
     category: 'Mastery',
-    title: 'NEW ACHIEVEMENT! Hunting Grounds Sovereign',
+    title: 'Hunting Grounds Sovereign',
     description: 'Reach Crawler Level 6+ and log 25+ completed workouts.',
     xpBonus: 500,
     rewardBox: 'platinum',
   },
+  {
+    id: 'ach_floor_conqueror',
+    category: 'Mastery',
+    title: 'Grand Floor Conqueror',
+    description: 'Clear 8 Weekly Boss challenges across the dungeon biomes.',
+    xpBonus: 600,
+    rewardBox: 'platinum',
+  },
 ];
 
-export const WEEKLY_BOSSES = [
-  { name: 'Razor Mantis Alpha', subtitle: 'Twilight Thicket Ambush', maxHp: 100 },
-  { name: 'Crimson-Eyed Stalker', subtitle: 'Ruined Tower Perimeter', maxHp: 100 },
-  { name: 'Gnarled Bog Treant', subtitle: 'Mist-Dithered Hollow', maxHp: 100 },
-  { name: 'Chitin Dreadnought', subtitle: 'Deep Hunting Grounds', maxHp: 100 },
-] as const;
+export interface WeeklyBossDef {
+  floor: number;
+  name: string;
+  subtitle: string;
+  maxHp: number;
+  image: string;
+  bgImage: string;
+}
 
-export function getWeeklyBossForWeek(weekNumber: number) {
+export const WEEKLY_BOSSES: readonly WeeklyBossDef[] = [
+  {
+    floor: 1,
+    name: 'Razor Mantis Alpha',
+    subtitle: 'Twilight Thicket Ambush',
+    maxHp: 100,
+    image: BOSS_MANTIS_IMG,
+    bgImage: WORLD_BACKGROUNDS.bg_1,
+  },
+  {
+    floor: 2,
+    name: 'Crimson-Eyed Stalker',
+    subtitle: 'Ruined Tower Perimeter',
+    maxHp: 100,
+    image: worldAsset('boss_2.jpg', BOSS_MANTIS_IMG),
+    bgImage: WORLD_BACKGROUNDS.bg_2,
+  },
+  {
+    floor: 3,
+    name: 'Gnarled Bog Treant',
+    subtitle: 'Mist-Dithered Hollow',
+    maxHp: 100,
+    image: worldAsset('boss_3.jpg', BOSS_MANTIS_IMG),
+    bgImage: WORLD_BACKGROUNDS.bg_3,
+  },
+  {
+    floor: 4,
+    name: 'Chitin Dreadnought',
+    subtitle: 'Deep Hunting Grounds',
+    maxHp: 100,
+    image: worldAsset('boss_4.jpg', BOSS_MANTIS_IMG),
+    bgImage: WORLD_BACKGROUNDS.bg_4,
+  },
+  {
+    floor: 5,
+    name: 'Ember Hound Matriarch',
+    subtitle: 'Ember Caverns',
+    maxHp: 100,
+    image: worldAsset('boss_5.jpg', BOSS_MANTIS_IMG),
+    bgImage: WORLD_BACKGROUNDS.bg_5,
+  },
+  {
+    floor: 6,
+    name: 'Bone-Bark Colossus',
+    subtitle: 'Deep Hunting Grounds',
+    maxHp: 100,
+    image: worldAsset('boss_6.jpg', BOSS_MANTIS_IMG),
+    bgImage: WORLD_BACKGROUNDS.bg_4,
+  },
+  {
+    floor: 7,
+    name: 'Mirror-Eyed Serpent',
+    subtitle: 'Mist-Dithered Hollow',
+    maxHp: 100,
+    image: worldAsset('boss_7.jpg', BOSS_MANTIS_IMG),
+    bgImage: WORLD_BACKGROUNDS.bg_3,
+  },
+  {
+    floor: 8,
+    name: 'Storm-Hide Boar',
+    subtitle: 'Ruined Tower Perimeter',
+    maxHp: 100,
+    image: worldAsset('boss_8.jpg', BOSS_MANTIS_IMG),
+    bgImage: WORLD_BACKGROUNDS.bg_2,
+  },
+];
+
+export function getWeeklyBossForWeek(weekNumber: number): WeeklyBossDef {
   const idx = Math.max(0, (weekNumber - 1) % WEEKLY_BOSSES.length);
   return WEEKLY_BOSSES[idx];
 }
@@ -424,8 +555,11 @@ export function getLevelInfo(xp: number, weeklyClears: number) {
 }
 
 export interface WeeklyChallengeSummary {
+  bossFloor: number;
   bossName: string;
   bossSubtitle: string;
+  bossImage: string;
+  bossBgImage: string;
   completedWorkouts: number;
   targetWorkouts: number;
   nutritionDaysHit: number;
@@ -501,8 +635,11 @@ export function computeWeeklyChallengeProgress(params: {
   const isBossSlain = overallPct >= 85;
 
   return {
+    bossFloor: boss.floor,
     bossName: boss.name,
     bossSubtitle: boss.subtitle,
+    bossImage: boss.image,
+    bossBgImage: boss.bgImage,
     completedWorkouts,
     targetWorkouts,
     nutritionDaysHit,
@@ -542,8 +679,8 @@ export function buildDefaultCrawlerState(
     clearedWeekKeys: [],
     sfxEnabled: true,
     crawlerName: defaultName.slice(0, 32) || 'Crawler',
-    crawlerClass: 'Primal Brawler',
-    crawlerMotto: 'You will not break me.',
+    crawlerClass: 'Ironclad Vanguard',
+    crawlerMotto: 'Steel yourself. One more set.',
     bannerTheme: 'amber',
     guildId: '',
     guildName: '',
@@ -686,12 +823,14 @@ export function applyCrawlerProgressionUpdate(params: {
     }
   };
 
-  // Evaluate all 6 achievements
+  // Evaluate all achievements
   if (rewardedSet.size >= 1) grantAchievement('ach_first_blood');
   if (hasWellFedDay) grantAchievement('ach_well_fed');
   if (currentStreak >= 7) grantAchievement('ach_torchbearer');
   if (hasIronStomachWeek) grantAchievement('ach_iron_stomach');
+  if (currentStreak >= 14) grantAchievement('ach_fortnight_will');
   if (weeklyClears >= 4) grantAchievement('ach_mantis_slayer');
+  if (weeklyClears >= 8) grantAchievement('ach_floor_conqueror');
 
   const preLevel = getLevelInfo(nextXp, weeklyClears).current;
   if (preLevel.level >= 6 && totalCompletedWorkouts >= 25) {
@@ -739,7 +878,7 @@ export function applyCrawlerProgressionUpdate(params: {
     clearedWeekKeys: Array.from(clearedWeekKeys).slice(0, 60),
     sfxEnabled: state.sfxEnabled,
     crawlerName: state.crawlerName ?? 'Crawler',
-    crawlerClass: state.crawlerClass ?? 'Primal Brawler',
+    crawlerClass: state.crawlerClass ?? 'Ironclad Vanguard',
     crawlerMotto: state.crawlerMotto ?? '',
     bannerTheme: state.bannerTheme ?? 'amber',
     guildId: state.guildId ?? '',

@@ -7,6 +7,7 @@ import {
   BANNER_THEME_STYLES,
   CRAWLER_ACHIEVEMENTS,
   CRAWLER_GEAR_CATALOG,
+  getGearIconUrl,
   getLevelInfo,
   HUNTING_GROUNDS_BG,
 } from '../lib/crawlerEngine';
@@ -198,34 +199,52 @@ export const CrawlerProfileModal: React.FC<Props> = ({
                 { label: t('Armor'), item: armorDef },
                 { label: t('Headgear & Relic'), item: accDef },
                 { label: t('Stage Aura'), item: auraDef },
-              ].map(({ label, item }) => (
-                <div
-                  key={label}
-                  className="p-3 rounded-lg bg-[#0e141d] border border-[#253247]"
-                >
-                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
-                    <span>{label}</span>
-                    {item && (
-                      <span className="font-mono uppercase text-amber-300">{t(item.rarity)}</span>
+              ].map(({ label, item }) => {
+                const iconUrl = item ? getGearIconUrl(item.id) : undefined;
+                return (
+                  <div
+                    key={label}
+                    className="p-3 rounded-lg bg-[#0e141d] border border-[#253247] flex items-start gap-3"
+                  >
+                    {iconUrl && (
+                      <div className="w-11 h-11 rounded-md border border-[#253247] bg-[#0b1017] shrink-0 overflow-hidden flex items-center justify-center">
+                        <img
+                          src={iconUrl}
+                          alt=""
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-contain pixel-art"
+                        />
+                      </div>
                     )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
+                        <span>{label}</span>
+                        {item && (
+                          <span className="font-mono uppercase text-amber-300">{t(item.rarity)}</span>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-slate-100 mt-1">
+                        {item ? t(item.name) : t('Default Starter')}
+                      </p>
+                      {item && (
+                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                          {t(item.description)}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm font-semibold text-slate-100 mt-1">
-                    {item ? t(item.name) : t('Default Starter')}
-                  </p>
-                  {item && (
-                    <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                      {t(item.description)}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Achievements */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2.5">
-              {t('Achievements ({n}/6)', { n: crawler.unlockedAchievementIds.length })}
+              {t('Achievements ({n}/{total})', {
+                n: crawler.unlockedAchievementIds.length,
+                total: CRAWLER_ACHIEVEMENTS.length,
+              })}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {CRAWLER_ACHIEVEMENTS.map((ach) => {

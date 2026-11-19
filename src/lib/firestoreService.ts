@@ -988,9 +988,9 @@ function buildCrawlerStatePayload(
       'Crawler'
     ),
     crawlerClass: sanitizeString(
-      state.crawlerClass || 'Primal Brawler',
+      state.crawlerClass || 'Ironclad Vanguard',
       SCHEMA_LIMITS.CRAWLER_CLASS_MAX,
-      'Primal Brawler'
+      'Ironclad Vanguard'
     ),
     crawlerMotto: sanitizeString(
       state.crawlerMotto ?? '',

@@ -50,11 +50,15 @@ import {
 import { initializeUserWorkspace } from './lib/seedData';
 import {
   applyCrawlerProgressionUpdate,
+  BOSS_MANTIS_IMG,
   buildDefaultCrawlerState,
   computeWeeklyChallengeProgress,
   CRAWLER_LEVELS,
   getLevelInfo,
+  getLootChestImg,
+  HUNTING_GROUNDS_BG,
   playRetroSfx,
+  WeeklyChallengeSummary,
 } from './lib/crawlerEngine';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './components/AuthGate';
@@ -389,11 +393,14 @@ function WorkspaceShell() {
     );
   }, [crawlerDoc, user?.uid, user?.displayName, profile?.displayName]);
 
-  const weeklySummary = useMemo(() => {
+  const weeklySummary: WeeklyChallengeSummary = useMemo(() => {
     if (!profile) {
       return {
+        bossFloor: 1,
         bossName: 'Razor Mantis Alpha',
         bossSubtitle: 'Twilight Thicket Ambush',
+        bossImage: BOSS_MANTIS_IMG,
+        bossBgImage: HUNTING_GROUNDS_BG,
         completedWorkouts: 0,
         targetWorkouts: 4,
         nutritionDaysHit: 0,
@@ -673,7 +680,7 @@ function WorkspaceShell() {
     if (!user || !profile || !crawlerDoc) return;
     const sig = JSON.stringify([
       crawlerDoc.crawlerName || profile.displayName,
-      crawlerDoc.crawlerClass || 'Primal Brawler',
+      crawlerDoc.crawlerClass || 'Ironclad Vanguard',
       crawlerDoc.crawlerMotto || '',
       crawlerDoc.bannerTheme || 'amber',
       crawlerDoc.xp,
@@ -770,7 +777,7 @@ function WorkspaceShell() {
         <div className="max-w-xl w-full bg-[#131a24] border-2 border-[#2a384e] rounded-xl p-8 shadow-2xl">
           <div className="flex items-start justify-between gap-3">
             <p className="font-pixel text-xs text-amber-400 mb-3">
-              {t('FLOOR 3 · THE HUNTING GROUNDS')}
+              {t('THE HUNTING GROUNDS')}
             </p>
             <LanguageToggle />
           </div>
@@ -840,7 +847,7 @@ function WorkspaceShell() {
     await saveCrawlerState(user.uid, next, Boolean(crawlerDoc), profile.displayName);
     lastSocialSyncSigRef.current = JSON.stringify([
       next.crawlerName || profile.displayName,
-      next.crawlerClass || 'Primal Brawler',
+      next.crawlerClass || 'Ironclad Vanguard',
       next.crawlerMotto || '',
       next.bannerTheme || 'amber',
       next.xp,
@@ -892,7 +899,7 @@ function WorkspaceShell() {
                 Fitness Crawler
               </span>
               <span className="text-[11px] font-mono text-slate-400">
-                Floor 3 · Lv {effectiveCrawler.level} Crawler
+                {t('Floor {n}', { n: weeklySummary.bossFloor })} · {t('LV {n}', { n: effectiveCrawler.level })} {t('Crawler')}
               </span>
             </div>
           </div>
@@ -947,7 +954,12 @@ function WorkspaceShell() {
                 className="w-full min-h-[40px] px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-400/50 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold flex items-center justify-between gap-2 transition-colors"
               >
                 <span className="inline-flex items-center gap-2">
-                  <PackageOpen className="w-4 h-4 shrink-0" />
+                  <img
+                    src={getLootChestImg(effectiveCrawler.pendingLootBoxes[0])}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="w-4 h-4 rounded-[2px] pixel-art object-cover shrink-0"
+                  />
                   {t('Loot Boxes Ready')}
                 </span>
                 <span className="font-mono">{effectiveCrawler.pendingLootBoxes.length}</span>
@@ -1201,7 +1213,7 @@ function WorkspaceShell() {
         </main>
       </div>
 
-      {/* System AI Reward / Loot / Achievement Toast */}
+      {/* Dungeon Reward / Loot / Achievement Toast */}
       {rewardToast && (
         <div
           role="status"
@@ -1216,7 +1228,7 @@ function WorkspaceShell() {
                     ? t('LEVEL UP! LV {n}', { n: rewardToast.leveledUpTo })
                     : rewardToast.isCrit
                     ? t('2X CRITICAL DISCIPLINE!')
-                    : t('SYSTEM AI REWARD')}
+                    : t('DUNGEON REWARD')}
                 </span>
                 <span className="text-xs font-mono font-bold text-emerald-400 tabular-nums">
                   +{rewardToast.xpAdded} XP
@@ -1252,7 +1264,16 @@ function WorkspaceShell() {
               }}
               className="w-full min-h-[36px] px-3 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md inline-flex items-center justify-center gap-1.5 transition-colors"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              {rewardToast.newLootBox ? (
+                <img
+                  src={getLootChestImg(rewardToast.newLootBox)}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="w-4 h-4 rounded-[2px] pixel-art object-cover"
+                />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
               {rewardToast.newLootBox
                 ? t('Open {tier} Loot Box', { tier: t(rewardToast.newLootBox).toUpperCase() })
                 : t('Inspect New Sprite & Gear')}

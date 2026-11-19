@@ -61,7 +61,7 @@ export const AuthGate: React.FC = () => {
         <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-center">
             <p className="font-pixel text-xs text-emerald-400 mb-3">
-              {t('FLOOR 3 · THE HUNTING GROUNDS')}
+              {t('THE HUNTING GROUNDS')}
             </p>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight mb-4 [text-wrap:balance]">
               {t('Enter the dungeon. Train, prep your meals, and level up your crawler.')}
