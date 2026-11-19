@@ -15,10 +15,10 @@ const SEX_OPTIONS: { key: Sex; label: string }[] = [
   { key: 'unspecified', label: 'Prefer not to say' },
 ];
 
+// 'neutral' (Non-binary) is kept in CrawlerStyle for backwards compatibility and hidden from the UI while its sprites are reworked.
 export const STYLE_OPTIONS: { key: CrawlerStyle; label: string }[] = [
   { key: 'masculine', label: 'Masculine' },
   { key: 'feminine', label: 'Feminine' },
-  { key: 'neutral', label: 'Non-binary' },
 ];
 
 export function Segmented<T extends string>({
@@ -34,7 +34,11 @@ export function Segmented<T extends string>({
 }) {
   const t = useT();
   return (
-    <div role="radiogroup" aria-label={label} className="grid grid-cols-3 gap-1.5">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={`grid gap-1.5 ${options.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}
+    >
       {options.map((o) => (
         <button
           key={o.key}

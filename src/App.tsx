@@ -110,7 +110,7 @@ function WorkspaceShell() {
   const [initializingWorkspace, setInitializingWorkspace] = useState(false);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [onboardSex, setOnboardSex] = useState<Sex>('unspecified');
-  const [onboardStyle, setOnboardStyle] = useState<CrawlerStyle>('neutral');
+  const [onboardStyle, setOnboardStyle] = useState<CrawlerStyle>('masculine');
 
   const [workouts, setWorkouts] = useState<WorkoutDay[]>([]);
   const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
