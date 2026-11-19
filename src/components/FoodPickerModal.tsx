@@ -6,6 +6,7 @@ import {
   foldText,
   formatFoodTitle,
   macrosForGrams,
+  pluralUnit,
   STARTER_FOODS,
 } from '../lib/foodDb';
 import { useT } from '../lib/i18n';
@@ -43,7 +44,8 @@ export const FoodPickerModal: React.FC<Props> = ({
   const t = useT();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Food | null>(null);
-  const [grams, setGrams] = useState(100);
+  const [amount, setAmount] = useState(100);
+  const [useUnit, setUseUnit] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newKcal, setNewKcal] = useState(0);
@@ -57,7 +59,8 @@ export const FoodPickerModal: React.FC<Props> = ({
     if (target) {
       setSearch('');
       setSelected(null);
-      setGrams(100);
+      setAmount(100);
+      setUseUnit(false);
       setCreating(false);
       setError(null);
     }
@@ -73,7 +76,8 @@ export const FoodPickerModal: React.FC<Props> = ({
 
   const pick = (food: Food) => {
     setSelected(food);
-    setGrams(food.unit?.grams ?? 100);
+    setUseUnit(Boolean(food.unit));
+    setAmount(food.unit ? 1 : 100);
     setError(null);
   };
 
@@ -115,10 +119,12 @@ export const FoodPickerModal: React.FC<Props> = ({
       setCreating(false);
     });
 
+  const grams = selected ? (useUnit && selected.unit ? amount * selected.unit.grams : amount) : 0;
+
   const handleConfirm = () => {
     if (!selected || grams <= 0) return;
     const macros = macrosForGrams(selected, grams);
-    const title = formatFoodTitle(selected, grams);
+    const title = formatFoodTitle(selected, grams, useUnit ? amount : undefined);
     return run(async () => {
       if (target.kind === 'replace') {
         await updateMealLog(uid, target.meal.id, {
@@ -311,28 +317,41 @@ export const FoodPickerModal: React.FC<Props> = ({
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">{t('Amount (g)')}</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={2000}
-                  value={grams}
-                  onChange={(e) => setGrams(Number(e.target.value))}
-                  className={`${inputCls} font-mono tabular-nums`}
-                />
+                <label className="block text-xs font-medium text-slate-300 mb-1">{t('Amount')}</label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0.25}
+                    step={useUnit ? 0.5 : 1}
+                    max={2000}
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                    className={`${inputCls} font-mono tabular-nums`}
+                  />
+                  <select
+                    aria-label={t('Unit')}
+                    value={useUnit ? 'unit' : 'base'}
+                    onChange={(e) => {
+                      const toUnit = e.target.value === 'unit';
+                      setUseUnit(toUnit);
+                      setAmount(toUnit ? 1 : selected.unit?.grams ?? 100);
+                    }}
+                    className={`${inputCls} w-auto`}
+                  >
+                    <option value="base">{selected.base ?? 'g'}</option>
+                    {selected.unit && (
+                      <option value="unit">{pluralUnit(selected.unit.label, 2)}</option>
+                    )}
+                  </select>
+                </div>
                 {selected.unit && (
-                  <div className="flex gap-1.5 mt-2">
-                    {[1, 2, 3].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setGrams(selected.unit!.grams * n)}
-                        className="px-2.5 py-1 text-[11px] text-slate-200 bg-[#1a2332] border border-[#2d3c54] hover:border-emerald-400 rounded-md"
-                      >
-                        {n} {selected.unit!.label} ({selected.unit!.grams * n}g)
-                      </button>
-                    ))}
-                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1.5">
+                    {t('1 {unit} ≈ {n}{base}', {
+                      unit: selected.unit.label,
+                      n: selected.unit.grams,
+                      base: selected.base ?? 'g',
+                    })}
+                  </p>
                 )}
               </div>
               <div className="grid grid-cols-4 gap-2 text-center bg-[#0e141d] border border-[#2d3c54] rounded-lg p-3 font-mono tabular-nums">
