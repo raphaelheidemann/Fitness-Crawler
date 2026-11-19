@@ -31,7 +31,7 @@ import {
 } from '../types';
 import { Food } from '../lib/foodDb';
 import { useT } from '../lib/i18n';
-import { DietChefCorner } from './DietChefCorner';
+import { GuideCorner } from './GuideCorner';
 import {
   createMealLog,
   deleteMealLog,
@@ -316,7 +316,7 @@ export const DietPlanView: React.FC<Props> = ({
 
   return (
     <div className="space-y-5">
-      <DietChefCorner crawler={crawler} fallbackStyle={profile.crawlerStyle} cheer={cheer} />
+      <GuideCorner cheer={cheer} />
       {/* Header */}
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
         <div>

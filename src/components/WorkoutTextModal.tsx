@@ -4,7 +4,7 @@ import { ExerciseItem } from '../types';
 import { useT } from '../lib/i18n';
 import { defaultCardio } from '../lib/sanitize';
 import { saveWorkoutPlan } from '../lib/firestoreService';
-import { buildWorkoutText, parseWorkoutText } from '../lib/workoutText';
+import { buildSessionText, buildWorkoutText, parseWorkoutText } from '../lib/workoutText';
 
 interface Props {
   mode: 'export' | 'import' | null;
@@ -14,6 +14,11 @@ interface Props {
   workoutName?: string;
   exercises?: ExerciseItem[];
   unit?: string;
+  /** export of a done session: when it happened and how long it took */
+  performedAt?: Date;
+  durationSec?: number;
+  /** true when performedAt includes a trustworthy clock time */
+  withTime?: boolean;
   /** import: called after the plans were saved */
   onImported?: (count: number) => void;
 }
@@ -25,6 +30,9 @@ export const WorkoutTextModal: React.FC<Props> = ({
   workoutName = '',
   exercises = [],
   unit = 'kg',
+  performedAt,
+  durationSec,
+  withTime,
   onImported,
 }) => {
   const t = useT();
@@ -33,14 +41,35 @@ export const WorkoutTextModal: React.FC<Props> = ({
   const [name, setName] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const hasDone = exercises.some((e) => (e.setLog ? e.setLog.some((s) => s.done) : e.completed));
+  const [kind, setKind] = useState<'log' | 'plan'>('log');
 
   useEffect(() => {
     if (!mode) return;
     setNotice(null);
     setSaving(false);
     setName('');
-    setText(mode === 'export' ? buildWorkoutText(workoutName, exercises, unit) : '');
+    setKind(hasDone ? 'log' : 'plan');
   }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (mode !== 'export') {
+      if (mode === 'import') setText('');
+      return;
+    }
+    setText(
+      kind === 'log'
+        ? buildSessionText({
+            name: workoutName,
+            exercises,
+            unit,
+            date: performedAt ?? new Date(),
+            durationSec,
+            withTime,
+          })
+        : buildWorkoutText(workoutName, exercises, unit)
+    );
+  }, [mode, kind]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const parsed = useMemo(() => (mode === 'import' ? parseWorkoutText(text) : []), [mode, text]);
   const found = parsed.reduce((n, w) => n + w.exercises.length, 0);
@@ -116,9 +145,28 @@ export const WorkoutTextModal: React.FC<Props> = ({
         </div>
 
         <div className="p-4 overflow-y-auto space-y-3">
+          {isExport && (
+            <div className="inline-flex rounded-lg border border-[#2d3c54] bg-[#0e141d] p-1 text-xs">
+              {(['log', 'plan'] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  disabled={k === 'log' && !hasDone}
+                  onClick={() => setKind(k)}
+                  className={`px-3 py-2 rounded-md disabled:opacity-40 ${
+                    kind === k ? 'bg-amber-400 text-slate-950 font-semibold' : 'text-slate-300'
+                  }`}
+                >
+                  {k === 'log' ? t('What I did (sets, load, RPE)') : t('Plan (to import)')}
+                </button>
+              ))}
+            </div>
+          )}
           <p className="text-xs text-slate-400">
             {isExport
-              ? t('One exercise per line. Send it to someone: they paste it in Import from text.')
+              ? kind === 'log'
+                ? t('Every set done, with load and RPE. Send it to your coach or AI trainer.')
+                : t('One exercise per line. Send it to someone: they paste it in Import from text.')
               : t('Paste a workout, one exercise per line, like "Supino com Barra - 3x10 - 40 kg".')}
           </p>
 

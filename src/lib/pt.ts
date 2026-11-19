@@ -1325,4 +1325,11 @@ export const PT: Record<string, string> = {
   'INT · Fat': 'INT · Gordura',
   '{n} {unit} over': '{n} {unit} acima',
   '{n} {unit} left': 'faltam {n} {unit}',
+  'What I did (sets, load, RPE)': 'O que eu fiz (séries, carga, RPE)',
+  'Plan (to import)': 'Plano (para importar)',
+  'Every set done, with load and RPE. Send it to your coach or AI trainer.': 'Cada série feita, com carga e RPE. Envie para seu personal ou agente de treino.',
+  'Nice one!': 'Mandou bem!',
+  'Fuel acquired!': 'Combustível garantido!',
+  'Level up your plate!': 'Prato nível up!',
+  'Stats rising!': 'Status subindo!',
 };
