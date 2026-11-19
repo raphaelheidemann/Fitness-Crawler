@@ -27,29 +27,6 @@ export const CRAWLER_SPRITES: Record<1 | 2 | 3 | 4, string> = {
   4: '/src/assets/images/crawler_tier_4_warden_1795014580315.jpg',
 };
 
-export const CRAWLER_SPRITES_FEMININE: Record<1 | 2 | 3 | 4, string> = {
-  1: '/src/assets/images/crawler_f_t1_1795079882457.jpg',
-  2: '/src/assets/images/crawler_f_t2_1795079880024.jpg',
-  3: '/src/assets/images/crawler_f_t3_1795079880961.jpg',
-  4: '/src/assets/images/crawler_f_t4_1795079881442.jpg',
-};
-
-export const CRAWLER_SPRITES_NEUTRAL: Record<1 | 2 | 3 | 4, string> = {
-  1: '/src/assets/images/crawler_n_t1_1795079882106.jpg',
-  2: '/src/assets/images/crawler_n_t2_1795079884193.jpg',
-  3: '/src/assets/images/crawler_n_t3_1795079884006.jpg',
-  4: '/src/assets/images/crawler_n_t4_1795079883922.jpg',
-};
-
-export const CRAWLER_SPRITES_BY_STYLE: Record<CrawlerStyle, Record<1 | 2 | 3 | 4, string>> = {
-  masculine: CRAWLER_SPRITES,
-  feminine: CRAWLER_SPRITES_FEMININE,
-  neutral: CRAWLER_SPRITES_NEUTRAL,
-};
-
-export const crawlerSprite = (tier: number, style: CrawlerStyle = 'neutral'): string | undefined =>
-  (CRAWLER_SPRITES_BY_STYLE[style] as Record<number, string>)[tier];
-
 export const CRAWLER_CLASS_PRESETS = [
   'Primal Brawler',
   'Iron Vanguard',
