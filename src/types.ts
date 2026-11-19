@@ -39,6 +39,13 @@ export interface CardioLog {
   completed: boolean;
 }
 
+export interface SetLog {
+  reps: number;
+  load: number;
+  rpe: number; // 0 = not rated
+  done: boolean;
+}
+
 export interface ExerciseItem {
   id: string;
   name: string;
@@ -49,6 +56,7 @@ export interface ExerciseItem {
   rpe: number;
   completed: boolean;
   restSeconds?: number;
+  setLog?: SetLog[]; // one entry per set; absent on legacy exercises
   muscleGroup?: string;
   imageUrl?: string;
   notes?: string;
@@ -66,6 +74,9 @@ export interface ExerciseCatalogItem {
   instructions: string[];
 }
 
+export type Sex = 'male' | 'female' | 'unspecified';
+export type CrawlerStyle = 'masculine' | 'feminine' | 'neutral';
+
 export interface UserProfile {
   ownerId: string;
   displayName: string;
@@ -81,6 +92,8 @@ export interface UserProfile {
   weeklyWorkoutTarget: number;
   mealsPerDay?: number;
   dailyWaterGoalMl?: number;
+  sex?: Sex; // drives BMR; 'unspecified' uses the average of both formulas
+  crawlerStyle?: CrawlerStyle;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -345,6 +358,7 @@ export interface CrawlerState {
   guildId?: string;
   guildName?: string;
   isPublicProfile?: boolean;
+  look?: string; // encoded appearance, see lib/crawlerLook
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -371,6 +385,7 @@ export interface PublicCrawler {
   guildId: string;
   guildName: string;
   isPublic: boolean;
+  look?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -409,6 +424,7 @@ export interface GuildMember {
   equippedAura: string;
   unlockedAchievementIds: string[];
   unlockedGearCount: number;
+  look?: string;
   joinedAt?: unknown;
   updatedAt?: unknown;
 }

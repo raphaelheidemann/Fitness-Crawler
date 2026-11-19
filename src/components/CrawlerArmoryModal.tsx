@@ -11,10 +11,14 @@ import {
   UserCog,
   X,
 } from 'lucide-react';
+import { AppearanceEditor } from './AppearanceEditor';
+import { CrawlerSprite } from './CrawlerSprite';
+import { encodeLook, parseLook } from '../lib/crawlerLook';
 import {
   BANNER_THEME_OPTIONS,
   BannerTheme,
   CrawlerState,
+  CrawlerStyle,
   GearSlot,
   LootBoxTier,
   SCHEMA_LIMITS,
@@ -25,7 +29,6 @@ import {
   CRAWLER_CLASS_PRESETS,
   CRAWLER_GEAR_CATALOG,
   CRAWLER_LEVELS,
-  CRAWLER_SPRITES,
   GearItemDef,
   getLevelInfo,
   LOOT_CHEST_IMG,
@@ -40,6 +43,7 @@ interface Props {
   initialTab?: ArmoryTab;
   onClose: () => void;
   crawler: CrawlerState;
+  spriteStyle?: CrawlerStyle;
   onUpdateCrawler: (next: Omit<CrawlerState, 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
@@ -63,6 +67,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
   initialTab = 'armory',
   onClose,
   crawler,
+  spriteStyle,
   onUpdateCrawler,
 }) => {
   const t = useT();
@@ -82,6 +87,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
   const [isPublicProfile, setIsPublicProfile] = useState(crawler.isPublicProfile ?? false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSavedMsg, setProfileSavedMsg] = useState<string | null>(null);
+  const [lookDraft, setLookDraft] = useState(() => parseLook(crawler.look, spriteStyle));
 
   React.useEffect(() => {
     if (open) {
@@ -92,6 +98,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
       setCrawlerMotto(crawler.crawlerMotto || '');
       setBannerTheme(crawler.bannerTheme ?? 'amber');
       setIsPublicProfile(crawler.isPublicProfile ?? false);
+      setLookDraft(parseLook(crawler.look, spriteStyle));
       setProfileSavedMsg(null);
     }
   }, [
@@ -102,6 +109,8 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
     crawler.crawlerMotto,
     crawler.bannerTheme,
     crawler.isPublicProfile,
+    crawler.look,
+    spriteStyle,
   ]);
 
   if (!open) return null;
@@ -109,8 +118,6 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
   const { current } = getLevelInfo(crawler.xp, crawler.weeklyClears);
   const maxUnlockedSpriteTier = current.spriteTier;
   const themeStyle = BANNER_THEME_STYLES[bannerTheme];
-  const previewSprite =
-    CRAWLER_SPRITES[crawler.equippedSpriteTier] ?? CRAWLER_SPRITES[current.spriteTier];
   const previewAuraBorder =
     AURA_BORDER_PREVIEW[crawler.equippedAura] ?? AURA_BORDER_PREVIEW.aur_none;
 
@@ -132,6 +139,7 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
         crawlerMotto: cleanMotto,
         bannerTheme,
         isPublicProfile,
+        look: encodeLook(lookDraft),
       });
       setProfileSavedMsg(t('Crawler identity updated and synced to rankings.'));
     } finally {
@@ -284,10 +292,10 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                 <div
                   className={`w-20 h-20 rounded-lg border-2 bg-[#0d1117] overflow-hidden shrink-0 flex items-center justify-center ${previewAuraBorder}`}
                 >
-                  <img
-                    src={previewSprite}
+                  <CrawlerSprite
+                    tier={crawler.equippedSpriteTier}
+                    lookOverride={lookDraft}
                     alt={crawlerName || t('Crawler Preview')}
-                    referrerPolicy="no-referrer"
                     className="w-full h-full object-contain pixel-art animate-crawler-idle"
                   />
                 </div>
@@ -415,6 +423,8 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                 </div>
               </div>
 
+              <AppearanceEditor look={lookDraft} onChange={setLookDraft} />
+
               <label className="flex items-start gap-3 p-3.5 rounded-lg border border-[#26344a] bg-[#0f151e] cursor-pointer">
                 <input
                   type="checkbox"
@@ -492,10 +502,11 @@ export const CrawlerArmoryModal: React.FC<Props> = ({
                         }`}
                       >
                         <div className="w-20 h-20 rounded bg-[#0d1117] flex items-center justify-center overflow-hidden">
-                          <img
-                            src={CRAWLER_SPRITES[tierNum]}
+                          <CrawlerSprite
+                            tier={tierNum}
+                            look={crawler.look}
+                            fallbackStyle={spriteStyle}
                             alt={t(tierLabel)}
-                            referrerPolicy="no-referrer"
                             className={`w-full h-full object-contain pixel-art ${
                               unlocked ? '' : 'grayscale contrast-75 opacity-40'
                             }`}

@@ -7,6 +7,7 @@ import {
   Database,
   Dumbbell,
   Footprints,
+  Gauge,
   Layers,
   Pencil,
   Play,
@@ -27,6 +28,7 @@ import {
   ExerciseItem,
   MealLog,
   SCHEMA_LIMITS,
+  SetLog,
   UserProfile,
   WorkoutDay,
   WorkoutPlan,
@@ -48,6 +50,7 @@ import {
   upsertWorkoutDay,
 } from '../lib/firestoreService';
 import { ExercisePickerModal, formatMuscleLabel } from './ExercisePickerModal';
+import { RpePicker } from './RpePicker';
 import { RestTimerBar, playRestCompleteChime } from './RestTimerBar';
 import { WorkoutPlanModal } from './WorkoutPlanModal';
 import { WorkoutTemplatesModal } from './WorkoutTemplatesModal';
@@ -116,6 +119,31 @@ const PreviewPhoto: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
     />
   );
 };
+
+function getSetRows(ex: ExerciseItem): SetLog[] {
+  if (ex.setLog && ex.setLog.length > 0) return ex.setLog;
+  const parsed = parseInt(ex.reps, 10);
+  const reps = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  const load = ex.actualLoad > 0 ? ex.actualLoad : ex.targetLoad;
+  return Array.from({ length: Math.max(1, ex.sets) }, () => ({
+    reps,
+    load,
+    rpe: 0,
+    done: ex.completed,
+  }));
+}
+
+function withSetRows(ex: ExerciseItem, rows: SetLog[]): ExerciseItem {
+  const last = [...rows].reverse().find((r) => r.done);
+  return {
+    ...ex,
+    setLog: rows,
+    sets: rows.length,
+    actualLoad: last ? last.load : ex.actualLoad,
+    rpe: last && last.rpe > 0 ? last.rpe : ex.rpe,
+    completed: rows.every((r) => r.done),
+  };
+}
 
 interface Props {
   uid: string;
@@ -210,6 +238,7 @@ export const GymPlanView: React.FC<Props> = ({
     initialQuery: '',
   });
   const [previewExerciseIdx, setPreviewExerciseIdx] = useState<number | null>(null);
+  const [rpeTarget, setRpeTarget] = useState<{ idx: number; setIdx: number } | null>(null);
 
   // Rest Timer state
   const [timerExerciseName, setTimerExerciseName] = useState('');
@@ -277,6 +306,23 @@ export const GymPlanView: React.FC<Props> = ({
     setSaveFeedback(null);
     setPreviewExerciseIdx(null);
   }, [existingDayDoc, selectedDay, selectedWeek]);
+
+  // Most recent earlier session's finished sets, keyed by exercise name
+  const previousByName = useMemo(() => {
+    const map = new Map<string, SetLog[]>();
+    const key = (w: WorkoutDay) => w.weekNumber * 7 + w.dayIndex;
+    const current = selectedWeek * 7 + selectedDay;
+    workouts
+      .filter((w) => key(w) < current)
+      .sort((a, b) => key(a) - key(b))
+      .forEach((w) =>
+        w.exercises.forEach((ex) => {
+          const done = getSetRows(ex).filter((r) => r.done);
+          if (ex.name && done.length > 0) map.set(ex.name.trim().toLowerCase(), done);
+        })
+      );
+    return map;
+  }, [workouts, selectedWeek, selectedDay]);
 
   const sessionVolume = useMemo(() => computeExerciseVolume(exercises), [exercises]);
   const weekVolume = useMemo(
@@ -363,6 +409,46 @@ export const GymPlanView: React.FC<Props> = ({
   ) => {
     setExercises((prev) =>
       prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const updateSet = (idx: number, setIdx: number, patch: Partial<SetLog>) => {
+    setExercises((prev) =>
+      prev.map((ex, i) =>
+        i === idx
+          ? withSetRows(
+              ex,
+              getSetRows(ex).map((r, j) => (j === setIdx ? { ...r, ...patch } : r))
+            )
+          : ex
+      )
+    );
+  };
+
+  const toggleSetDone = (idx: number, setIdx: number) => {
+    const ex = exercises[idx];
+    const done = !getSetRows(ex)[setIdx].done;
+    updateSet(idx, setIdx, { done });
+    if (done) startRestTimer(ex.name, ex.restSeconds ?? 90);
+  };
+
+  const addSet = (idx: number) => {
+    setExercises((prev) =>
+      prev.map((ex, i) => {
+        if (i !== idx) return ex;
+        const rows = getSetRows(ex);
+        if (rows.length >= 20) return ex;
+        return withSetRows(ex, [...rows, { ...rows[rows.length - 1], rpe: 0, done: false }]);
+      })
+    );
+  };
+
+  const removeSet = (idx: number) => {
+    setExercises((prev) =>
+      prev.map((ex, i) => {
+        const rows = getSetRows(ex);
+        return i === idx && rows.length > 1 ? withSetRows(ex, rows.slice(0, -1)) : ex;
+      })
     );
   };
 
@@ -1142,233 +1228,19 @@ export const GymPlanView: React.FC<Props> = ({
               </div>
             ) : (
               <>
-                {/* Desktop Table View */}
-                <div className="hidden lg:block overflow-x-auto border border-[#263347] rounded-lg">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-[#0e141d] border-b border-[#263347] text-xs font-medium text-slate-400">
-                        <th className="py-2.5 px-3">{t('Exercise')}</th>
-                        <th className="py-2.5 px-2 text-right w-16">{t('Sets')}</th>
-                        <th className="py-2.5 px-2 text-right w-22">{t('Reps')}</th>
-                        <th className="py-2.5 px-2 text-right w-24">{t('Target ({unit})', { unit: wUnit })}</th>
-                        <th className="py-2.5 px-2 text-right w-24">{t('Actual ({unit})', { unit: wUnit })}</th>
-                        <th className="py-2.5 px-2 text-right w-16">{t('RPE')}</th>
-                        <th className="py-2.5 px-2 text-right w-32">{t('Rest (s)')}</th>
-                        <th className="py-2.5 px-2 text-center w-14">{t('Done')}</th>
-                        <th className="py-2.5 px-2 text-right w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#1e293b] text-sm">
-                      {exercises.map((ex, idx) => {
-                        const restSec = ex.restSeconds ?? 90;
-                        return (
-                          <tr key={ex.id} className="hover:bg-[#17202e]">
-                            <td className="py-2.5 px-3 min-w-[260px]">
-                              <div className="flex items-center gap-2.5">
-                                <ExerciseThumb
-                                  src={ex.imageUrl}
-                                  alt={ex.name || t('Exercise')}
-                                  onClick={() => {
-                                    if (ex.imageUrl) {
-                                      setPreviewExerciseIdx(idx);
-                                    } else {
-                                      setPickerState({
-                                        open: true,
-                                        mode: 'match',
-                                        matchIndex: idx,
-                                        initialQuery: ex.name,
-                                      });
-                                    }
-                                  }}
-                                />
-                                <div className="flex-1 min-w-0 space-y-1">
-                                  <input
-                                    type="text"
-                                    required
-                                    maxLength={80}
-                                    value={ex.name}
-                                    onChange={(e) =>
-                                      handleUpdateExercise(idx, 'name', e.target.value)
-                                    }
-                                    placeholder={t('e.g., Barbell Squat')}
-                                    className="w-full px-2.5 py-1.5 text-sm font-medium text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
-                                  />
-                                  <div className="flex items-center gap-2 text-[11px] text-slate-400 px-0.5">
-                                    <span>
-                                      {ex.muscleGroup
-                                        ? t(formatMuscleLabel(ex.muscleGroup))
-                                        : t('Custom exercise')}
-                                    </span>
-                                    <span aria-hidden="true">·</span>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setPickerState({
-                                          open: true,
-                                          mode: 'match',
-                                          matchIndex: idx,
-                                          initialQuery: ex.name,
-                                        })
-                                      }
-                                      className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 font-medium"
-                                    >
-                                      <Search className="w-3 h-3" />
-                                      {ex.imageUrl ? t('Swap') : t('Match photo')}
-                                    </button>
-                                  </div>
-                                  <input
-                                    type="text"
-                                    maxLength={SCHEMA_LIMITS.EXERCISE_NOTES_MAX}
-                                    value={ex.notes ?? ''}
-                                    onChange={(e) =>
-                                      handleUpdateExercise(idx, 'notes', e.target.value)
-                                    }
-                                    placeholder={t('Cue / last log note...')}
-                                    className="w-full px-2 py-1 text-[11px] text-slate-300 bg-[#0e141d]/70 border border-[#263347] rounded focus:outline-none focus:border-emerald-400"
-                                  />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-2.5 px-2 align-top">
-                              <input
-                                type="number"
-                                min={1}
-                                max={20}
-                                value={ex.sets}
-                                onChange={(e) =>
-                                  handleUpdateExercise(idx, 'sets', Number(e.target.value))
-                                }
-                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
-                              />
-                            </td>
-                            <td className="py-2.5 px-2 align-top">
-                              <input
-                                type="text"
-                                maxLength={24}
-                                value={ex.reps}
-                                onChange={(e) =>
-                                  handleUpdateExercise(idx, 'reps', e.target.value)
-                                }
-                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
-                              />
-                            </td>
-                            <td className="py-2.5 px-2 align-top">
-                              <input
-                                type="number"
-                                step="0.5"
-                                min={0}
-                                max={1000}
-                                value={ex.targetLoad}
-                                onChange={(e) =>
-                                  handleUpdateExercise(
-                                    idx,
-                                    'targetLoad',
-                                    Number(e.target.value)
-                                  )
-                                }
-                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
-                              />
-                            </td>
-                            <td className="py-2.5 px-2 align-top">
-                              <input
-                                type="number"
-                                step="0.5"
-                                min={0}
-                                max={1000}
-                                value={ex.actualLoad}
-                                onChange={(e) =>
-                                  handleUpdateExercise(
-                                    idx,
-                                    'actualLoad',
-                                    Number(e.target.value)
-                                  )
-                                }
-                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
-                              />
-                            </td>
-                            <td className="py-2.5 px-2 align-top">
-                              <input
-                                type="number"
-                                step="0.5"
-                                min={1}
-                                max={10}
-                                value={ex.rpe}
-                                onChange={(e) =>
-                                  handleUpdateExercise(idx, 'rpe', Number(e.target.value))
-                                }
-                                className="w-full px-2 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
-                              />
-                            </td>
-                            <td className="py-2.5 px-2 align-top">
-                              <div className="flex items-center justify-end gap-1">
-                                <input
-                                  type="number"
-                                  step={15}
-                                  min={0}
-                                  max={600}
-                                  aria-label={t('Rest seconds for {name}', { name: ex.name || t('exercise') })}
-                                  value={restSec}
-                                  onChange={(e) =>
-                                    handleUpdateExercise(
-                                      idx,
-                                      'restSeconds',
-                                      Number(e.target.value)
-                                    )
-                                  }
-                                  className="w-16 px-1.5 py-1.5 text-sm text-right font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => startRestTimer(ex.name, restSec)}
-                                  title={t('Start {sec}s rest timer', { sec: restSec })}
-                                  aria-label={t('Start {sec} second rest timer for {name}', {
-                                    sec: restSec,
-                                    name: ex.name || t('exercise'),
-                                  })}
-                                  className="p-1.5 text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-md transition-colors"
-                                >
-                                  <Timer className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                            <td className="py-3 px-2 text-center align-top">
-                              <input
-                                type="checkbox"
-                                checked={ex.completed}
-                                onChange={(e) =>
-                                  handleUpdateExercise(idx, 'completed', e.target.checked)
-                                }
-                                aria-label={t('Mark {name} complete', { name: ex.name || t('exercise') })}
-                                className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
-                              />
-                            </td>
-                            <td className="py-2.5 px-2 text-right align-top">
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveExercise(idx)}
-                                aria-label={t('Remove exercise')}
-                                className="p-1.5 text-slate-400 hover:text-rose-400 rounded-md transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Gym Card View */}
-                <div className="lg:hidden space-y-3">
+                <div className="space-y-4">
                   {exercises.map((ex, idx) => {
                     const restSec = ex.restSeconds ?? 90;
+                    const rows = getSetRows(ex);
+                    const prevRows = previousByName.get(ex.name.trim().toLowerCase());
+                    const cell =
+                      'w-full min-h-[44px] px-1 text-center text-base font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400';
                     return (
                       <div
                         key={ex.id}
-                        className="border border-[#263347] rounded-xl p-3.5 bg-[#0e141d] space-y-3"
+                        className="border border-[#263347] rounded-xl p-3 sm:p-4 bg-[#0e141d] space-y-3"
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-center gap-3">
                           <ExerciseThumb
                             src={ex.imageUrl}
                             alt={ex.name || t('Exercise')}
@@ -1385,24 +1257,24 @@ export const GymPlanView: React.FC<Props> = ({
                               }
                             }}
                           />
-                          <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex-1 min-w-0">
                             <input
                               type="text"
                               required
                               maxLength={80}
                               value={ex.name}
-                              onChange={(e) =>
-                                handleUpdateExercise(idx, 'name', e.target.value)
-                              }
+                              onChange={(e) => handleUpdateExercise(idx, 'name', e.target.value)}
                               placeholder={t('Exercise name')}
-                              className="w-full min-h-[38px] px-2.5 py-1.5 text-sm font-semibold text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                              className="w-full min-h-[38px] px-2.5 py-1.5 text-sm font-semibold text-sky-400 bg-transparent border border-transparent hover:border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
                             />
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                            <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400 px-2.5">
                               <span>
                                 {ex.muscleGroup
                                   ? t(formatMuscleLabel(ex.muscleGroup))
-                                  : t('Custom')}
+                                  : t('Custom exercise')}
                               </span>
+                              <span aria-hidden="true">·</span>
+                              <span>{t('Target: {reps} reps', { reps: ex.reps })}</span>
                               <span aria-hidden="true">·</span>
                               <button
                                 type="button"
@@ -1414,9 +1286,10 @@ export const GymPlanView: React.FC<Props> = ({
                                     initialQuery: ex.name,
                                   })
                                 }
-                                className="text-amber-400 font-medium"
+                                className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 font-medium"
                               >
-                                {ex.imageUrl ? t('Swap image') : t('Match from DB')}
+                                <Search className="w-3 h-3" />
+                                {ex.imageUrl ? t('Swap') : t('Match photo')}
                               </button>
                             </div>
                           </div>
@@ -1430,51 +1303,10 @@ export const GymPlanView: React.FC<Props> = ({
                           </button>
                         </div>
 
-                        <input
-                          type="text"
-                          maxLength={SCHEMA_LIMITS.EXERCISE_NOTES_MAX}
-                          value={ex.notes ?? ''}
-                          onChange={(e) =>
-                            handleUpdateExercise(idx, 'notes', e.target.value)
-                          }
-                          placeholder={t('Progression cue / last load note...')}
-                          className="w-full px-2.5 py-1.5 text-xs text-slate-300 bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                        />
-
-                        <div className="grid grid-cols-3 gap-2">
-                          <div>
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              {t('Sets')}
-                            </label>
-                            <input
-                              type="number"
-                              min={1}
-                              max={20}
-                              value={ex.sets}
-                              onChange={(e) =>
-                                handleUpdateExercise(idx, 'sets', Number(e.target.value))
-                              }
-                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              {t('Reps')}
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={24}
-                              value={ex.reps}
-                              onChange={(e) =>
-                                handleUpdateExercise(idx, 'reps', e.target.value)
-                              }
-                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              {t('Rest (sec)')}
-                            </label>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="inline-flex items-center gap-2 px-3 min-h-[40px] text-xs text-slate-200 bg-[#1a2332] border border-[#2d3c54] rounded-lg">
+                            <Timer className="w-4 h-4 text-emerald-300" />
+                            {t('Rest (sec)')}
                             <input
                               type="number"
                               step={15}
@@ -1482,97 +1314,115 @@ export const GymPlanView: React.FC<Props> = ({
                               max={600}
                               value={restSec}
                               onChange={(e) =>
-                                handleUpdateExercise(
-                                  idx,
-                                  'restSeconds',
-                                  Number(e.target.value)
-                                )
+                                handleUpdateExercise(idx, 'restSeconds', Number(e.target.value))
                               }
-                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                              className="w-14 px-1 py-1 text-sm text-center font-mono tabular-nums text-white bg-[#0e141d] border border-[#2d3c54] rounded-md focus:outline-none focus:border-emerald-400"
                             />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              {t('Target ({unit})', { unit: wUnit })}
-                            </label>
-                            <input
-                              type="number"
-                              step="0.5"
-                              min={0}
-                              max={1000}
-                              value={ex.targetLoad}
-                              onChange={(e) =>
-                                handleUpdateExercise(
-                                  idx,
-                                  'targetLoad',
-                                  Number(e.target.value)
-                                )
-                              }
-                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              {t('Actual ({unit})', { unit: wUnit })}
-                            </label>
-                            <input
-                              type="number"
-                              step="0.5"
-                              min={0}
-                              max={1000}
-                              value={ex.actualLoad}
-                              onChange={(e) =>
-                                handleUpdateExercise(
-                                  idx,
-                                  'actualLoad',
-                                  Number(e.target.value)
-                                )
-                              }
-                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                              {t('RPE')}
-                            </label>
-                            <input
-                              type="number"
-                              step="0.5"
-                              min={1}
-                              max={10}
-                              value={ex.rpe}
-                              onChange={(e) =>
-                                handleUpdateExercise(idx, 'rpe', Number(e.target.value))
-                              }
-                              className="w-full min-h-[40px] px-2.5 py-1.5 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                            />
-                          </div>
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={SCHEMA_LIMITS.EXERCISE_NOTES_MAX}
+                            value={ex.notes ?? ''}
+                            onChange={(e) => handleUpdateExercise(idx, 'notes', e.target.value)}
+                            placeholder={t('Cue / last log note...')}
+                            className="flex-1 min-w-[140px] min-h-[40px] px-2.5 py-1.5 text-xs text-slate-300 bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
+                          />
                         </div>
 
-                        <div className="flex items-center gap-2 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => startRestTimer(ex.name, restSec)}
-                            className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 rounded-lg transition-colors tabular-nums"
-                          >
-                            <Timer className="w-4 h-4" />
-                            {t('Start {sec}s Rest', { sec: restSec })}
-                          </button>
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-[2.25rem_minmax(0,1fr)_3.75rem_3.75rem_2.75rem_2.75rem] sm:grid-cols-[2.5rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-1.5 sm:gap-2 text-[11px] font-medium text-slate-400 text-center uppercase">
+                            <span>{t('Set')}</span>
+                            <span>{t('Previous')}</span>
+                            <span>{wUnit}</span>
+                            <span>{t('Reps')}</span>
+                            <span>{t('RPE')}</span>
+                            <Check className="w-3.5 h-3.5 mx-auto" aria-hidden="true" />
+                          </div>
+                          {rows.map((row, setIdx) => {
+                            const prev = prevRows ? prevRows[setIdx] ?? prevRows[prevRows.length - 1] : undefined;
+                            return (
+                              <div
+                                key={setIdx}
+                                className={`grid grid-cols-[2.25rem_minmax(0,1fr)_3.75rem_3.75rem_2.75rem_2.75rem] sm:grid-cols-[2.5rem_minmax(0,1fr)_5rem_5rem_3rem_3rem] gap-1.5 sm:gap-2 items-center rounded-lg ${
+                                  row.done ? 'bg-emerald-500/10' : ''
+                                }`}
+                              >
+                                <span className="min-h-[44px] inline-flex items-center justify-center text-sm font-semibold text-white bg-[#1a2332] rounded-lg">
+                                  {setIdx + 1}
+                                </span>
+                                <span className="text-[11px] leading-tight text-center text-slate-500 font-mono tabular-nums">
+                                  {prev
+                                    ? `${prev.load}${wUnit} x ${prev.reps}${prev.rpe > 0 ? ` @ ${prev.rpe} rpe` : ''}`
+                                    : '—'}
+                                </span>
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.5"
+                                  min={0}
+                                  max={1000}
+                                  value={row.load || ''}
+                                  placeholder={prev ? String(prev.load) : '0'}
+                                  aria-label={t('Weight ({unit})', { unit: wUnit })}
+                                  onChange={(e) => updateSet(idx, setIdx, { load: Number(e.target.value) })}
+                                  className={cell}
+                                />
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min={0}
+                                  max={999}
+                                  value={row.reps || ''}
+                                  placeholder={prev ? String(prev.reps) : '0'}
+                                  aria-label={t('Reps')}
+                                  onChange={(e) => updateSet(idx, setIdx, { reps: Number(e.target.value) })}
+                                  className={cell}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setRpeTarget({ idx, setIdx })}
+                                  aria-label={t('Set RPE for set {n}', { n: setIdx + 1 })}
+                                  className="min-h-[44px] inline-flex items-center justify-center text-sm font-mono tabular-nums text-slate-300 bg-[#1a2332] border border-[#2d3c54] hover:border-emerald-400 rounded-lg"
+                                >
+                                  {row.rpe > 0 ? row.rpe : <Gauge className="w-4 h-4" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleSetDone(idx, setIdx)}
+                                  aria-label={t('Mark set {n} done', { n: setIdx + 1 })}
+                                  aria-pressed={row.done}
+                                  className={`min-h-[44px] inline-flex items-center justify-center rounded-lg border transition-colors ${
+                                    row.done
+                                      ? 'bg-emerald-400 text-slate-950 border-emerald-400'
+                                      : 'bg-[#1a2332] text-slate-400 border-[#2d3c54] hover:text-white'
+                                  }`}
+                                >
+                                  <Check className="w-5 h-5" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
 
+                        <div className="flex gap-2">
                           <button
                             type="button"
-                            onClick={() =>
-                              handleUpdateExercise(idx, 'completed', !ex.completed)
-                            }
-                            className={`min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-1.5 text-xs font-semibold rounded-lg border transition-colors ${
-                              ex.completed
-                                ? 'bg-emerald-400 text-slate-950 border-emerald-400'
-                                : 'bg-[#1a2332] text-slate-200 border-[#2d3c54] hover:bg-[#233044]'
-                            }`}
+                            onClick={() => addSet(idx)}
+                            disabled={rows.length >= 20}
+                            className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 text-sm font-medium text-slate-200 bg-[#1a2332] hover:bg-[#233044] disabled:opacity-50 rounded-lg"
                           >
-                            <Check className="w-4 h-4" />
-                            {ex.completed ? t('Done') : t('Mark Done')}
+                            <Plus className="w-4 h-4" />
+                            {t('Add set')}
                           </button>
+                          {rows.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeSet(idx)}
+                              className="min-h-[44px] px-4 text-xs font-medium text-slate-400 hover:text-rose-400 bg-[#1a2332] rounded-lg"
+                            >
+                              {t('Remove set')}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1874,9 +1724,17 @@ export const GymPlanView: React.FC<Props> = ({
         onSelectExercise={handleSelectFromCatalog}
       />
 
+      {rpeTarget && exercises[rpeTarget.idx] && (
+        <RpePicker
+          value={getSetRows(exercises[rpeTarget.idx])[rpeTarget.setIdx]?.rpe ?? 0}
+          onChange={(v) => updateSet(rpeTarget.idx, rpeTarget.setIdx, { rpe: v })}
+          onClose={() => setRpeTarget(null)}
+        />
+      )}
+
       {/* Active Floating Rest Timer */}
       {timerSecondsLeft !== null && (
-        <RestTimerBar
+      <RestTimerBar
           exerciseName={timerExerciseName}
           targetSeconds={timerTargetSeconds}
           secondsLeft={timerSecondsLeft}

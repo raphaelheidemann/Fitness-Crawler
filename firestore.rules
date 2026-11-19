@@ -59,7 +59,7 @@ service cloud.firestore {
         'ownerId', 'displayName', 'currentWeek', 'phaseName', 'unitSystem',
         'startDate', 'targetWeight', 'dailyCalorieTarget', 'proteinTargetG',
         'carbsTargetG', 'fatTargetG', 'weeklyWorkoutTarget', 'mealsPerDay',
-        'dailyWaterGoalMl', 'createdAt', 'updatedAt'
+        'dailyWaterGoalMl', 'sex', 'crawlerStyle', 'createdAt', 'updatedAt'
       ])
       && data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId)
       && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
@@ -75,6 +75,8 @@ service cloud.firestore {
       && data.weeklyWorkoutTarget is int && data.weeklyWorkoutTarget >= 1 && data.weeklyWorkoutTarget <= 7
       && (!('mealsPerDay' in data) || (data.mealsPerDay is int && data.mealsPerDay >= 1 && data.mealsPerDay <= 10))
       && (!('dailyWaterGoalMl' in data) || (data.dailyWaterGoalMl is int && data.dailyWaterGoalMl >= 500 && data.dailyWaterGoalMl <= 10000))
+      && (!('sex' in data) || data.sex in ['male', 'female', 'unspecified'])
+      && (!('crawlerStyle' in data) || data.crawlerStyle in ['masculine', 'feminine', 'neutral'])
       && data.createdAt is timestamp
       && data.updatedAt is timestamp;
     }
@@ -305,6 +307,7 @@ service cloud.firestore {
         'rewardedActionKeys', 'clearedWeekKeys', 'sfxEnabled', 'createdAt', 'updatedAt'
       ])
       && data.keys().hasOnly([
+        'look',
         'ownerId', 'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
         'streakFreezes', 'lastActiveDate', 'recoveryQuestActive', 'equippedSpriteTier',
         'equippedWeapon', 'equippedArmor', 'equippedAccessory', 'equippedAura',
@@ -346,6 +349,7 @@ service cloud.firestore {
       && (!('guildId' in data) || (data.guildId is string && (data.guildId == '' || isValidId(data.guildId)) && data.guildId.size() <= 40))
       && (!('guildName' in data) || (data.guildName is string && data.guildName.size() <= 50))
       && (!('isPublicProfile' in data) || data.isPublicProfile is bool)
+      && (!('look' in data) || (data.look is string && data.look.size() <= 24))
       && data.createdAt is timestamp
       && data.updatedAt is timestamp;
     }
@@ -359,6 +363,7 @@ service cloud.firestore {
         'guildId', 'guildName', 'isPublic', 'createdAt', 'updatedAt'
       ])
       && data.keys().hasOnly([
+        'look',
         'ownerId', 'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
         'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
         'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
@@ -370,6 +375,7 @@ service cloud.firestore {
       && data.crawlerClass is string && data.crawlerClass.size() >= 1 && data.crawlerClass.size() <= 32
       && data.crawlerMotto is string && data.crawlerMotto.size() <= 80
       && isValidBannerTheme(data.bannerTheme)
+      && (!('look' in data) || (data.look is string && data.look.size() <= 24))
       && data.xp is int && data.xp >= 0 && data.xp <= 1000000
       && data.level is int && data.level >= 1 && data.level <= 8
       && data.weeklyClears is int && data.weeklyClears >= 0 && data.weeklyClears <= 500
@@ -419,6 +425,7 @@ service cloud.firestore {
         'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount', 'joinedAt', 'updatedAt'
       ])
       && data.keys().hasOnly([
+        'look',
         'ownerId', 'guildId', 'role', 'crawlerName', 'crawlerClass', 'crawlerMotto',
         'bannerTheme', 'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
         'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
@@ -431,6 +438,7 @@ service cloud.firestore {
       && data.crawlerClass is string && data.crawlerClass.size() >= 1 && data.crawlerClass.size() <= 32
       && data.crawlerMotto is string && data.crawlerMotto.size() <= 80
       && isValidBannerTheme(data.bannerTheme)
+      && (!('look' in data) || (data.look is string && data.look.size() <= 24))
       && data.xp is int && data.xp >= 0 && data.xp <= 1000000
       && data.level is int && data.level >= 1 && data.level <= 8
       && data.weeklyClears is int && data.weeklyClears >= 0 && data.weeklyClears <= 500
@@ -472,7 +480,7 @@ service cloud.firestore {
           || incoming().diff(existing()).affectedKeys().hasOnly([
             'displayName', 'currentWeek', 'phaseName', 'unitSystem', 'startDate',
             'targetWeight', 'dailyCalorieTarget', 'proteinTargetG', 'carbsTargetG',
-            'fatTargetG', 'weeklyWorkoutTarget', 'mealsPerDay', 'dailyWaterGoalMl', 'updatedAt'
+            'fatTargetG', 'weeklyWorkoutTarget', 'mealsPerDay', 'dailyWaterGoalMl', 'sex', 'crawlerStyle', 'updatedAt'
           ])
         );
       allow delete: if isEmailVerified() && isValidId(userId) && isOwner(userId);
@@ -774,7 +782,7 @@ service cloud.firestore {
             'unlockedGearIds', 'unlockedAchievementIds', 'pendingLootBoxes',
             'rewardedActionKeys', 'clearedWeekKeys', 'sfxEnabled',
             'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
-            'guildId', 'guildName', 'isPublicProfile', 'updatedAt'
+            'guildId', 'guildName', 'isPublicProfile', 'look', 'updatedAt'
           ]);
         allow delete: if isEmailVerified()
           && isValidId(userId)
@@ -811,7 +819,7 @@ service cloud.firestore {
           'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
           'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
           'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount',
-          'guildId', 'guildName', 'isPublic', 'updatedAt'
+          'guildId', 'guildName', 'isPublic', 'look', 'updatedAt'
         ]);
       allow delete: if isEmailVerified() && isValidId(crawlerId) && isOwner(crawlerId);
     }
@@ -894,7 +902,7 @@ service cloud.firestore {
             'crawlerName', 'crawlerClass', 'crawlerMotto', 'bannerTheme',
             'xp', 'level', 'weeklyClears', 'currentStreak', 'bestStreak',
             'equippedSpriteTier', 'equippedWeapon', 'equippedArmor', 'equippedAccessory',
-            'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount', 'updatedAt'
+            'equippedAura', 'unlockedAchievementIds', 'unlockedGearCount', 'look', 'updatedAt'
           ]);
         allow delete: if isEmailVerified()
           && isValidId(guildId)

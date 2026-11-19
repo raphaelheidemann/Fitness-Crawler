@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useT } from '../lib/i18n';
 import { X } from 'lucide-react';
-import { UnitSystem, UserProfile } from '../types';
+import { Sex, UnitSystem, UserProfile } from '../types';
+import { IdentityFields } from './IdentityFields';
 import { updateUserProfileSettings } from '../lib/firestoreService';
 
 interface Props {
@@ -26,6 +27,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
   const [weeklyWorkoutTarget, setWeeklyWorkoutTarget] = useState(profile.weeklyWorkoutTarget);
   const [mealsPerDay, setMealsPerDay] = useState(profile.mealsPerDay ?? 6);
   const [dailyWaterGoalMl, setDailyWaterGoalMl] = useState(profile.dailyWaterGoalMl ?? 3000);
+  const [sex, setSex] = useState<Sex>(profile.sex ?? 'unspecified');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
       setWeeklyWorkoutTarget(profile.weeklyWorkoutTarget);
       setMealsPerDay(profile.mealsPerDay ?? 6);
       setDailyWaterGoalMl(profile.dailyWaterGoalMl ?? 3000);
+      setSex(profile.sex ?? 'unspecified');
     }
   }, [open, profile]);
 
@@ -68,6 +71,7 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
         weeklyWorkoutTarget,
         mealsPerDay,
         dailyWaterGoalMl,
+        sex,
       });
       onClose();
     } finally {
@@ -317,6 +321,11 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
               </div>
             </div>
           </div>
+
+          <IdentityFields
+            sex={sex}
+            onSexChange={setSex}
+          />
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#253247]">
             <button

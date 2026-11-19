@@ -64,6 +64,15 @@ export function sanitizeExercises(items: ExerciseItem[]): ExerciseItem[] {
       completed: Boolean(ex.completed),
       restSeconds: clampInt(Number(ex.restSeconds ?? 90), 0, 600, 90),
     };
+    if (Array.isArray(ex.setLog) && ex.setLog.length > 0) {
+      clean.setLog = ex.setLog.slice(0, 20).map((st) => ({
+        reps: clampInt(Number(st.reps), 0, 999, 0),
+        load: Number(clampNumber(Number(st.load), 0, 1000, 0).toFixed(1)),
+        rpe: Number(clampNumber(Number(st.rpe), 0, 10, 0).toFixed(1)),
+        done: Boolean(st.done),
+      }));
+      clean.sets = clean.setLog.length;
+    }
     const muscle = sanitizeString(ex.muscleGroup ?? '', 40, '');
     if (muscle) clean.muscleGroup = muscle;
     const img = sanitizeString(ex.imageUrl ?? '', SCHEMA_LIMITS.IMAGE_URL_MAX, '');
@@ -147,6 +156,9 @@ export function formatWaterAmount(ml: number, unitSystem: UnitSystem): string {
 
 export function computeExerciseVolume(exercises: ExerciseItem[]): number {
   return exercises.reduce((total, ex) => {
+    if (ex.setLog && ex.setLog.length > 0) {
+      return total + ex.setLog.reduce((acc, st) => (st.done ? acc + st.reps * st.load : acc), 0);
+    }
     const load = ex.actualLoad > 0 ? ex.actualLoad : ex.targetLoad;
     const parsedReps = parseInt(ex.reps, 10);
     const reps = Number.isFinite(parsedReps) && parsedReps > 0 ? parsedReps : 0;

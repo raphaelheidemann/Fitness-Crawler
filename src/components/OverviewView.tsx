@@ -183,6 +183,7 @@ export const OverviewView: React.FC<Props> = ({
       <HuntingGroundsStage
         crawler={crawler}
         displayName={profile.displayName}
+        spriteStyle={profile.crawlerStyle}
         weekNumber={profile.currentWeek}
         weeklySummary={weeklySummary}
         onOpenArmory={onOpenArmory}

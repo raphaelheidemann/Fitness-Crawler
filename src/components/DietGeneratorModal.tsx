@@ -35,7 +35,7 @@ export const DietGeneratorModal: React.FC<Props> = ({
   mealLogs,
 }) => {
   const t = useT();
-  const [sex, setSex] = useState<Sex>('male');
+  const [sex, setSex] = useState<Sex>(profile.sex ?? 'unspecified');
   const [age, setAge] = useState(30);
   const [heightCm, setHeightCm] = useState(170);
   const [weightKg, setWeightKg] = useState(Math.max(profile.targetWeight, 70));
@@ -86,6 +86,7 @@ export const DietGeneratorModal: React.FC<Props> = ({
           carbsTargetG: targets.carbsG,
           fatTargetG: targets.fatG,
           mealsPerDay: meals,
+          sex,
         });
       }
       onClose();
@@ -132,6 +133,7 @@ export const DietGeneratorModal: React.FC<Props> = ({
               <select value={sex} onChange={(e) => setSex(e.target.value as Sex)} className={inputCls}>
                 <option value="male">{t('Male')}</option>
                 <option value="female">{t('Female')}</option>
+                <option value="unspecified">{t('Prefer not to say')}</option>
               </select>
             </div>
             <div>

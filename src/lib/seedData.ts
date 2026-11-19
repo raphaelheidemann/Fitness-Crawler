@@ -1,6 +1,6 @@
 import { doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { MealSlot, RecipeCategory, SCHEMA_LIMITS } from '../types';
+import { CrawlerStyle, MealSlot, RecipeCategory, SCHEMA_LIMITS, Sex } from '../types';
 import { buildDefaultCrawlerState } from './crawlerEngine';
 import { STARTER_HABITS } from './firestoreService';
 import { sanitizeString, todayIsoDate } from './sanitize';
@@ -17,7 +17,9 @@ function offsetIsoDate(daysAgo: number): string {
 export async function initializeUserWorkspace(
   uid: string,
   displayName: string,
-  includeStarterPlan = true
+  includeStarterPlan = true,
+  sex: Sex = 'unspecified',
+  crawlerStyle: CrawlerStyle = 'neutral'
 ): Promise<void> {
   const path = `users/${uid}`;
   try {
@@ -39,6 +41,8 @@ export async function initializeUserWorkspace(
       weeklyWorkoutTarget: 5,
       mealsPerDay: 6,
       dailyWaterGoalMl: 3000,
+      sex,
+      crawlerStyle,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -157,8 +161,9 @@ export async function initializeUserWorkspace(
         },
       ];
 
-      recipes.forEach((rec) => {
-        batch.set(doc(db, 'users', uid, 'recipes', rec.id), {
+      recipes.forEach(({ id, ...rec }) => {
+        // firestore.rules rejects an `id` field: the id lives in the doc path
+        batch.set(doc(db, 'users', uid, 'recipes', id), {
           ownerId: uid,
           ...rec,
           createdAt: serverTimestamp(),
@@ -226,8 +231,8 @@ export async function initializeUserWorkspace(
         },
       ];
 
-      measurements.forEach((m) => {
-        batch.set(doc(db, 'users', uid, 'measurements', m.id), {
+      measurements.forEach(({ id, ...m }) => {
+        batch.set(doc(db, 'users', uid, 'measurements', id), {
           ownerId: uid,
           ...m,
           createdAt: serverTimestamp(),

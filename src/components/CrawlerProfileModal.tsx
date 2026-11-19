@@ -1,4 +1,5 @@
 import React from 'react';
+import { CrawlerSprite } from './CrawlerSprite';
 import { useT } from '../lib/i18n';
 import { Award, Flame, Shield, Skull, Swords, Users, X } from 'lucide-react';
 import { GuildMember, PublicCrawler } from '../types';
@@ -6,7 +7,6 @@ import {
   BANNER_THEME_STYLES,
   CRAWLER_ACHIEVEMENTS,
   CRAWLER_GEAR_CATALOG,
-  CRAWLER_SPRITES,
   getLevelInfo,
   HUNTING_GROUNDS_BG,
 } from '../lib/crawlerEngine';
@@ -46,8 +46,6 @@ export const CrawlerProfileModal: React.FC<Props> = ({
 
   const theme = BANNER_THEME_STYLES[crawler.bannerTheme] ?? BANNER_THEME_STYLES.amber;
   const auraFrame = AURA_FRAME_CLASSES[crawler.equippedAura] ?? AURA_FRAME_CLASSES.aur_none;
-  const spriteSrc =
-    CRAWLER_SPRITES[crawler.equippedSpriteTier] ?? CRAWLER_SPRITES[current.spriteTier];
 
   const weaponDef = CRAWLER_GEAR_CATALOG.find((g) => g.id === crawler.equippedWeapon);
   const armorDef = CRAWLER_GEAR_CATALOG.find((g) => g.id === crawler.equippedArmor);
@@ -89,10 +87,10 @@ export const CrawlerProfileModal: React.FC<Props> = ({
             <div
               className={`w-20 h-20 sm:w-24 sm:h-24 rounded-lg border-2 bg-[#0d1117] overflow-hidden shrink-0 flex items-center justify-center ${auraFrame}`}
             >
-              <img
-                src={spriteSrc}
+              <CrawlerSprite
+                tier={crawler.equippedSpriteTier}
+                look={crawler.look}
                 alt={t('{name} sprite', { name: crawler.crawlerName })}
-                referrerPolicy="no-referrer"
                 className="w-full h-full object-contain pixel-art animate-crawler-idle"
               />
             </div>

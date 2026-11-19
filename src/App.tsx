@@ -36,6 +36,8 @@ import {
   Measurement,
   NavSection,
   Recipe,
+  CrawlerStyle,
+  Sex,
   UserProfile,
   WorkoutDay,
   WorkoutPlan,
@@ -56,6 +58,8 @@ import {
 } from './lib/crawlerEngine';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthGate } from './components/AuthGate';
+import { encodeLook, parseLook } from './lib/crawlerLook';
+import { IdentityFields } from './components/IdentityFields';
 import { OverviewView } from './components/OverviewView';
 import { GymPlanView } from './components/GymPlanView';
 import { DietPlanView } from './components/DietPlanView';
@@ -104,6 +108,9 @@ function WorkspaceShell() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileChecked, setProfileChecked] = useState(false);
   const [initializingWorkspace, setInitializingWorkspace] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const [onboardSex, setOnboardSex] = useState<Sex>('unspecified');
+  const [onboardStyle, setOnboardStyle] = useState<CrawlerStyle>('neutral');
 
   const [workouts, setWorkouts] = useState<WorkoutDay[]>([]);
   const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
@@ -534,6 +541,7 @@ function WorkspaceShell() {
         xp: initialXp,
         level: current.level,
         equippedSpriteTier: current.spriteTier,
+        look: profile.crawlerStyle ? encodeLook(parseLook(undefined, profile.crawlerStyle)) : '',
         unlockedGearIds: Array.from(gearSet).slice(0, 60),
         unlockedAchievementIds: achIds,
         rewardedActionKeys: initialKeys,
@@ -683,6 +691,7 @@ function WorkspaceShell() {
       crawlerDoc.guildId || '',
       crawlerDoc.guildName || '',
       crawlerDoc.isPublicProfile ?? false,
+      crawlerDoc.look || '',
     ]);
     if (lastSocialSyncSigRef.current === sig) return;
     lastSocialSyncSigRef.current = sig;
@@ -732,12 +741,25 @@ function WorkspaceShell() {
   if (!profile) {
     const handleBootstrap = async (includeStarter: boolean) => {
       setInitializingWorkspace(true);
+      setBootstrapError(null);
       try {
         await initializeUserWorkspace(
           user.uid,
           user.displayName || user.email?.split('@')[0] || 'Crawler',
-          includeStarter
+          includeStarter,
+          onboardSex,
+          onboardStyle
         );
+      } catch (err) {
+        // Without this the screen just stays put and the user sees nothing happen.
+        let detail = err instanceof Error ? err.message : String(err);
+        try {
+          detail = JSON.parse(detail).error ?? detail;
+        } catch {
+          // not our wrapped JSON error; show as is
+        }
+        console.error('Workspace bootstrap failed:', err);
+        setBootstrapError(detail);
       } finally {
         setInitializingWorkspace(false);
       }
@@ -758,6 +780,22 @@ function WorkspaceShell() {
           <p className="text-sm text-slate-300 leading-relaxed mb-6">
             {t('Start with a 4-week sample hypertrophy program, 4 high-protein recipes, and check-in history so you can explore charts right away — or open a clean Week 1 slate to import your own CSV schedule.')}
           </p>
+
+          <div className="mb-6">
+            <IdentityFields
+              sex={onboardSex}
+              crawlerStyle={onboardStyle}
+              onSexChange={setOnboardSex}
+              onStyleChange={setOnboardStyle}
+            />
+          </div>
+
+          {bootstrapError && (
+            <div role="alert" className="mb-4 rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">
+              <p className="font-semibold">{t('Could not create your workspace. Try again.')}</p>
+              <p className="mt-1 break-words font-mono text-[11px] text-rose-300/80">{bootstrapError}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
@@ -820,6 +858,7 @@ function WorkspaceShell() {
       next.guildId || '',
       next.guildName || '',
       next.isPublicProfile ?? false,
+      next.look || '',
     ]);
     await syncSocialCrawlerProfile(user.uid, next, profile.displayName);
   };
@@ -1251,6 +1290,7 @@ function WorkspaceShell() {
         initialTab={armoryState.tab}
         onClose={() => setArmoryState((prev) => ({ ...prev, open: false }))}
         crawler={effectiveCrawler}
+        spriteStyle={profile.crawlerStyle}
         onUpdateCrawler={handleUpdateCrawler}
       />
 
