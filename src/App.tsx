@@ -1145,6 +1145,7 @@ function WorkspaceShell() {
               workouts={workouts}
               workoutPlans={workoutPlans}
               mealLogs={mealLogs}
+              crawler={effectiveCrawler}
               onOpenCsvImport={(wk, day) => handleOpenCsvImport('training', wk, day)}
             />
           )}
@@ -1159,6 +1160,7 @@ function WorkspaceShell() {
               customFoods={customFoods}
               onNavigateToRecipes={() => setActiveNav('recipes')}
               onOpenQuickFood={handleOpenQuickFood}
+              crawler={effectiveCrawler}
               onOpenCsvImport={(wk, day) => handleOpenCsvImport('diet', wk, day)}
             />
           )}

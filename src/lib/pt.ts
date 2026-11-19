@@ -1273,4 +1273,7 @@ export const PT: Record<string, string> = {
   'Import': 'Importar',
   'Imported {n} workout. Open a day and pick it from the list.': '{n} treino importado. Abra um dia e escolha na lista.',
   'Imported {n} workouts. Open a day and pick one from the list.': '{n} treinos importados. Abra um dia e escolha na lista.',
+  'Move exercise up': 'Mover exercício para cima',
+  'Move exercise down': 'Mover exercício para baixo',
+  'Workout progress: {done} of {total} sets': 'Progresso do treino: {done} de {total} séries',
 };

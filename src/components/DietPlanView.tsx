@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import {
   buildDailyMealSlots,
+  CrawlerState,
   DAY_FULL,
   DAY_SHORT,
   HydrationLog,
@@ -28,6 +29,7 @@ import {
 } from '../types';
 import { Food } from '../lib/foodDb';
 import { useT } from '../lib/i18n';
+import { DietChefCorner } from './DietChefCorner';
 import {
   createMealLog,
   deleteMealLog,
@@ -47,6 +49,7 @@ interface Props {
   customFoods: Food[];
   onNavigateToRecipes: () => void;
   onOpenQuickFood: (week: number, day: number, slot?: MealSlot) => void;
+  crawler?: CrawlerState;
   onOpenCsvImport: (week: number, day: number) => void;
 }
 
@@ -59,9 +62,11 @@ export const DietPlanView: React.FC<Props> = ({
   customFoods,
   onNavigateToRecipes,
   onOpenQuickFood,
+  crawler,
   onOpenCsvImport,
 }) => {
   const t = useT();
+  const [cheer, setCheer] = useState(0);
   const slotLabel = (label: string) =>
     label.startsWith('Meal ') ? t('Meal {n}', { n: label.slice(5) }) : t(label);
   const [selectedWeek, setSelectedWeek] = useState(profile.currentWeek);
@@ -259,6 +264,7 @@ export const DietPlanView: React.FC<Props> = ({
 
   return (
     <div className="space-y-5">
+      <DietChefCorner crawler={crawler} fallbackStyle={profile.crawlerStyle} cheer={cheer} />
       {/* Header */}
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
@@ -533,9 +539,10 @@ export const DietPlanView: React.FC<Props> = ({
                           <div className="flex items-center gap-3 min-w-0">
                             <button
                               type="button"
-                              onClick={() =>
-                                void toggleMealConsumed(uid, meal.id, !meal.consumed)
-                              }
+                              onClick={() => {
+                                if (!meal.consumed) setCheer((n) => n + 1);
+                                void toggleMealConsumed(uid, meal.id, !meal.consumed);
+                              }}
                               aria-label={t('Mark {name} as consumed', { name: meal.title })}
                               className="min-h-[44px] min-w-[44px] -ml-2 flex items-center justify-center shrink-0"
                             >

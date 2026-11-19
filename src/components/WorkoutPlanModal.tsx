@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ChevronDown,
+  ChevronUp,
   Database,
   Dumbbell,
   Footprints,
@@ -29,6 +31,7 @@ import {
 import { saveWorkoutPlan } from '../lib/firestoreService';
 import { ExercisePickerModal, formatMuscleLabel } from './ExercisePickerModal';
 import { useT } from '../lib/i18n';
+import { moveItem } from '../lib/arrayMove';
 
 interface Props {
   open: boolean;
@@ -443,6 +446,26 @@ export const WorkoutPlanModal: React.FC<Props> = ({
                               {ex.imageUrl ? t('Swap') : t('Match photo')}
                             </button>
                           </div>
+                        </div>
+                        <div className="flex items-center shrink-0">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => setExercises((prev) => moveItem(prev, idx, idx - 1))}
+                            aria-label={t('Move exercise up')}
+                            className="w-9 h-10 inline-flex items-center justify-center text-slate-300 hover:text-white disabled:opacity-30 rounded-lg"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === exercises.length - 1}
+                            onClick={() => setExercises((prev) => moveItem(prev, idx, idx + 1))}
+                            aria-label={t('Move exercise down')}
+                            className="w-9 h-10 inline-flex items-center justify-center text-slate-300 hover:text-white disabled:opacity-30 rounded-lg"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
                         </div>
                         <button
                           type="button"

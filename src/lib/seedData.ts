@@ -19,7 +19,7 @@ export async function initializeUserWorkspace(
   displayName: string,
   includeStarterPlan = true,
   sex: Sex = 'unspecified',
-  crawlerStyle: CrawlerStyle = 'neutral'
+  crawlerStyle: CrawlerStyle = 'masculine'
 ): Promise<void> {
   const path = `users/${uid}`;
   try {

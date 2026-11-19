@@ -29,3 +29,11 @@ assert.deepEqual(f.skipped, ['linha solta']);
 assert.equal(parseWorkoutText('Treino: A\nRosca 3x12\nTreino: B\nElevação 3x15').length, 2);
 assert.equal(parseWorkoutText('nada aqui').length, 0);
 console.log('workoutText OK');
+
+// reorder helper
+import { moveItem } from '../src/lib/arrayMove';
+assert.deepEqual(moveItem(['a', 'b', 'c'], 0, 1), ['b', 'a', 'c']);
+assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 1), ['a', 'c', 'b']);
+assert.deepEqual(moveItem(['a', 'b', 'c'], 0, -1), ['a', 'b', 'c']);
+assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 3), ['a', 'b', 'c']);
+console.log('arrayMove OK');

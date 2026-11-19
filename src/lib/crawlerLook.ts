@@ -21,7 +21,7 @@ export interface CrawlerLook {
 }
 
 export const DEFAULT_LOOK: CrawlerLook = {
-  style: 'neutral',
+  style: 'masculine',
   hair: 0,
   hairColor: 1,
   eyes: 0,
@@ -33,7 +33,7 @@ export const DEFAULT_LOOK: CrawlerLook = {
 const STYLE_CODE: Record<CrawlerStyle, string> = { masculine: 'm', feminine: 'f', neutral: 'n' };
 
 /** Stored as one short string ("f.2.3.1.2.1.1") so it fits a single Firestore field. */
-export function parseLook(raw: string | undefined, fallbackStyle: CrawlerStyle = 'neutral'): CrawlerLook {
+export function parseLook(raw: string | undefined, fallbackStyle: CrawlerStyle = 'masculine'): CrawlerLook {
   const base: CrawlerLook = {
     ...DEFAULT_LOOK,
     style: fallbackStyle,

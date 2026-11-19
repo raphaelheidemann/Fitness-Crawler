@@ -90,7 +90,7 @@ export async function updateDailyWaterGoal(
 export const normalizeSex = (v: unknown): Sex =>
   v === 'male' || v === 'female' ? v : 'unspecified';
 export const normalizeCrawlerStyle = (v: unknown): CrawlerStyle =>
-  v === 'masculine' || v === 'feminine' ? v : 'neutral';
+  v === 'masculine' || v === 'feminine' || v === 'neutral' ? v : 'masculine';
 
 export async function updateUserProfileSettings(
   uid: string,
