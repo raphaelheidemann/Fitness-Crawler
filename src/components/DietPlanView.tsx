@@ -42,6 +42,7 @@ import { HydrationCard } from './HydrationCard';
 import { DietGeneratorModal } from './DietGeneratorModal';
 import { FoodPickerModal, FoodPickerTarget } from './FoodPickerModal';
 import { MealTextModal } from './MealTextModal';
+import { FoodIcon } from './FoodIcon';
 
 interface Props {
   uid: string;
@@ -691,8 +692,8 @@ export const DietPlanView: React.FC<Props> = ({
                                 className="w-11 h-11 rounded-lg object-cover border border-[#2d3c54] shrink-0"
                               />
                             ) : (
-                              <div className="w-11 h-11 rounded-lg bg-[#0e141d] border border-[#2d3c54] flex items-center justify-center text-slate-400 shrink-0">
-                                <Utensils className="w-4 h-4" />
+                              <div className="w-11 h-11 rounded-lg bg-[#0e141d] border border-[#2d3c54] flex items-center justify-center shrink-0">
+                                <FoodIcon food={meal.title} />
                               </div>
                             )}
 
