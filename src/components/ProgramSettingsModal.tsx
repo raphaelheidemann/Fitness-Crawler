@@ -3,6 +3,7 @@ import { useT } from '../lib/i18n';
 import { X } from 'lucide-react';
 import { Sex, UnitSystem, UserProfile } from '../types';
 import { IdentityFields } from './IdentityFields';
+import { TargetCalculator } from './TargetCalculator';
 import { updateUserProfileSettings } from '../lib/firestoreService';
 
 interface Props {
@@ -212,6 +213,19 @@ export const ProgramSettingsModal: React.FC<Props> = ({ open, onClose, profile, 
                 {t('Macro sum: {n} kcal', { n: estimatedKcal.toLocaleString() })}
               </span>
             </div>
+
+            <TargetCalculator
+              unitSystem={unitSystem}
+              sex={sex}
+              onSexChange={setSex}
+              weightHint={targetWeight}
+              onApply={(r) => {
+                setDailyCalorieTarget(r.calories);
+                setProteinTargetG(r.proteinG);
+                setCarbsTargetG(r.carbsG);
+                setFatTargetG(r.fatG);
+              }}
+            />
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <div>

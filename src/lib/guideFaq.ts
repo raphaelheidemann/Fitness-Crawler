@@ -32,7 +32,7 @@ export const GUIDE_FAQ: GuideFaqItem[] = [
     tab: 'overview',
     question: 'Where do I start?',
     steps: [
-      'On Home, tap Edit Week & Targets to set your goal weight, calories, and protein.',
+      'On Home, tap Edit Week & Targets. Do not know your numbers? Tap Calculate calories and macros for me and answer age, height, weight and goal.',
       'Open Diet to add your daily meals or generate a basic diet plan.',
       'Open Gym to pick a ready-made workout or add your exercises.',
       'Each day, check off eaten meals, workouts, water, and habits to earn XP.',
@@ -119,7 +119,8 @@ export const GUIDE_FAQ: GuideFaqItem[] = [
     question: 'How do I adjust my targets?',
     steps: [
       'On Home, tap Edit Week & Targets (or tap the Current Week card in the side menu).',
-      'Update calories, protein, carbs, fat, water goal, and target weight.',
+      'Do not know your numbers? Tap Calculate calories and macros for me, fill in age, height, weight and goal, then tap Use these numbers.',
+      'Or update calories, protein, carbs, fat, water goal, and target weight by hand.',
       'You can also change how many meals per day you want.',
       'Tap Save Targets to apply the changes everywhere.',
     ],
