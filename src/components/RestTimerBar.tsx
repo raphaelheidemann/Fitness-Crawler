@@ -94,7 +94,7 @@ export const RestTimerBar: React.FC<Props> = ({
     <div
       role="region"
       aria-label={t('Rest timer')}
-      className="fixed bottom-16 lg:bottom-5 right-3 left-3 sm:left-auto sm:w-[400px] z-30 bg-slate-900 text-white border border-slate-800 rounded-xl shadow-xl overflow-hidden"
+      className="fixed bottom-16 lg:bottom-5 right-3 left-3 sm:left-auto sm:w-[400px] z-[35] bg-slate-900 text-white border border-slate-800 rounded-xl shadow-xl overflow-hidden"
     >
       {/* Progress bar */}
       <div className="h-1 w-full bg-slate-800">

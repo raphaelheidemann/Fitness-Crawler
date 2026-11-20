@@ -1361,4 +1361,153 @@ export const PT: Record<string, string> = {
   Kettlebell: 'Kettlebell',
   'Other equipment': 'Outros',
   'All Levels': 'Todos os níveis',
+
+  // Interactive Guia FAQ
+  'Interactive guide that helps you use the app. Tap me!':
+    'Guia interativo que te ajuda a usar o app. Toque em mim!',
+  'Open interactive guide': 'Abrir guia interativo',
+  'Dismiss guide hint': 'Dispensar aviso do guia',
+  'How can I help?': 'Como posso te ajudar?',
+  'Tap a question for step-by-step help': 'Toque em uma dúvida para ver o passo a passo',
+  'Close guide': 'Fechar guia',
+  'Search questions...': 'Buscar dúvidas...',
+  'On this screen': 'Nesta tela',
+  'Other questions': 'Outras dúvidas',
+  'No matching questions found. Try another word.':
+    'Nenhuma dúvida encontrada. Tente outra palavra.',
+  'Back to questions': 'Voltar às dúvidas',
+  'Take me there': 'Me leva lá',
+  'Where do I start?': 'Por onde eu começo?',
+  'On Home, tap Edit Week & Targets to set your goal weight, calories, and protein.':
+    'Na aba Início, toque em Editar semana e metas para colocar seu peso-alvo, calorias e proteína.',
+  'Open Diet to add your daily meals or generate a basic diet plan.':
+    'Abra a aba Dieta para adicionar suas refeições ou montar uma dieta básica.',
+  'Open Gym to pick a ready-made workout or add your exercises.':
+    'Abra a aba Treino para escolher um treino pronto ou adicionar seus exercícios.',
+  'Each day, check off eaten meals, workouts, water, and habits to earn XP.':
+    'Todo dia, marque as refeições comidas, treinos, água e hábitos para ganhar XP.',
+  'What is XP and what is it for?': 'O que é XP e para que serve?',
+  'XP is the score you earn by logging workouts, meals, water, habits, and check-ins.':
+    'XP é a pontuação que você ganha ao registrar treinos, refeições, água, hábitos e medidas.',
+  'More XP levels up your character and deals damage to the Weekly Boss on Home.':
+    'Com mais XP você sobe de nível e causa dano no chefe semanal na aba Início.',
+  'Beating weekly goals and bosses rewards loot boxes with gear and new looks.':
+    'Ao bater metas e vencer chefes, você ganha baús com equipamentos e novos visuais.',
+  'Tap the arena card on Home to open your Armory and inspect your gear.':
+    'Toque na arena na aba Início para abrir o Arsenal e ver seus equipamentos.',
+  'How do I install the app on my phone?': 'Como instalo o app no celular?',
+  'On mobile, tap the menu icon at the top left and tap Install on Phone.':
+    'No celular, toque no menu (☰) no canto superior esquerdo e depois em Instalar no celular.',
+  'On Android (Chrome), tap Install Phone App or open the Chrome menu and choose Install.':
+    'No Android (Chrome), toque em Instalar app no celular ou use o menu do navegador e escolha Instalar.',
+  'On iPhone (Safari), tap the Share button at the bottom and choose Add to Home Screen.':
+    'No iPhone (Safari), toque no botão Compartilhar embaixo e escolha Adicionar à Tela de Início.',
+  'If you opened the link inside another app, open the URL directly in Safari or Chrome first.':
+    'Se abriu o link dentro de outro app, abra o endereço direto no Safari ou Chrome primeiro.',
+  'How do I add food to my day?': 'Como eu coloco comidas no dia?',
+  'Open Diet and tap the green Add meal button at the top.':
+    'Abra a aba Dieta e toque no botão verde Adicionar refeição no topo.',
+  "Type what you ate, like 'pão integral 2 fatias, presunto 1 fatia'.":
+    "Digite o que comeu, como 'pão integral 2 fatias, presunto 1 fatia'.",
+  'Check the matched foods and calculated calories and macros below.':
+    'Confira os alimentos encontrados e as calorias e macros calculados abaixo.',
+  'Pick which Meal to save into (and mark Already eaten if you already ate it).':
+    'Escolha a Refeição para salvar (e marque Já comi se você já tiver comido).',
+  'Tap Add to day to save.': 'Toque em Adicionar ao dia para salvar.',
+  'How do I add a food that does not exist?': 'Como adiciono um alimento que não existe?',
+  'Tap Log Food Eaten on Home (or tap More > Log Food Eaten in Diet).':
+    'Toque em Registrar alimento no Início (ou abra Mais > Registrar alimento na Dieta).',
+  'Tap Create new food (saved for next time) below the search list.':
+    'Toque em Criar novo alimento (fica salvo) logo abaixo da lista de busca.',
+  'Enter the name and calories, protein, carbs, and fat per 100 g, then save.':
+    'Preencha o nome e as calorias, proteína, carbo e gordura por 100 g e salve.',
+  'If you do not want to save it for later, tap Enter manually for a one-time entry.':
+    'Se não quiser salvar na base, toque em Preencher manualmente para lançar só desta vez.',
+  "How do I copy yesterday's meals?": 'Como copio o dia de ontem?',
+  'In Diet, tap the day tab where you want to paste the meals.':
+    'Na aba Dieta, toque na aba do dia em que você quer colar as refeições.',
+  'At the top right, tap More.': 'No topo da tela, toque em Mais.',
+  'Tap Copy yesterday here (or Copy same day last week).':
+    'Toque em Copiar ontem para cá (ou Copiar o mesmo dia da semana passada).',
+  'Yesterday items are added to the selected day so you can adjust or check them off.':
+    'Os itens de ontem entram no dia escolhido para você ajustar ou marcar como comidos.',
+  'What do HP, STR, AGI, and INT mean?': 'O que significam HP, FOR, AGI e INT?',
+  'They are your daily nutrition bars styled like RPG stats at the top of Diet.':
+    'São as suas barras de alimentação do dia em estilo RPG no topo da aba Dieta.',
+  'HP · Rations tracks your consumed calories for the day against your calorie target.':
+    'HP · Ração mostra quantas calorias você já comeu hoje em relação à meta.',
+  'STR · Protein tracks protein, AGI · Carbs tracks carbs, and INT · Fat tracks fat.':
+    'FOR · Proteína mostra proteína, AGI · Carbo os carboidratos e INT · Gordura as gorduras.',
+  'Each bar fills up as you mark foods as eaten.':
+    'Cada barra enche conforme você marca os alimentos como comidos.',
+  'How do I adjust my targets?': 'Como ajusto minhas metas?',
+  'On Home, tap Edit Week & Targets (or tap the Current Week card in the side menu).':
+    'Na aba Início, toque em Editar semana e metas (ou no cartão Semana atual do menu lateral).',
+  'Update calories, protein, carbs, fat, water goal, and target weight.':
+    'Altere calorias, proteína, carbo, gordura, meta de água e peso-alvo.',
+  'You can also change how many meals per day you want.':
+    'Você também pode mudar quantas refeições por dia quer usar.',
+  'Tap Save Targets to apply the changes everywhere.':
+    'Toque em Salvar metas para atualizar todo o app.',
+  'How do I start a workout?': 'Como começo um treino?',
+  'Open Gym and pick the day of the week you are training.':
+    'Abra a aba Treino e escolha o dia da semana em que vai treinar.',
+  'Keep Gym workout selected and add exercises or pick a saved plan.':
+    'Deixe Academia selecionado e adicione exercícios ou escolha um treino salvo.',
+  'Tap Start Workout to start the live session timer.':
+    'Toque em Iniciar treino para ligar o cronômetro da sessão.',
+  'Check off each finished set and tap Finish Workout when you are done.':
+    'Marque cada série feita e toque em Finalizar treino quando terminar.',
+  'How do I add an exercise?': 'Como adiciono um exercício?',
+  'Open Gym and scroll to Exercise Prescription on the selected day.':
+    'Na aba Treino, role até Prescrição de exercícios no dia selecionado.',
+  'Tap Browse Exercise DB to search the catalog with exercise photos.':
+    'Toque em Banco de exercícios para buscar no catálogo com fotos.',
+  'Or tap Custom Row to type an exercise name manually.':
+    'Ou toque em Exercício manual para digitar o nome do exercício do zero.',
+  'Adjust sets, reps, and load, then tap Save Day Log.':
+    'Ajuste séries, repetições e carga e toque em Salvar registro do dia.',
+  'How do I use a ready-made plan?': 'Como uso um plano pronto?',
+  'In Gym, tap Ready-made Workouts near the top.':
+    'Na aba Treino, toque em Treinos prontos perto do topo.',
+  'Pick your level and split, then add the templates to your plans.':
+    'Escolha seu nível e divisão e adicione os treinos aos seus planos.',
+  'Choose a day and select a saved plan from Plan for [day] (or from Training Plans).':
+    'Escolha um dia e selecione o plano no campo Plano para [dia] (ou em Meus treinos).',
+  'All exercises load into the day so you can adjust weights and train.':
+    'Todos os exercícios carregam no dia para você ajustar os pesos e treinar.',
+  'How do I log a run or walk?': 'Como registro uma corrida ou caminhada?',
+  'In Gym, select the day of the activity.':
+    'Na aba Treino, escolha o dia da atividade.',
+  'Under Training type, tap Run or Walk.':
+    'Em Tipo de treino, toque em Corrida ou Caminhada.',
+  'Fill in distance and time (for runs, entering any two values calculates pace automatically).':
+    'Preencha distância e tempo (na corrida, preenchendo dois campos o pace calcula sozinho).',
+  'Tap Save Day Log to record it and earn +35 XP.':
+    'Toque em Salvar registro do dia para registrar e ganhar +35 XP.',
+  'How do I export my workout as text?': 'Como exporto meu treino em texto?',
+  'In Gym, open a day that already has at least one exercise.':
+    'Na aba Treino, abra um dia que já tenha pelo menos um exercício.',
+  'Tap Export as text at the top of the day editor.':
+    'Toque em Exportar texto no topo do editor do dia.',
+  'Choose between What I did (sets, load, RPE) or Plan (to import).':
+    'Escolha entre O que eu fiz (séries, carga, RPE) ou Plano (para importar).',
+  'Tap Copy text or Share to send it anywhere.':
+    'Toque em Copiar texto ou Compartilhar para enviar por mensagem.',
+  'How do I log my weight?': 'Como registro meu peso?',
+  'Tap Log Check-in at the top of the app, or open Body > Measurements and tap Log Measurement.':
+    'Toque em Registrar check-in no topo do app, ou abra Corpo > Medidas e toque em Registrar medida.',
+  'Enter the date, your current weight, and optional body fat or body measurements.':
+    'Informe a data, seu peso atual e, se quiser, gordura e medidas do corpo.',
+  'Tap Save Check-in to update your history and progress chart.':
+    'Toque em Salvar check-in para atualizar seu histórico e o gráfico.',
+  'How do I check off a habit?': 'Como marco um hábito?',
+  'On Home, scroll down to Daily Quests & Goal Squares.':
+    'Na aba Início, role até Missões diárias e quadrados de meta.',
+  "Under Today's Check-In, tap any habit tile you completed to mark it done and earn +10 XP.":
+    'Em Check-in de hoje, toque no cartão do hábito que você fez para marcar e ganhar +10 XP.',
+  'Use Add Habit or Edit Habits to create new routines or customize existing ones.':
+    'Use Adicionar hábito ou Editar hábitos para criar rotinas novas ou editar as atuais.',
+  'Completing every habit on the same day awards a +25 XP sweep bonus.':
+    'Concluir todos os hábitos do dia dá um bônus de +25 XP.',
 };

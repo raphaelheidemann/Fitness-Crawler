@@ -31,7 +31,6 @@ import {
 } from '../types';
 import { Food } from '../lib/foodDb';
 import { useT } from '../lib/i18n';
-import { GuideCorner } from './GuideCorner';
 import {
   createMealLog,
   deleteMealLog,
@@ -55,6 +54,9 @@ interface Props {
   onOpenQuickFood: (week: number, day: number, slot?: MealSlot) => void;
   crawler?: CrawlerState;
   onOpenCsvImport: (week: number, day: number) => void;
+  onGuideCheer?: () => void;
+  externalOpenMealText?: boolean;
+  onCloseExternalMealText?: () => void;
 }
 
 export const DietPlanView: React.FC<Props> = ({
@@ -68,9 +70,11 @@ export const DietPlanView: React.FC<Props> = ({
   onOpenQuickFood,
   crawler,
   onOpenCsvImport,
+  onGuideCheer,
+  externalOpenMealText,
+  onCloseExternalMealText,
 }) => {
   const t = useT();
-  const [cheer, setCheer] = useState(0);
   const slotLabel = (label: string) =>
     label.startsWith('Meal ') ? t('Meal {n}', { n: label.slice(5) }) : t(label);
   const [selectedWeek, setSelectedWeek] = useState(profile.currentWeek);
@@ -104,6 +108,13 @@ export const DietPlanView: React.FC<Props> = ({
   useEffect(() => {
     setSelectedWeek(profile.currentWeek);
   }, [profile.currentWeek]);
+
+  useEffect(() => {
+    if (externalOpenMealText) {
+      setMealTextOpen(true);
+      onCloseExternalMealText?.();
+    }
+  }, [externalOpenMealText, onCloseExternalMealText]);
 
   const weekMeals = useMemo(
     () => mealLogs.filter((m) => m.weekNumber === selectedWeek),
@@ -316,7 +327,6 @@ export const DietPlanView: React.FC<Props> = ({
 
   return (
     <div className="space-y-5">
-      <GuideCorner cheer={cheer} />
       {/* Header */}
       <div className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -667,7 +677,7 @@ export const DietPlanView: React.FC<Props> = ({
                             <button
                               type="button"
                               onClick={() => {
-                                if (!meal.consumed) setCheer((n) => n + 1);
+                                if (!meal.consumed) onGuideCheer?.();
                                 void toggleMealConsumed(uid, meal.id, !meal.consumed);
                               }}
                               aria-label={t('Mark {name} as consumed', { name: meal.title })}

@@ -77,6 +77,8 @@ import { CsvImportModal, CsvImportTarget } from './components/CsvImportModal';
 import { CrawlerArmoryModal } from './components/CrawlerArmoryModal';
 import { GuildView } from './components/GuildView';
 import { PWAInstallButton } from './components/PWAInstallButton';
+import { GuideCorner, GuideHostTab } from './components/GuideCorner';
+import { GuideActionType } from './lib/guideFaq';
 
 /** XP reasons are built in English; translate known shapes at display time. */
 function translateReason(t: (s: string, v?: Record<string, string | number>) => string, reason: string): string {
@@ -167,6 +169,9 @@ function WorkspaceShell() {
     day: number;
   }>({ open: false, mode: 'training', week: 1, day: 0 });
   const [importFeedback, setImportFeedback] = useState<string | null>(null);
+  const [guideCheer, setGuideCheer] = useState(0);
+  const [dietOpenMealText, setDietOpenMealText] = useState(false);
+  const [gymExternalAction, setGymExternalAction] = useState<'picker' | 'templates' | null>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
@@ -876,6 +881,65 @@ function WorkspaceShell() {
     setCsvImportState({ open: true, mode, week, day });
   };
 
+  const handleGuideAction = (actionType: GuideActionType) => {
+    const jsDay = new Date().getDay();
+    const todayIdx = jsDay === 0 ? 6 : jsDay - 1;
+    switch (actionType) {
+      case 'open_settings':
+        setSettingsOpen(true);
+        break;
+      case 'open_armory':
+        setActiveNav('overview');
+        setArmoryState({ open: true, tab: 'armory' });
+        break;
+      case 'open_quick_food':
+        handleOpenQuickFood(profile.currentWeek, todayIdx, 'on_the_spot');
+        break;
+      case 'open_diet_add_meal':
+        setActiveNav('diet');
+        setDietOpenMealText(true);
+        break;
+      case 'go_diet_tab':
+        setActiveNav('diet');
+        break;
+      case 'go_gym_tab':
+        setActiveNav('gym');
+        break;
+      case 'open_gym_picker':
+        setActiveNav('gym');
+        setGymExternalAction('picker');
+        break;
+      case 'open_gym_templates':
+        setActiveNav('gym');
+        setGymExternalAction('templates');
+        break;
+      case 'open_measurement_modal':
+        handleOpenQuickCheckIn();
+        break;
+      case 'scroll_to_habits': {
+        setActiveNav('overview');
+        const reduced =
+          typeof window !== 'undefined' &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.setTimeout(() => {
+          document.getElementById('habits-card')?.scrollIntoView({
+            behavior: reduced ? 'auto' : 'smooth',
+            block: 'start',
+          });
+        }, 60);
+        break;
+      }
+    }
+  };
+
+  const guideHostTab: GuideHostTab | null =
+    activeNav === 'overview' ||
+    activeNav === 'gym' ||
+    activeNav === 'diet' ||
+    activeNav === 'measurements'
+      ? activeNav
+      : null;
+
   const handleUpdateCrawler = async (next: Omit<CrawlerState, 'createdAt' | 'updatedAt'>) => {
     await saveCrawlerState(user.uid, next, Boolean(crawlerDoc), profile.displayName);
     lastSocialSyncSigRef.current = JSON.stringify([
@@ -1120,7 +1184,7 @@ function WorkspaceShell() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8 max-w-[1280px] w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-28 lg:pb-24 max-w-[1280px] w-full mx-auto">
           {importFeedback && (
             <div className="mb-4 flex items-center justify-between gap-3 px-4 py-2.5 text-xs font-medium text-emerald-200 bg-emerald-950/50 border border-emerald-500/40 rounded-lg">
               <span>{importFeedback}</span>
@@ -1192,6 +1256,8 @@ function WorkspaceShell() {
               mealLogs={mealLogs}
               crawler={effectiveCrawler}
               onOpenCsvImport={(wk, day) => handleOpenCsvImport('training', wk, day)}
+              externalAction={gymExternalAction}
+              onConsumeExternalAction={() => setGymExternalAction(null)}
             />
           )}
 
@@ -1207,6 +1273,9 @@ function WorkspaceShell() {
               onOpenQuickFood={handleOpenQuickFood}
               crawler={effectiveCrawler}
               onOpenCsvImport={(wk, day) => handleOpenCsvImport('diet', wk, day)}
+              onGuideCheer={() => setGuideCheer((n) => n + 1)}
+              externalOpenMealText={dietOpenMealText}
+              onCloseExternalMealText={() => setDietOpenMealText(false)}
             />
           )}
 
@@ -1313,6 +1382,14 @@ function WorkspaceShell() {
             </button>
           )}
         </div>
+      )}
+
+      {guideHostTab && (
+        <GuideCorner
+          activeTab={guideHostTab}
+          cheer={guideCheer}
+          onAction={handleGuideAction}
+        />
       )}
 
       {/* Mobile Fixed Thumb-Zone Bottom Tab Bar */}

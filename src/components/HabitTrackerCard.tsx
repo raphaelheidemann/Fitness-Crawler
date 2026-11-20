@@ -318,7 +318,7 @@ export const HabitTrackerCard: React.FC<Props> = ({ uid, habits, habitLogs }) =>
     totalHabitsCount > 0 ? Math.round((selectedDateCount / totalHabitsCount) * 100) : 0;
 
   return (
-    <section className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 space-y-6">
+    <section id="habits-card" className="bg-[#131a24] border-2 border-[#263347] rounded-xl p-5 space-y-6">
       {/* Header Row */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

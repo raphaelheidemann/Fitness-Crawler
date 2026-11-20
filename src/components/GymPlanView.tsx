@@ -176,6 +176,8 @@ interface Props {
   mealLogs: MealLog[];
   crawler?: CrawlerState;
   onOpenCsvImport: (week: number, day: number) => void;
+  externalAction?: 'picker' | 'templates' | null;
+  onConsumeExternalAction?: () => void;
 }
 
 export const GymPlanView: React.FC<Props> = ({
@@ -186,6 +188,8 @@ export const GymPlanView: React.FC<Props> = ({
   mealLogs,
   crawler,
   onOpenCsvImport,
+  externalAction,
+  onConsumeExternalAction,
 }) => {
   const t = useT();
   const [subTab, setSubTab] = useState<'schedule' | 'plans'>('schedule');
@@ -200,6 +204,24 @@ export const GymPlanView: React.FC<Props> = ({
   useEffect(() => {
     setSelectedWeek(profile.currentWeek);
   }, [profile.currentWeek]);
+
+  useEffect(() => {
+    if (!externalAction) return;
+    if (externalAction === 'templates') {
+      setTemplatesOpen(true);
+    } else if (externalAction === 'picker') {
+      setSubTab('schedule');
+      setIsRestDay(false);
+      setCardio((c) => ({ ...c, activityType: 'none' }));
+      setPickerState({
+        open: true,
+        mode: 'add',
+        matchIndex: null,
+        initialQuery: '',
+      });
+    }
+    onConsumeExternalAction?.();
+  }, [externalAction, onConsumeExternalAction]);
 
   const sortedPlans = useMemo(
     () =>
