@@ -59,6 +59,7 @@ import { WorkoutPlanModal } from './WorkoutPlanModal';
 import { WorkoutTemplatesModal } from './WorkoutTemplatesModal';
 import { WorkoutTextModal } from './WorkoutTextModal';
 import { GymAvatarTrail } from './GymAvatarTrail';
+import { CardioFields } from './CardioFields';
 import { useT } from '../lib/i18n';
 import { moveItem } from '../lib/arrayMove';
 
@@ -229,6 +230,16 @@ export const GymPlanView: React.FC<Props> = ({
   const [notes, setNotes] = useState('');
   const [exercises, setExercises] = useState<ExerciseItem[]>([]);
   const [cardio, setCardio] = useState<CardioLog>(defaultCardio());
+  // Gym day, or a run/walk day (cardio set and no exercises).
+  const hasExercises = exercises.some((ex) => ex.name.trim());
+  const mode: 'gym' | 'run' | 'walk' =
+    !isRestDay && cardio.activityType !== 'none' && !hasExercises ? cardio.activityType : 'gym';
+  const pickMode = (m: 'gym' | 'run' | 'walk') => {
+    if (m === 'gym') return setCardio((c) => ({ ...c, activityType: 'none' }));
+    if (hasExercises && !window.confirm(t('Switching to run/walk removes this day\'s exercises. Continue?'))) return;
+    setExercises([]);
+    setCardio((c) => ({ ...c, activityType: m }));
+  };
   const [saving, setSaving] = useState(false);
   const [updatingTemplate, setUpdatingTemplate] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
@@ -1161,9 +1172,13 @@ export const GymPlanView: React.FC<Props> = ({
                   >
                     {dayDoc ? (
                       <>
-                        {dayDoc.isRestDay ? t('Rest') : `${dayDoc.exercises.length} ${t('ex')}`}
+                        {dayDoc.isRestDay
+                          ? t('Rest')
+                          : dayDoc.exercises.length === 0 && dayDoc.cardio && dayDoc.cardio.activityType !== 'none'
+                            ? ''
+                            : `${dayDoc.exercises.length} ${t('ex')}`}
                         {dayDoc.cardio && dayDoc.cardio.activityType !== 'none'
-                          ? ` · ${dayDoc.cardio.activityType === 'walk' ? t('Walk') : t('Run')} ${dayDoc.cardio.distance}${dUnit}`
+                          ? `${dayDoc.exercises.length ? ' · ' : ''}${dayDoc.cardio.activityType === 'walk' ? t('Walk') : t('Run')} ${dayDoc.cardio.distance}${dUnit}`
                           : ''}
                       </>
                     ) : (
@@ -1195,7 +1210,7 @@ export const GymPlanView: React.FC<Props> = ({
                   </span>
                 </div>
               )}
-              {!isRestDay && (
+              {!isRestDay && mode === 'gym' && (
                 <GymAvatarTrail
                   crawler={crawler}
                   fallbackStyle={profile.crawlerStyle}
@@ -1281,6 +1296,32 @@ export const GymPlanView: React.FC<Props> = ({
                     ? ` · ${t('Duration: {time}', { time: fmtElapsed(existingDayDoc.durationSec) })}`
                     : ''}
                 </p>
+                {!isRestDay && (
+                  <div
+                    role="group"
+                    aria-label={t('Training type')}
+                    className="mt-2 inline-flex items-center p-1 bg-[#0e141d] border border-[#2d3c54] rounded-lg"
+                  >
+                    {(
+                      [
+                        { id: 'gym', label: t('Gym workout') },
+                        { id: 'run', label: t('Run') },
+                        { id: 'walk', label: t('Walk') },
+                      ] as { id: 'gym' | 'run' | 'walk'; label: string }[]
+                    ).map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => pickMode(opt.id)}
+                        className={`min-h-[38px] px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                          mode === opt.id ? 'bg-amber-400 text-slate-950' : 'text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <input
                     type="text"
@@ -1304,7 +1345,7 @@ export const GymPlanView: React.FC<Props> = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                {!isRestDay &&
+                {!isRestDay && mode === 'gym' &&
                   (!session ? (
                     <button
                       type="button"
@@ -1382,7 +1423,7 @@ export const GymPlanView: React.FC<Props> = ({
               </div>
             )}
 
-        {!isRestDay && (
+        {!isRestDay && mode === 'gym' && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
@@ -1691,144 +1732,27 @@ export const GymPlanView: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Walk or Run Cardio Option */}
-        <div className="p-4 sm:p-5 bg-[#0e141d] border border-[#263347] rounded-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Run / walk log (own day type) or cardio finisher already saved on a gym day */}
+        {!isRestDay && cardio.activityType !== 'none' && (
+          <div className="p-4 sm:p-5 bg-[#0e141d] border border-[#263347] rounded-xl space-y-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-[#131a24] border border-[#2d3c54] flex items-center justify-center text-emerald-400 shrink-0">
                 <Footprints className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-white">{t('Cardio · Walk or Run (+35 XP)')}</h2>
+                <h2 className="text-sm font-semibold text-white">
+                  {cardio.activityType === 'run' ? t('Run (+35 XP)') : t('Walk (+35 XP)')}
+                </h2>
                 <p className="text-xs text-slate-400">
-                  {t('Log outdoor or treadmill walk/run distance, duration, and pace')}
+                  {cardio.activityType === 'run'
+                    ? t('Distance, time and pace: fill two, the third is calculated')
+                    : t('Distance and time')}
                 </p>
               </div>
             </div>
-
-            <div className="inline-flex items-center p-1 bg-[#131a24] border border-[#2d3c54] rounded-lg self-start sm:self-auto">
-              {(
-                [
-                  { id: 'none', label: t('None') },
-                  { id: 'walk', label: t('Walk') },
-                  { id: 'run', label: t('Run') },
-                ] as { id: CardioType; label: string }[]
-              ).map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() =>
-                    setCardio((prev) => ({
-                      ...prev,
-                      activityType: opt.id,
-                    }))
-                  }
-                  className={`min-h-[38px] px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                    cardio.activityType === opt.id
-                      ? 'bg-amber-400 text-slate-950'
-                      : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <CardioFields cardio={cardio} setCardio={setCardio} unit={dUnit} />
           </div>
-
-          {cardio.activityType !== 'none' && (
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {t('Distance ({unit})', { unit: dUnit })}
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min={0}
-                  max={500}
-                  value={cardio.distance}
-                  onChange={(e) =>
-                    setCardio((prev) => ({ ...prev, distance: Number(e.target.value) }))
-                  }
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {t('Duration (min)')}
-                </label>
-                <input
-                  type="number"
-                  step="1"
-                  min={0}
-                  max={600}
-                  value={cardio.durationMinutes}
-                  onChange={(e) =>
-                    setCardio((prev) => ({
-                      ...prev,
-                      durationMinutes: Number(e.target.value),
-                    }))
-                  }
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {t('Calories Burned')}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={5000}
-                  value={cardio.caloriesBurned}
-                  onChange={(e) =>
-                    setCardio((prev) => ({
-                      ...prev,
-                      caloriesBurned: Number(e.target.value),
-                    }))
-                  }
-                  className="w-full px-3 py-2 text-sm font-mono tabular-nums text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  {cardio.activityType === 'walk' ? t('Incline / Speed') : t('Pace / Split')}
-                </label>
-                <input
-                  type="text"
-                  maxLength={SCHEMA_LIMITS.PACE_OR_INCLINE_MAX}
-                  value={cardio.paceOrIncline}
-                  onChange={(e) =>
-                    setCardio((prev) => ({ ...prev, paceOrIncline: e.target.value }))
-                  }
-                  placeholder={
-                    cardio.activityType === 'walk'
-                      ? t('e.g., 6% incline · 5.8 km/h')
-                      : t('e.g., 5:20 /km')
-                  }
-                  className="w-full px-3 py-2 text-sm text-white bg-[#131a24] border border-[#2d3c54] rounded-lg focus:outline-none focus:border-emerald-400"
-                />
-              </div>
-
-              <div className="flex items-end">
-                <label className="w-full min-h-[42px] px-3 py-2 bg-[#131a24] border border-[#2d3c54] rounded-lg inline-flex items-center gap-2 text-xs font-medium text-slate-200 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={cardio.completed}
-                    onChange={(e) =>
-                      setCardio((prev) => ({ ...prev, completed: e.target.checked }))
-                    }
-                    className="w-4 h-4 rounded border-[#394c69] bg-[#0e141d] text-emerald-400 focus:ring-emerald-400"
-                  />
-                  {t('Cardio Done')}
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
         <div>
           <label className="block text-xs font-medium text-slate-300 mb-1.5">
