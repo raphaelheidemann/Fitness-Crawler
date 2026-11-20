@@ -1378,8 +1378,8 @@ export const PT: Record<string, string> = {
   'Back to questions': 'Voltar às dúvidas',
   'Take me there': 'Me leva lá',
   'Where do I start?': 'Por onde eu começo?',
-  'On Home, tap Edit Week & Targets to set your goal weight, calories, and protein.':
-    'Na aba Início, toque em Editar semana e metas para colocar seu peso-alvo, calorias e proteína.',
+  'On Home, tap Edit Week & Targets. Do not know your numbers? Tap Calculate calories and macros for me and answer age, height, weight and goal.':
+    'Na Home, toque em Editar semana e metas. Não sabe seus números? Toque em “Calcule calorias e macros para mim” e responda idade, altura, peso e objetivo.',
   'Open Diet to add your daily meals or generate a basic diet plan.':
     'Abra a aba Dieta para adicionar suas refeições ou montar uma dieta básica.',
   'Open Gym to pick a ready-made workout or add your exercises.':
@@ -1510,4 +1510,12 @@ export const PT: Record<string, string> = {
     'Use Adicionar hábito ou Editar hábitos para criar rotinas novas ou editar as atuais.',
   'Completing every habit on the same day awards a +25 XP sweep bonus.':
     'Concluir todos os hábitos do dia dá um bônus de +25 XP.',
+  "Don't know your numbers? Calculate calories and macros for me": 'Não sabe seus números? Calcule calorias e macros para mim',
+  'Calculate my targets': 'Calcular minhas metas',
+  'Current weight ({unit})': 'Peso atual ({unit})',
+  'Use these numbers': 'Usar estes números',
+  'Do not know your numbers? Tap Calculate calories and macros for me, fill in age, height, weight and goal, then tap Use these numbers.':
+    'Não sabe seus números? Toque em “Calcule calorias e macros para mim”, preencha idade, altura, peso e objetivo e toque em Usar estes números.',
+  'Or update calories, protein, carbs, fat, water goal, and target weight by hand.':
+    'Ou ajuste calorias, proteína, carboidratos, gordura, meta de água e peso meta manualmente.',
 };
