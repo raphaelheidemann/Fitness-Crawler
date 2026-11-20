@@ -1355,4 +1355,10 @@ export const PT: Record<string, string> = {
   'Average speed: {v} {unit}/h · pace {p} /{unit}': 'Velocidade média: {v} {unit}/h · pace {p} /{unit}',
   'Run done': 'Corrida feita',
   "Switching to run/walk removes this day's exercises. Continue?": 'Trocar para corrida/caminhada remove os exercícios deste dia. Continuar?',
+  'All Equipment': 'Todos os equipamentos',
+  Plate: 'Anilha',
+  Bodyweight: 'Peso do corpo',
+  Kettlebell: 'Kettlebell',
+  'Other equipment': 'Outros',
+  'All Levels': 'Todos os níveis',
 };

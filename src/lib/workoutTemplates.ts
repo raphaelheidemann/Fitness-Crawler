@@ -1,4 +1,6 @@
 import { ExerciseItem } from '../types';
+import { exerciseNamePt } from './exerciseNamesPt';
+import { CATALOG_REFS, TEMPLATE_BASE, TEMPLATE_BEGINNER } from './workoutTemplateCatalog';
 
 export type TemplateLevel = 'beginner' | 'intermediate' | 'advanced';
 
@@ -29,9 +31,15 @@ function day(splitId: string, name: string, weekdays: number[], rows: Row[]): Te
   return {
     name,
     weekdays,
-    exercises: rows.map(([exName, sets, reps, muscleGroup], i) => ({
+    exercises: rows.map(([rowName, sets, reps, rowMuscle], i) => {
+      const refId = (splitId.startsWith('beg_') && TEMPLATE_BEGINNER[rowName]) || TEMPLATE_BASE[rowName];
+      const ref = refId ? CATALOG_REFS[refId] : undefined;
+      const exName = ref ? exerciseNamePt(ref.name) : rowName;
+      const muscleGroup = ref?.muscle ?? rowMuscle;
+      return {
       id: `tpl_${splitId}_${name.replace(/[^a-zA-Z0-9]+/g, '')}_${i}`,
       name: exName,
+      imageUrl: ref?.image,
       sets,
       reps,
       targetLoad: 0,
@@ -40,7 +48,7 @@ function day(splitId: string, name: string, weekdays: number[], rows: Row[]): Te
       completed: false,
       restSeconds: sets >= 4 && muscleGroup !== 'biceps' && muscleGroup !== 'triceps' ? 120 : 90,
       muscleGroup,
-    })),
+    };}),
   };
 }
 

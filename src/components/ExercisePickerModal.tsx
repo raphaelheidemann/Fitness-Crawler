@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useI18n, useT } from '../lib/i18n';
 import { exerciseNamePt } from '../lib/exerciseNamesPt';
+import { foldText } from '../lib/foodDb';
 import { ExerciseCatalogItem } from '../types';
 
 interface ExerciseCatalogResponse {
@@ -94,6 +95,55 @@ interface Props {
   onSelectExercise: (item: ExerciseCatalogItem, defaultRestSeconds: number) => void;
 }
 
+type EquipKey = 'all' | 'machine' | 'dumbbell' | 'barbell' | 'plate' | 'cable' | 'body' | 'kettlebell' | 'bands' | 'other';
+const EQUIP_FILTERS: { key: EquipKey; label: string }[] = [
+  { key: 'all', label: 'All Equipment' },
+  { key: 'machine', label: 'Machine' },
+  { key: 'dumbbell', label: 'Dumbbell' },
+  { key: 'barbell', label: 'Barbell' },
+  { key: 'plate', label: 'Plate' },
+  { key: 'cable', label: 'Cable' },
+  { key: 'body', label: 'Bodyweight' },
+  { key: 'kettlebell', label: 'Kettlebell' },
+  { key: 'bands', label: 'Bands' },
+  { key: 'other', label: 'Other equipment' },
+];
+const LEVEL_FILTERS = [
+  { key: 'all', label: 'All Levels' },
+  { key: 'beginner', label: 'Beginner' },
+  { key: 'intermediate', label: 'Intermediate' },
+  { key: 'expert', label: 'Advanced' },
+];
+
+function equipKeyOf(ex: ExerciseCatalogItem): EquipKey {
+  if (/\bplates?\b/i.test(ex.name)) return 'plate';
+  switch (ex.equipment) {
+    case 'machine': return 'machine';
+    case 'dumbbell': return 'dumbbell';
+    case 'barbell':
+    case 'e-z curl bar': return 'barbell';
+    case 'cable': return 'cable';
+    case 'body only': return 'body';
+    case 'kettlebells': return 'kettlebell';
+    case 'bands': return 'bands';
+    default: return 'other';
+  }
+}
+
+// Portuguese words people type for each equipment, searched without accents.
+const EQUIP_WORDS: Record<EquipKey, string> = {
+  all: '',
+  machine: 'maquina articulada',
+  dumbbell: 'halter halteres',
+  barbell: 'barra',
+  plate: 'anilha disco',
+  cable: 'polia cabo crossover',
+  body: 'peso corporal do corpo livre',
+  kettlebell: 'kettlebell',
+  bands: 'elastico faixa',
+  other: '',
+};
+
 const DEFAULT_REST_OPTIONS = [60, 90, 120, 180] as const;
 const PAGE_SIZE = 48;
 
@@ -114,6 +164,8 @@ export const ExercisePickerModal: React.FC<Props> = ({
 
   const [query, setQuery] = useState(initialQuery);
   const [selectedMuscle, setSelectedMuscle] = useState<string>('all');
+  const [equip, setEquip] = useState<EquipKey>('all');
+  const [level, setLevel] = useState<string>('all');
   const [defaultRest, setDefaultRest] = useState<number>(90);
   const [visibleLimit, setVisibleLimit] = useState<number>(PAGE_SIZE);
   const [detailItem, setDetailItem] = useState<ExerciseCatalogItem | null>(null);
@@ -150,22 +202,39 @@ export const ExercisePickerModal: React.FC<Props> = ({
     };
   }, [isOpen]);
 
-  const filteredExercises = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return allExercises.filter((ex) => {
-      if (selectedMuscle !== 'all' && ex.muscleGroup.toLowerCase() !== selectedMuscle) {
-        return false;
-      }
-      if (!q) return true;
-      return (
-        ex.name.toLowerCase().includes(q) ||
-        nm(ex.name).toLowerCase().includes(q) ||
-        ex.muscleGroup.toLowerCase().includes(q) ||
-        ex.equipment.toLowerCase().includes(q) ||
-        ex.category.toLowerCase().includes(q)
+  // Haystack per exercise (EN + PT name, muscle, equipment in both languages), accent-free.
+  const haystacks = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const ex of allExercises) {
+      m.set(
+        ex.id,
+        foldText(
+          [
+            ex.name,
+            exerciseNamePt(ex.name),
+            ex.muscleGroup,
+            t(formatMuscleLabel(ex.muscleGroup)),
+            ex.equipment,
+            EQUIP_WORDS[equipKeyOf(ex)],
+            ex.category,
+          ].join(' ')
+        )
       );
+    }
+    return m;
+  }, [allExercises, lang]);
+
+  const filteredExercises = useMemo(() => {
+    const words = foldText(query).split(/\s+/).filter(Boolean);
+    return allExercises.filter((ex) => {
+      if (selectedMuscle !== 'all' && ex.muscleGroup.toLowerCase() !== selectedMuscle) return false;
+      if (equip !== 'all' && equipKeyOf(ex) !== equip) return false;
+      if (level !== 'all' && ex.level !== level) return false;
+      if (words.length === 0) return true;
+      const h = haystacks.get(ex.id) ?? '';
+      return words.every((w) => h.includes(w));
     });
-  }, [allExercises, selectedMuscle, query, lang]);
+  }, [allExercises, selectedMuscle, equip, level, query, haystacks]);
 
   const visibleExercises = useMemo(
     () => filteredExercises.slice(0, visibleLimit),
@@ -378,6 +447,46 @@ export const ExercisePickerModal: React.FC<Props> = ({
                     }`}
                   >
                     {t(formatMuscleLabel(muscle))}
+                  </button>
+                ))}
+              </div>
+
+              {/* Equipment + level filters */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {EQUIP_FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => {
+                      setEquip(f.key);
+                      setVisibleLimit(PAGE_SIZE);
+                    }}
+                    className={`min-h-[34px] px-3 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors shrink-0 ${
+                      equip === f.key
+                        ? 'bg-emerald-400 text-slate-950'
+                        : 'bg-[#131a24] border border-[#2d3c54] text-slate-300 hover:bg-[#1a2332]'
+                    }`}
+                  >
+                    {t(f.label)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {LEVEL_FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => {
+                      setLevel(f.key);
+                      setVisibleLimit(PAGE_SIZE);
+                    }}
+                    className={`min-h-[30px] px-2.5 py-1 text-[11px] font-semibold rounded-lg whitespace-nowrap transition-colors shrink-0 ${
+                      level === f.key
+                        ? 'bg-sky-400 text-slate-950'
+                        : 'bg-[#131a24] border border-[#2d3c54] text-slate-300 hover:bg-[#1a2332]'
+                    }`}
+                  >
+                    {t(f.label)}
                   </button>
                 ))}
               </div>

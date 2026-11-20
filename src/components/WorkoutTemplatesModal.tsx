@@ -157,8 +157,18 @@ export const WorkoutTemplatesModal: React.FC<Props> = ({ open, onClose, uid, onA
                   </div>
                   <ul className="mt-2 space-y-1">
                     {d.exercises.map((ex) => (
-                      <li key={ex.id} className="flex justify-between gap-2 text-xs text-slate-300">
-                        <span className="truncate">{ex.name}</span>
+                      <li key={ex.id} className="flex items-center justify-between gap-2 text-xs text-slate-300">
+                        <span className="flex items-center gap-2 min-w-0">
+                          {ex.imageUrl && (
+                            <img
+                              src={ex.imageUrl}
+                              alt=""
+                              loading="lazy"
+                              className="w-9 h-9 rounded-md object-cover bg-[#0e141d] shrink-0"
+                            />
+                          )}
+                          <span className="truncate">{ex.name}</span>
+                        </span>
                         <span className="font-mono tabular-nums text-slate-400 shrink-0">
                           {ex.sets}×{ex.reps}
                         </span>
