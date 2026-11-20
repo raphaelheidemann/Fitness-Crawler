@@ -97,7 +97,7 @@ export function matchFoods(
     const hits = q.filter((w) => ft.some((x) => x === w || x.startsWith(w) || w.startsWith(x))).length;
     if (hits === 0) return;
     const all = hits === q.length;
-    let score = hits * 100 - (ft.length - hits) * 6 - i * 0.01;
+    let score = hits * 100 - (ft.length - hits) * 1 - i * 0.01;
     if (all) score += 1000;
     if (ft[0] === q[0]) score += 40;
     if (food.custom) score += 20;

@@ -120,7 +120,7 @@ const ROWS: Row[] = [
   ['creme_leite', 'Creme de leite', 221, 1.5, 3, 22, ['colher de sopa', 15]],
   ['iogurte_proteico', 'Iogurte proteico', 60, 10, 4, 0.5, ['pote', 170]],
   ['iogurte_desnatado', 'Iogurte desnatado', 42, 4.3, 5.8, 0.2, ['pote', 170]],
-  ['cafe_sem_acucar', 'Café sem açúcar', 2, 0.1, 0.3, 0, ['xícara', 50]],
+  ['cafe_sem_acucar', 'Café preto', 2, 0.1, 0.3, 0, ['xícara', 50]],
   ['cafe_com_leite', 'Café com leite', 38, 2, 3.5, 1.7, ['xícara', 150]],
   ['suco_laranja', 'Suco de laranja natural', 45, 0.7, 10.4, 0.2, ['copo', 200]],
   ['suco_uva', 'Suco de uva integral', 60, 0.4, 15, 0, ['copo', 200]],
