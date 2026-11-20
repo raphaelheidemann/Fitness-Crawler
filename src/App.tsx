@@ -1362,6 +1362,7 @@ function WorkspaceShell() {
         onClose={() => setQuickFoodOpen(false)}
         uid={user.uid}
         profile={profile}
+        customFoods={customFoods}
         defaultWeek={quickFoodDefaults.week}
         defaultDay={quickFoodDefaults.day}
         defaultSlot={quickFoodDefaults.slot}

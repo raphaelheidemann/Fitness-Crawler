@@ -471,6 +471,16 @@ export const PT: Record<string, string> = {
     'Já comi (conta agora nas macros consumidas de hoje)',
   'Logging...': 'Registrando...',
   'Save Food Entry': 'Salvar alimento',
+  Change: 'Trocar',
+  'Enter manually': 'Preencher manualmente',
+  'Search food database': 'Buscar na base de alimentos',
+  '100{base}: {kcal} kcal · {p}P · {c}C · {f}F': '100{base}: {kcal} kcal · {p}P · {c}C · {f}F',
+  'Added foods': 'Alimentos adicionados',
+  Total: 'Total',
+  'Add to list': 'Adicionar à soma',
+  'Save {n} foods': 'Salvar {n} alimentos',
+  'Remove {name}': 'Remover {name}',
+  '{n} items': '{n} itens',
 
   // Hydration
   'Hydration Potion': 'Poção de hidratação',
